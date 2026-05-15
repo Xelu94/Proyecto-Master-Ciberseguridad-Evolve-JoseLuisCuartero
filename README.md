@@ -22,7 +22,7 @@ CyberKB es una aplicación **local** de escritorio pensada para profesionales y 
 
 Además incluye un módulo **OSINT** con 15+ herramientas agrupadas por objetivo (dominio, IP, email, URL/web) y un **chat IA** con contexto de toda la base de conocimiento.
 
-¿Qué problema resuelve?
+## ¿Qué problema resuelve?
 Cuando estudias ciberseguridad acumulas cientos de notas, PDFs, comandos y CVEs dispersos en carpetas, Notion, bloc de notas… CyberKB centraliza todo ese conocimiento en una sola herramienta local: lo organiza automáticamente con IA, lo hace buscable, y lo conecta visualmente mediante un grafo de conocimiento interactivo.
 
 ---
