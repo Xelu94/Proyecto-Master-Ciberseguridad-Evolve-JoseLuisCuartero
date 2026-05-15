@@ -1,0 +1,38 @@
+# Environment
+.env
+*.env
+
+# Database (ignore the DB file itself — keep schema via models.py)
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# Uploads (personal files)
+uploads/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Compiled EXE (too large for GitHub)
+*.exe
+
+# Keep these dirs tracked
+!data/.gitkeep
+!uploads/.gitkeep
