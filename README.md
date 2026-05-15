@@ -192,3 +192,4 @@ CyberKB/
 ## Licencia
 
 MIT — libre para uso personal y educativo.
+Proyecto académico desarrollado durante el Master en Ciberseguridad de [Evolve](https://evolve.es).
