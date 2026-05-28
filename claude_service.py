@@ -6,7 +6,13 @@ from dotenv import load_dotenv
 
 load_dotenv(encoding="utf-8", override=True)
 
-client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY", ""))
+client = None  # lazy-init so key changes at runtime take effect
+
+def _get_client():
+    global client
+    if client is None:
+        client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY", ""))
+    return client
 
 CATEGORIES = [
     "reconocimiento",   # OSINT, footprinting, scanning
@@ -195,7 +201,7 @@ KNOWN_TOOLS: dict[str, str | None] = {
 
 
 def _call_claude(prompt: str, max_tokens: int = 2048) -> str:
-    msg = client.messages.create(
+    msg = _get_client().messages.create(
         model="claude-sonnet-4-6",
         max_tokens=max_tokens,
         messages=[{"role": "user", "content": prompt}],
@@ -240,6 +246,14 @@ Responde con este JSON exacto:
       "description": "<descripción breve>"
     }}
   ],
+  "mitre_techniques": [
+    {{
+      "id": "<T1055 o T1555.003 — ID exacto de ATT&CK>",
+      "name": "<nombre de la técnica>",
+      "tactic": "<táctica: Initial Access|Execution|Persistence|Privilege Escalation|Defense Evasion|Credential Access|Discovery|Lateral Movement|Collection|Command and Control|Exfiltration|Impact|Reconnaissance|Resource Development>",
+      "snippet": "<frase o fragmento del documento donde se menciona>"
+    }}
+  ],
   "knowledge_gaps": ["<concepto mencionado que podría necesitar más estudio>"]
 }}
 
@@ -248,9 +262,10 @@ REGLAS ESTRICTAS:
 - commands: solo si hay comandos reales (con binario ejecutable), máximo 15
 - tools: herramientas de seguridad con nombre propio, no comandos genéricos
 - cves: solo CVEs con formato CVE-XXXX-XXXXX explícitos en el texto
+- mitre_techniques: solo si se menciona explícitamente una técnica ATT&CK (por ID T#### o por nombre reconocible como "Process Injection", "Pass the Hash", "Spearphishing"…). Si no hay ninguna, devuelve array vacío.
 - JSON puro, sin comentarios, sin markdown"""
 
-    raw = _call_claude(prompt, max_tokens=3000)
+    raw = _call_claude(prompt, max_tokens=3500)
     raw = raw.strip()
     if raw.startswith("```"):
         raw = re.sub(r"^```[a-z]*\n?", "", raw)
@@ -266,6 +281,7 @@ REGLAS ESTRICTAS:
             "commands": [],
             "tools": [],
             "cves": [],
+            "mitre_techniques": [],
             "knowledge_gaps": [],
         }
     # Validate category
@@ -286,7 +302,7 @@ REGLAS ESTRICTAS:
     return data
 
 
-VALID_ENTITY_TYPES = {"attack", "defense", "tool", "protocol", "vuln", "methodology", "concept"}
+VALID_ENTITY_TYPES = {"attack", "defense", "tool", "protocol", "vuln", "methodology", "concept", "mitre"}
 
 
 def extract_entities(text: str) -> dict:
@@ -321,6 +337,7 @@ TIPOS VÁLIDOS:
 - vuln:        CVEs y vulns específicas (CVE-2021-44228, Log4Shell, EternalBlue, BlueKeep, PrintNightmare...)
 - methodology: frameworks y metodologías (OWASP Top 10, MITRE ATT&CK, Kill Chain, PTES, NIST, ISO 27001...)
 - concept:     conceptos fundamentales (CIA Triad, Zero Trust Architecture, Defense in Depth, AAA, Least Privilege...)
+- mitre:       técnicas MITRE ATT&CK con ID explícito (T1055 Process Injection, T1059 Command Scripting, T1003 OS Credential Dumping...)
 
 REGLAS ESTRICTAS:
 - Máximo 30 entidades por texto
@@ -375,3 +392,129 @@ Incluye los siguientes comandos ya documentados y añade los más importantes qu
 Formato: secciones por caso de uso, comandos con explicación breve, flags importantes.
 Responde solo con el Markdown del cheatsheet."""
     return _call_claude(prompt, max_tokens=2000)
+
+
+def generate_audit_report(audit_type: str, items: list[dict], progress: int) -> dict:
+    """Generate technical and executive audit reports from checklist data."""
+    # Build items text
+    done = [i for i in items if i.get("done")]
+    pending = [i for i in items if not i.get("done")]
+
+    def fmt_items(lst):
+        lines = []
+        for it in lst:
+            note = f" — Nota: {it['notes']}" if it.get("notes") else ""
+            sev = f" [{it.get('severity','medium').upper()}]" if it.get("severity") else ""
+            lines.append(f"- [{it.get('id','')}]{sev} {it.get('text','')}{note}")
+        return "\n".join(lines) if lines else "Ninguno"
+
+    items_block = f"""COMPLETADOS ({len(done)}):\n{fmt_items(done)}\n\nPENDIENTES ({len(pending)}):\n{fmt_items(pending)}"""
+
+    prompt = f"""Eres un consultor senior de ciberseguridad. Genera un informe de auditoría en español basado en el siguiente checklist.
+
+TIPO DE AUDITORÍA: {audit_type}
+PROGRESO: {progress}% completado ({len(done)}/{len(done)+len(pending)} ítems)
+
+CHECKLIST:
+{items_block}
+
+Responde SOLO con JSON válido (sin markdown):
+{{
+  "technical": "<informe técnico en Markdown — incluye: Resumen Técnico, Alcance, Hallazgos por severidad (Crítico/Alto/Medio/Bajo), Recomendaciones específicas con comandos si aplica>",
+  "executive": "<informe ejecutivo en Markdown — sin tecnicismos, orientado a dirección: Resumen Ejecutivo, Nivel de Riesgo Global (Crítico/Alto/Medio/Bajo), Impacto en Negocio, Próximos Pasos priorizados (máx 5)>"
+}}
+
+REGLAS:
+- Informe técnico: detallado, con secciones ##, bullets de hallazgos con severidad, comandos sugeridos en bloques de código
+- Informe ejecutivo: lenguaje claro para no técnicos, sin comandos, énfasis en riesgo empresarial y ROI de las correcciones
+- Ambos en español
+- Basarte en los ítems completados para documentar hallazgos y en los pendientes para riesgos abiertos"""
+
+    raw = _call_claude(prompt, max_tokens=4000)
+    raw = raw.strip()
+    if raw.startswith("```"):
+        raw = re.sub(r"^```[a-z]*\n?", "", raw)
+        raw = re.sub(r"\n?```$", "", raw)
+    try:
+        data = json.loads(raw)
+        return {
+            "technical": data.get("technical", "Error generando informe técnico."),
+            "executive": data.get("executive", "Error generando informe ejecutivo."),
+        }
+    except Exception:
+        # fallback: return raw as technical
+        return {"technical": raw, "executive": "Error al parsear la respuesta de IA."}
+
+
+def generate_forensic_note(hash_str: str, vt: dict, mb: dict, anyrun: dict) -> dict:
+    """Synthesize VirusTotal + MalwareBazaar + Any.run data into a structured forensic note."""
+    vt_summary = json.dumps({k: v for k, v in vt.items() if k != "stats"}, ensure_ascii=False)[:3000]
+    mb_summary = json.dumps(mb, ensure_ascii=False)[:1500]
+    anyrun_summary = json.dumps(anyrun, ensure_ascii=False)[:1500]
+
+    prompt = f"""Eres un analista de malware senior. Genera un informe forense completo en español para el siguiente hash SHA256.
+
+HASH SHA256: {hash_str}
+
+DATOS VIRUSTOTAL:
+{vt_summary}
+
+DATOS MALWAREBAZAAR:
+{mb_summary}
+
+DATOS ANY.RUN:
+{anyrun_summary}
+
+Responde SOLO con JSON válido (sin markdown):
+{{
+  "title": "Análisis forense — <nombre_malware_o_hash_corto> — <fecha_hoy>",
+  "summary": "<resumen de 2-3 frases del malware>",
+  "content": "<contenido completo en Markdown con secciones: ## Identificación, ## Detección, ## Comportamiento, ## Indicadores de Compromiso (IOCs), ## Técnicas MITRE, ## Recomendaciones>",
+  "tags": ["<tag1>", "<tag2>"],
+  "cves": [
+    {{"id": "CVE-XXXX-XXXXX", "description": "<descripción breve>"}}
+  ],
+  "mitre_techniques": [
+    {{"id": "T1055", "name": "<nombre>", "tactic": "<táctica>", "snippet": "<contexto>"}}
+  ],
+  "timeline": {{
+    "created": "<fecha ISO o vacío>",
+    "first_submission": "<fecha ISO o vacío>",
+    "first_seen_itw": "<fecha ISO o vacío>",
+    "last_analysis": "<fecha ISO o vacío>"
+  }}
+}}
+
+REGLAS:
+- Usar solo datos presentes en las fuentes — no inventar IOCs ni hashes
+- Si no hay CVEs mencionados explícitamente, dejar lista vacía
+- Tags: familia de malware, tipo (trojan/ransomware/rat/etc.), táctica principal ATT&CK
+- Content en Markdown con secciones claras, listas de IOCs en bloques de código
+- El campo timeline debe usar las fechas de VirusTotal si están disponibles"""
+
+    raw = _call_claude(prompt, max_tokens=4000)
+    raw = raw.strip()
+    if raw.startswith("```"):
+        raw = re.sub(r"^```[a-z]*\n?", "", raw)
+        raw = re.sub(r"\n?```$", "", raw)
+    try:
+        data = json.loads(raw)
+        return {
+            "title":            data.get("title", f"Análisis forense — {hash_str[:12]}"),
+            "summary":          data.get("summary", ""),
+            "content":          data.get("content", raw),
+            "tags":             data.get("tags", []),
+            "cves":             data.get("cves", []),
+            "mitre_techniques": data.get("mitre_techniques", []),
+            "timeline":         data.get("timeline", {}),
+        }
+    except Exception:
+        return {
+            "title":            f"Análisis forense — {hash_str[:12]}",
+            "summary":          "",
+            "content":          raw,
+            "tags":             [],
+            "cves":             [],
+            "mitre_techniques": [],
+            "timeline":         {},
+        }

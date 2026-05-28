@@ -5,10 +5,15 @@ import socket
 import httpx
 from datetime import datetime
 
-SHODAN_KEY  = os.getenv("SHODAN_API_KEY",    "")
-VT_KEY      = os.getenv("VIRUSTOTAL_API_KEY", "")
-HUNTER_KEY  = os.getenv("HUNTER_API_KEY",    "")
-URLSCAN_KEY = os.getenv("URLSCAN_API_KEY",   "")
+SHODAN_KEY        = os.getenv("SHODAN_API_KEY",        "")
+VT_KEY            = os.getenv("VIRUSTOTAL_API_KEY",   "")
+HUNTER_KEY        = os.getenv("HUNTER_API_KEY",       "")
+URLSCAN_KEY       = os.getenv("URLSCAN_API_KEY",       "")
+ABUSEIPDB_KEY     = os.getenv("ABUSEIPDB_API_KEY",     "")
+MALWAREBAZAAR_KEY = os.getenv("MALWAREBAZAAR_API_KEY", "")
+HIBP_KEY          = os.getenv("HIBP_API_KEY",          "")
+LEAKRADAR_KEY     = os.getenv("LEAKRADAR_API_KEY",     "")
+ANYRUN_KEY        = os.getenv("ANYRUN_API_KEY",        "")
 
 _HEADERS = {"User-Agent": "CyberKB-OSINT/3.0"}
 
@@ -66,6 +71,62 @@ async def subdomains_crtsh(domain: str) -> dict:
         return {"domain": domain, "subdomains": sorted(subs), "count": len(subs)}
     except Exception as e:
         return {"error": str(e)}
+
+
+async def subdomains_combined(domain: str) -> dict:
+    """Find subdomains from crt.sh + HackerTarget, deduped with source tags."""
+    import asyncio
+
+    async def from_crtsh():
+        results = {}
+        try:
+            async with httpx.AsyncClient(timeout=20, headers=_HEADERS) as client:
+                r = await client.get(f"https://crt.sh/?q=%.{domain}&output=json")
+                if r.status_code == 200:
+                    for e in r.json():
+                        for sub in e.get("name_value", "").split("\n"):
+                            sub = sub.strip().lstrip("*.")
+                            if sub.endswith(domain) and sub != domain:
+                                results[sub] = results.get(sub, set()) | {"crt.sh"}
+        except Exception:
+            pass
+        return results
+
+    async def from_hackertarget():
+        results = {}
+        try:
+            async with httpx.AsyncClient(timeout=15, headers=_HEADERS) as client:
+                r = await client.get(f"https://api.hackertarget.com/hostsearch/?q={domain}")
+                if r.status_code == 200 and "error" not in r.text[:30].lower():
+                    for line in r.text.splitlines():
+                        parts = line.split(",")
+                        if len(parts) >= 1:
+                            sub = parts[0].strip()
+                            if sub.endswith(domain) and sub != domain:
+                                results[sub] = results.get(sub, set()) | {"HackerTarget"}
+        except Exception:
+            pass
+        return results
+
+    crt_res, ht_res = await asyncio.gather(from_crtsh(), from_hackertarget())
+
+    # Merge
+    merged: dict[str, set] = {}
+    for sub, sources in crt_res.items():
+        merged.setdefault(sub, set()).update(sources)
+    for sub, sources in ht_res.items():
+        merged.setdefault(sub, set()).update(sources)
+
+    entries = sorted(
+        [{"subdomain": sub, "sources": sorted(srcs)} for sub, srcs in merged.items()],
+        key=lambda x: x["subdomain"]
+    )
+    return {
+        "domain":  domain,
+        "entries": entries,
+        "count":   len(entries),
+        "sources": {"crt.sh": len(crt_res), "hackertarget": len(ht_res)},
+    }
 
 
 async def ssl_cert(domain: str) -> dict:
@@ -434,20 +495,36 @@ async def email_verify(email: str) -> dict:
 
 
 async def hibp_check(email_or_domain: str) -> dict:
+    hibp_headers = {**_HEADERS, "hibp-api-key": HIBP_KEY, "User-Agent": "CyberKB"}
     try:
-        async with httpx.AsyncClient(timeout=15, headers=_HEADERS) as client:
-            hibp_headers = {**_HEADERS, "hibp-api-key": ""}
+        async with httpx.AsyncClient(timeout=15) as client:
             if "@" in email_or_domain:
+                if not HIBP_KEY:
+                    return {
+                        "error": "HIBP_API_KEY no configurada — requerida para búsqueda por email",
+                        "info": "Obtén API key en https://haveibeenpwned.com/API/Key (servicio de pago ~3.50$/mes)",
+                    }
                 url = f"https://haveibeenpwned.com/api/v3/breachedaccount/{email_or_domain}?truncateResponse=false"
             else:
+                # Domain search works without key
                 url = f"https://haveibeenpwned.com/api/v3/breacheddomain/{email_or_domain}"
             r = await client.get(url, headers=hibp_headers)
             if r.status_code == 200:
-                return {"target": email_or_domain, "breaches": r.json()}
+                breaches = r.json()
+                # Normalize: domain endpoint returns dict {email: [breaches]}, email returns list
+                if isinstance(breaches, dict):
+                    flat = []
+                    for email, blist in breaches.items():
+                        for b in blist:
+                            flat.append({"Email": email, "Name": b, "BreachDate": "", "DataClasses": []})
+                    return {"target": email_or_domain, "breaches": flat, "is_domain": True}
+                return {"target": email_or_domain, "breaches": breaches}
             elif r.status_code == 404:
-                return {"target": email_or_domain, "breaches": [], "message": "Sin brechas encontradas."}
+                return {"target": email_or_domain, "breaches": [], "message": "✓ Sin brechas encontradas."}
             elif r.status_code == 401:
-                return {"error": "HIBP requiere API key de pago para búsqueda por email. Dominio funciona sin key."}
+                return {"error": "HIBP_API_KEY inválida o expirada"}
+            elif r.status_code == 429:
+                return {"error": "Rate limit HIBP — espera unos segundos antes de reintentar"}
             else:
                 return {"error": f"HIBP devolvió HTTP {r.status_code}"}
     except Exception as e:
@@ -621,3 +698,370 @@ async def virustotal_lookup(target: str) -> dict:
         return data
     except Exception as e:
         return {"error": str(e)}
+
+
+# ══════════════════════════════════════════════════════════
+#  THREAT INTELLIGENCE
+# ══════════════════════════════════════════════════════════
+
+def _ts(unix: int | None) -> str:
+    """Unix timestamp → human readable date string."""
+    if not unix:
+        return ""
+    try:
+        return datetime.utcfromtimestamp(unix).strftime("%Y-%m-%d %H:%M UTC")
+    except Exception:
+        return str(unix)
+
+
+async def hash_vt(hash_str: str) -> dict:
+    """Detailed VirusTotal file/hash analysis for threat intelligence."""
+    if not VT_KEY:
+        return {"error": "VIRUSTOTAL_API_KEY no configurado en .env",
+                "info": "Obtén API key gratuita en https://www.virustotal.com/gui/join-us"}
+    hash_str = hash_str.strip().lower()
+    length = len(hash_str)
+    if length == 32:
+        hash_type = "MD5"
+    elif length == 40:
+        hash_type = "SHA1"
+    elif length == 64:
+        hash_type = "SHA256"
+    else:
+        return {"error": f"Hash inválido — longitud {length}. Esperado MD5(32), SHA1(40) o SHA256(64)."}
+
+    vt_headers = {**_HEADERS, "x-apikey": VT_KEY}
+    try:
+        async with httpx.AsyncClient(timeout=25, headers=vt_headers) as client:
+            r = await client.get(f"https://www.virustotal.com/api/v3/files/{hash_str}")
+            if r.status_code == 404:
+                return {"error": "Hash no encontrado en VirusTotal — muestra desconocida o nunca subida."}
+            if r.status_code != 200:
+                return {"error": f"VirusTotal devolvió HTTP {r.status_code}"}
+            data = r.json()
+
+        attrs = data.get("data", {}).get("attributes", {})
+        stats = attrs.get("last_analysis_stats", {})
+        total = sum(stats.values())
+        detected = stats.get("malicious", 0) + stats.get("suspicious", 0)
+
+        # Malware name / family
+        threat_cls = attrs.get("popular_threat_classification", {})
+        suggested_label = threat_cls.get("suggested_threat_label", "")
+        families = [f.get("value", "") for f in threat_cls.get("popular_threat_category", [])]
+        family = families[0] if families else ""
+
+        # Alternative names from AV results
+        av_results = attrs.get("last_analysis_results", {})
+        alt_names = {}
+        for av, res in av_results.items():
+            if res.get("category") in ("malicious", "suspicious") and res.get("result"):
+                alt_names[av] = res["result"]
+        # Top 15 AV detections
+        top_detections = [{"av": av, "result": name} for av, name in list(alt_names.items())[:15]]
+
+        # Names list
+        names = attrs.get("names", [])[:10]
+
+        # Votes
+        votes = attrs.get("total_votes", {})
+        community_score = votes.get("malicious", 0) - votes.get("harmless", 0)
+
+        # MITRE ATT&CK from sigma/crowdsourced
+        mitre_techniques = []
+        for sigma in attrs.get("sigma_analysis_results", [])[:5]:
+            for tactic in sigma.get("match_context", [{}]):
+                pass  # sigma is complex; skip deep parse
+        # Try crowdsourced IDS
+        for ids_r in attrs.get("crowdsourced_ids_results", [])[:5]:
+            for alert in ids_r.get("alert_context", []):
+                pass
+
+        # Simpler: check sandbox verdicts for MITRE
+        for verdict in attrs.get("sandbox_verdicts", {}).values():
+            for t in verdict.get("malware_classification", []):
+                pass
+
+        # C2 / contacted IPs/domains (from network indicators if available)
+        contacted_urls = attrs.get("contacted_urls", [])[:10]
+        contacted_ips  = attrs.get("contacted_ips", [])[:10]
+        contacted_domains = attrs.get("contacted_domains", [])[:10]
+
+        # File type info
+        file_type = attrs.get("type_description", "") or attrs.get("magic", "")
+        file_size = attrs.get("size", 0)
+        file_name = attrs.get("meaningful_name", "") or (names[0] if names else "")
+
+        return {
+            "hash":              hash_str,
+            "hash_type":         hash_type,
+            "file_name":         file_name,
+            "file_type":         file_type,
+            "file_size":         file_size,
+            "suggested_label":   suggested_label,
+            "family":            family,
+            "detected":          detected,
+            "total_engines":     total,
+            "community_score":   community_score,
+            "created_at":        _ts(attrs.get("creation_date")),
+            "first_submission":  _ts(attrs.get("first_submission_date")),
+            "first_seen_itw":    _ts(attrs.get("first_seen_itw_date")),
+            "last_analysis":     _ts(attrs.get("last_analysis_date")),
+            "names":             names,
+            "top_detections":    top_detections,
+            "contacted_urls":    contacted_urls,
+            "contacted_ips":     contacted_ips,
+            "contacted_domains": contacted_domains,
+            "stats":             stats,
+            "tags":              attrs.get("tags", []),
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+async def ip_abuseipdb(ip: str) -> dict:
+    """AbuseIPDB IP reputation check."""
+    if not ABUSEIPDB_KEY:
+        return {
+            "error": "ABUSEIPDB_API_KEY no configurado en .env",
+            "info": "Obtén API key gratuita (1000 req/día) en https://www.abuseipdb.com/api",
+        }
+    try:
+        headers = {**_HEADERS, "Key": ABUSEIPDB_KEY, "Accept": "application/json"}
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(
+                "https://api.abuseipdb.com/api/v2/check",
+                params={"ipAddress": ip, "maxAgeInDays": 90, "verbose": True},
+                headers=headers,
+            )
+            if r.status_code == 422:
+                return {"error": f"IP inválida: {ip}"}
+            if r.status_code == 401:
+                return {"error": "ABUSEIPDB_API_KEY inválida o expirada"}
+            if r.status_code != 200:
+                return {"error": f"AbuseIPDB devolvió HTTP {r.status_code}"}
+            data = r.json().get("data", {})
+
+        score = data.get("abuseConfidenceScore", 0)
+        reports = data.get("reports", [])[:5]
+
+        # Category codes → names
+        CAT = {
+            1:"DNS Compromise", 2:"DNS Poisoning", 3:"Fraud Orders",
+            4:"DDoS Attack", 5:"FTP Brute-Force", 6:"Ping of Death",
+            7:"Phishing", 8:"Fraud VoIP", 9:"Open Proxy", 10:"Web Spam",
+            11:"Email Spam", 12:"Blog Spam", 13:"VPN IP", 14:"Port Scan",
+            15:"Hacking", 16:"SQL Injection", 17:"Spoofing", 18:"Brute-Force",
+            19:"Bad Web Bot", 20:"Exploited Host", 21:"Web App Attack",
+            22:"SSH", 23:"IoT Targeted",
+        }
+        parsed_reports = []
+        for rep in reports:
+            cats = [CAT.get(c, f"Cat {c}") for c in rep.get("categories", [])]
+            parsed_reports.append({
+                "date":       rep.get("reportedAt", "")[:10],
+                "categories": cats,
+                "comment":    (rep.get("comment") or "")[:200],
+                "country":    rep.get("reporterCountryCode", ""),
+            })
+
+        return {
+            "ip":             ip,
+            "score":          score,
+            "country":        data.get("countryCode", ""),
+            "isp":            data.get("isp", ""),
+            "domain":         data.get("domain", ""),
+            "usage_type":     data.get("usageType", ""),
+            "total_reports":  data.get("totalReports", 0),
+            "distinct_users": data.get("numDistinctUsers", 0),
+            "last_reported":  (data.get("lastReportedAt") or "")[:10],
+            "is_tor":         data.get("isTor", False),
+            "is_proxy":       data.get("isPublicAccessPoint", False),
+            "is_whitelisted": data.get("isWhitelisted", False),
+            "reports":        parsed_reports,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+async def hash_malwarebazaar(hash_str: str) -> dict:
+    """MalwareBazaar hash lookup — requires free API key from abuse.ch."""
+    if not MALWAREBAZAAR_KEY:
+        return {
+            "error": "MALWAREBAZAAR_API_KEY no configurada en .env",
+            "info": "Regístrate gratis en https://bazaar.abuse.ch/api/ para obtener tu API key.",
+        }
+    hash_str = hash_str.strip().lower()
+    if len(hash_str) != 64:
+        return {"error": "MalwareBazaar requiere hash SHA256 (64 caracteres hex)"}
+    try:
+        mb_headers = {**_HEADERS, "Auth-Key": MALWAREBAZAAR_KEY}
+        async with httpx.AsyncClient(timeout=20, headers=mb_headers) as client:
+            r = await client.post(
+                "https://mb-api.abuse.ch/api/v1/",
+                data={"query": "get_info", "hash": hash_str},
+            )
+            data = r.json()
+
+        if data.get("query_status") == "hash_not_found":
+            return {"error": "Hash no encontrado en MalwareBazaar — muestra desconocida."}
+        if data.get("query_status") != "ok":
+            return {"error": f"MalwareBazaar: {data.get('query_status', 'error desconocido')}"}
+
+        samples = data.get("data", [])
+        if not samples:
+            return {"error": "Sin datos para este hash"}
+
+        s = samples[0]
+        return {
+            "sha256":      s.get("sha256_hash", ""),
+            "sha1":        s.get("sha1_hash", ""),
+            "md5":         s.get("md5_hash", ""),
+            "file_name":   s.get("file_name", ""),
+            "file_size":   s.get("file_size", 0),
+            "file_type":   s.get("file_type", ""),
+            "mime_type":   s.get("file_type_mime", ""),
+            "first_seen":  s.get("first_seen", ""),
+            "last_seen":   s.get("last_seen", ""),
+            "tags":        s.get("tags", []) or [],
+            "signature":   s.get("signature", ""),
+            "origin":      s.get("origin_country", ""),
+            "imphash":     s.get("imphash", ""),
+            "ssdeep":      s.get("ssdeep", ""),
+            "tlsh":        s.get("tlsh", ""),
+            "reporter":    s.get("reporter", ""),
+            "anonymous":   s.get("anonymous", 0),
+            "intelligence": s.get("intelligence", {}),
+            "delivery_method": s.get("delivery_method", ""),
+            "comment":     s.get("comment", ""),
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ══════════════════════════════════════════════════════════
+#  LEAK SEARCH
+# ══════════════════════════════════════════════════════════
+
+def _mask_password(pwd: str) -> str:
+    """Show first 2 + last 2 chars, mask middle."""
+    if not pwd:
+        return "****"
+    if len(pwd) <= 4:
+        return "*" * len(pwd)
+    return pwd[:2] + "*" * (len(pwd) - 4) + pwd[-2:]
+
+
+async def leakradar_search(query: str) -> dict:
+    """Credential search by email or domain (DeHashed-compatible API)."""
+    if not LEAKRADAR_KEY:
+        return {
+            "error": "LEAKRADAR_API_KEY no configurada en .env",
+            "info": "Obtén API key en https://dehashed.com (compatible) o https://leakradar.io",
+        }
+    query = query.strip()
+    is_domain = query.startswith("@") or ("@" not in query)
+    search_term = query.lstrip("@")
+
+    try:
+        # DeHashed-compatible search endpoint
+        search_query = f"domain:{search_term}" if is_domain else f"email:{search_term}"
+        async with httpx.AsyncClient(timeout=20) as client:
+            r = await client.get(
+                "https://api.dehashed.com/search",
+                params={"query": search_query, "size": 20},
+                headers={
+                    **_HEADERS,
+                    "Accept": "application/json",
+                    "Authorization": f"Bearer {LEAKRADAR_KEY}",
+                },
+            )
+            if r.status_code == 401:
+                return {"error": "LEAKRADAR_API_KEY inválida o expirada"}
+            if r.status_code == 402:
+                return {"error": "Créditos insuficientes en cuenta"}
+            if r.status_code != 200:
+                return {"error": f"LeakRadar devolvió HTTP {r.status_code}: {r.text[:200]}"}
+            data = r.json()
+
+        entries = data.get("entries", []) or []
+        results = []
+        for e in entries[:50]:
+            pwd = e.get("password", "")
+            results.append({
+                "email":           e.get("email", ""),
+                "username":        e.get("username", ""),
+                "password":        _mask_password(pwd) if pwd else "",
+                "hashed_password": e.get("hashed_password", ""),
+                "database":        e.get("database_name", ""),
+                "name":            e.get("name", ""),
+                "phone":           e.get("phone", ""),
+            })
+
+        return {
+            "query":   query,
+            "total":   data.get("total", len(results)),
+            "balance": data.get("balance"),
+            "results": results,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ══════════════════════════════════════════════════════════
+#  ANY.RUN
+# ══════════════════════════════════════════════════════════
+
+async def anyrun_lookup(hash_str: str) -> dict:
+    """Query Any.run public sandbox reports by SHA256 hash."""
+    hash_str = hash_str.strip().lower()
+    if len(hash_str) != 64:
+        return {"error": "Any.run requiere SHA256 (64 caracteres hex)", "link": None}
+
+    direct_link = f"https://any.run/malware-trends/?q={hash_str}"
+
+    if not ANYRUN_KEY:
+        return {
+            "note": "ANYRUN_API_KEY no configurada — mostrando enlace directo",
+            "link": direct_link,
+            "tasks": [],
+        }
+
+    try:
+        headers = {
+            **_HEADERS,
+            "Authorization": f"API-Key {ANYRUN_KEY}",
+        }
+        async with httpx.AsyncClient(timeout=20, headers=headers) as client:
+            r = await client.get(
+                "https://api.any.run/v1/tasks/",
+                params={"hash": hash_str, "skip": 0, "limit": 5},
+            )
+            if r.status_code == 401:
+                return {"error": "ANYRUN_API_KEY inválida o expirada", "link": direct_link, "tasks": []}
+            if r.status_code == 404 or r.status_code == 200:
+                data = r.json() if r.status_code == 200 else {}
+            else:
+                return {"error": f"Any.run devolvió HTTP {r.status_code}", "link": direct_link, "tasks": []}
+
+        tasks = data.get("data", {}).get("tasks", []) or []
+        parsed = []
+        for t in tasks[:5]:
+            parsed.append({
+                "task_id":    t.get("uuid", ""),
+                "name":       t.get("name", ""),
+                "verdict":    t.get("verdict", ""),
+                "threat_name":t.get("mainObject", {}).get("threatName", ""),
+                "mitre":      [m.get("id", "") for m in t.get("mitre", [])[:10]],
+                "date":       t.get("date", "")[:10],
+                "url":        f"https://app.any.run/tasks/{t.get('uuid', '')}" if t.get("uuid") else "",
+            })
+
+        return {
+            "hash":  hash_str,
+            "total": data.get("data", {}).get("total", len(parsed)),
+            "tasks": parsed,
+            "link":  direct_link,
+        }
+    except Exception as e:
+        return {"error": str(e), "link": direct_link, "tasks": []}

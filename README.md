@@ -1,44 +1,110 @@
-# CyberKB — Cybersecurity Knowledge Base
+# CyberKB v5.6 — Cybersecurity Knowledge Base
 
-> Base de conocimiento de ciberseguridad potenciada por IA (Claude Sonnet). Gestiona notas, comandos, herramientas, CVEs y consultas OSINT desde una interfaz local.
+> Base de conocimiento de ciberseguridad potenciada por IA (Claude Sonnet). Gestiona notas, comandos, herramientas, CVEs, consultas OSINT, threat intelligence y análisis forense desde una interfaz local sin depender de servicios externos.
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688)
 ![SQLite](https://img.shields.io/badge/SQLite-local-lightgrey)
 ![Claude](https://img.shields.io/badge/IA-Claude%20Sonnet-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-5.6-purple)
 
 ---
 
 ## ¿Qué es CyberKB?
 
-CyberKB es una aplicación **local** de escritorio pensada para profesionales y estudiantes de ciberseguridad. Permite importar documentos (PDF, ODT, TXT, MD) y extraer automáticamente mediante IA:
+CyberKB es una aplicación **local** de escritorio pensada para profesionales y estudiantes de ciberseguridad. Permite importar documentos (PDF, ODT, TXT, MD) y extraer automáticamente mediante IA todo el conocimiento relevante: notas, comandos, herramientas, CVEs, técnicas MITRE ATT&CK y entidades del grafo de conocimiento.
 
-- **Notas** categorizadas (reconocimiento, explotación, post-explotación, OSINT, forense…)
-- **Comandos** con detección de SO (Linux, Windows, PowerShell, Google Dorks)
-- **Herramientas** con URL y descripción
-- **CVEs** referenciados en el documento
-- **Grafo de conocimiento** interactivo: entidades reales de ciberseguridad (técnicas, protocolos, vulnerabilidades…) extraídas del contenido y visualizadas como red de nodos
+Más allá del gestor de notas, CyberKB integra un flujo ofensivo completo: desde el reconocimiento OSINT, pasando por la enumeración activa, la correlación con threat intelligence en tiempo real, hasta la generación de informes técnicos y ejecutivos para el cliente.
 
-Además incluye un módulo **OSINT** con 15+ herramientas agrupadas por objetivo (dominio, IP, email, URL/web) y un **chat IA** con contexto de toda la base de conocimiento.
+Todo corre **en local**. Tus datos nunca salen de tu máquina salvo las llamadas explícitas a las APIs que tú configures.
 
 ## ¿Qué problema resuelve?
 Cuando estudias ciberseguridad acumulas cientos de notas, PDFs, comandos y CVEs dispersos en carpetas, Notion, bloc de notas… CyberKB centraliza todo ese conocimiento en una sola herramienta local: lo organiza automáticamente con IA, lo hace buscable, y lo conecta visualmente mediante un grafo de conocimiento interactivo.
 
 ---
 
-## Características
+## Módulos
 
 | Módulo | Descripción |
 |---|---|
-| 📝 **Editor** | Notas con categoría, subcategoría, tags, comandos y CVEs asociados |
-| ⚙ **Herramientas** | Catálogo de tools con URL, tipo (software/web) y casos de uso |
-| ⌘ **Comandos** | Cheatsheet filtrable por OS: Linux / Windows / PowerShell / Google Dorks |
-| ◎ **OSINT** | 15 herramientas: WHOIS, DNS, SSL, Wayback, DMARC/SPF, Reverse DNS, ASN/BGP, email verify, Hunter.io, Shodan, VirusTotal, URLscan… |
-| ⬡ **Grafo** | Grafo D3.js de entidades reales: ataques, defensas, herramientas, protocolos, vulnerabilidades, metodologías, conceptos |
-| ⚠ **CVEs** | Lista de CVEs con severidad y descripción |
-| ✦ **Chat IA** | Pregunta a Claude con contexto de tus notas |
-| 📋 **Auditorías** | Checklists de auditoría (web, red, AD…) con progreso guardado |
+| 📝 **Editor** | Notas con categoría, subcategoría, tags, análisis IA automático al subir documentos |
+| ⚙ **Herramientas** | Catálogo de tools detectadas automáticamente con URL, tipo y casos de uso |
+| ⌘ **Comandos** | Cheatsheet filtrable por OS: Linux / Windows / PowerShell / Google Dorks / PrivEsc |
+| ◎ **OSINT** | 18+ herramientas agrupadas por objetivo: dominio, IP, email, URL, credenciales filtradas |
+| 🗺 **Enumeración** | Módulo ofensivo completo: descubrimiento de red, análisis de servicios por puerto, generador Nmap interactivo y cheatsheet |
+| ⬡ **Grafo** | Grafo D3.js de entidades reales: ataques, defensas, herramientas, protocolos, vulnerabilidades, MITRE |
+| ⚠ **CVEs** | Lista de CVEs con severidad, descripción y badges Exploit-DB en tiempo real |
+| ✓ **Auditorías** | Checklists de auditoría (web, red, AD, móvil) con progreso guardado e informes PDF/MD |
+| ⚡ **MITRE ATT&CK** | Técnicas extraídas automáticamente de tus notas, organizadas por táctica con enlace directo |
+| 🔬 **Forense** | Pipeline forense automático SHA256: VirusTotal + MalwareBazaar + Any.run → nota IA |
+| ✦ **Chat IA** | Claude con contexto de toda tu base de conocimiento |
+
+---
+
+## Novedades v5.6
+
+### 🗺 Módulo de Enumeración
+Nuevo módulo enfocado en el flujo ofensivo real de pentesting, organizado en tres secciones:
+
+- **Descubrimiento de red**: métodos ARP/ICMP con nivel de ruido (silencioso / moderado / ruidoso), tabla de interpretación de TTL por SO, generador de comandos personalizado con rango de red y herramienta seleccionable
+- **Análisis de servicios**: metodología de dos fases (descubrimiento rápido → análisis profundo), generador Nmap interactivo en tiempo real con toggles para todos los flags, acordeón con 9 servicios (FTP/SSH/Telnet/SMTP/DNS/HTTP/SMB/RDP/MySQL) con vectores de ataque y comandos copiables, tabla de servicios adicionales
+- **Cheatsheet Nmap**: referencia rápida completa organizada por categorías (puertos, tipos de escaneo, velocidad, output, scripts NSE)
+- Integración con KB: botón 💾 en cada comando para guardarlo directamente en la base de datos con categoría y OS inferido automáticamente
+- Generador Nmap con botón para crear nota con los comandos generados, IP y fecha
+
+### 🔬 Modo Forense
+Pipeline automático de análisis de malware por hash SHA256:
+1. VirusTotal + MalwareBazaar en paralelo
+2. Any.run (si detecciones > 5) para sandbox dinámico
+3. Claude sintetiza toda la información → nota estructurada con CVEs, técnicas MITRE y timeline
+4. Indicadores de progreso por fase con estados visuales
+
+### 🎯 Threat Intelligence
+Integrado en el módulo OSINT:
+- **VirusTotal hash lookup**: análisis de ficheros por MD5/SHA1/SHA256 con detecciones por motor AV
+- **AbuseIPDB**: reputación de IPs con histórico de abusos reportados
+- **MalwareBazaar**: lookup de hashes con metadatos de muestras de malware
+
+### ⚡ MITRE ATT&CK
+- Extracción automática de técnicas ATT&CK al analizar documentos con IA
+- Tab dedicado con técnicas organizadas por táctica (Reconocimiento → Exfiltración)
+- Tarjetas con ID, nombre, táctica y fragmento de contexto
+- Búsqueda en tiempo real y enlace directo a attack.mitre.org
+
+### 📄 Generador de Informes
+Desde el módulo de Auditorías, con elementos completados:
+- **Informe técnico**: detalle de hallazgos con evidencias, comandos y recomendaciones técnicas
+- **Informe ejecutivo**: resumen de riesgo, impacto de negocio y plan de acción para dirección
+- Exportar en Markdown o imprimir como PDF desde el navegador
+
+### 🔓 Detección de Credenciales Filtradas (LeakRadar)
+- Búsqueda por email o dominio en bases de datos de brechas (compatible DeHashed)
+- Contraseñas enmascaradas automáticamente para uso responsable
+- Disponible en el módulo OSINT → sección Email
+
+### 💥 Exploit-DB en CVEs
+- Badge por cada CVE que indica si existe exploit público en Exploit-DB
+- Carga lazy (solo cuando se visualiza la lista de CVEs)
+- Enlace directo al exploit con detalles del módulo afectado
+
+### ⚡ PrivEsc Cheatsheet
+- 19 técnicas de escalada de privilegios pre-cargadas (9 Linux + 10 Windows)
+- Filtro dedicado ⚡ PrivEsc en el módulo de Comandos
+- Badge amber en cada comando de escalada
+- Accesos rápidos a GTFOBins y LOLBAS
+
+### 🔍 OSINT mejorado
+- **Subdominios**: fuentes combinadas crt.sh + HackerTarget con deduplicación y badges por fuente
+- **HIBP mejorado**: verificación de emails y dominios con HIBP v3, resultados inline
+- **Búsqueda de credenciales**: nuevo botón LeakRadar en la sección Email
+
+### 🔧 UX y rendimiento
+- Barras de progreso animadas en todas las operaciones largas (upload, análisis IA, forense, reindexado)
+- Botón API Keys centrado y destacado visualmente en la barra de navegación
+- Fix: botón Reindexar ahora vuelve siempre a su estado original
+- Fix: campos de API key con texto-overflow sin scroll lateral
+- Versión v5.6 en título y logo
 
 ---
 
@@ -46,7 +112,7 @@ Cuando estudias ciberseguridad acumulas cientos de notas, PDFs, comandos y CVEs 
 
 - Python 3.11 o superior
 - API key de Anthropic (Claude) — [obtener aquí](https://console.anthropic.com/)
-- Conexión a internet (solo para llamadas a la API y herramientas OSINT)
+- Conexión a internet (solo para llamadas a APIs configuradas)
 
 ---
 
@@ -55,7 +121,7 @@ Cuando estudias ciberseguridad acumulas cientos de notas, PDFs, comandos y CVEs 
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/jcuarterosaez/CyberKB.git
+git clone https://github.com/Xelu94/CyberKB.git
 cd CyberKB
 ```
 
@@ -79,24 +145,33 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Edita `.env` con tu API key:
+Edita `.env` con tus API keys:
 
 ```env
-ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxxxxx   # Obligatoria
+# Obligatoria
+ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxxxxx
+
+# Opcionales — dejar vacío para deshabilitar esa herramienta
+VIRUSTOTAL_API_KEY=       # gratis — virustotal.com
+ABUSEIPDB_API_KEY=        # gratis — abuseipdb.com
+MALWAREBAZAAR_API_KEY=    # gratis — bazaar.abuse.ch
+HUNTER_API_KEY=           # gratis (25/mes) — hunter.io
+HIBP_API_KEY=             # ~3.50$/mes — haveibeenpwned.com
+LEAKRADAR_API_KEY=        # DeHashed compatible — dehashed.com
+ANYRUN_API_KEY=           # gratis (tier limitado) — any.run
+SHODAN_API_KEY=           # de pago — shodan.io
+URLSCAN_API_KEY=          # gratis — urlscan.io
 ```
 
-**APIs opcionales** para módulo OSINT (todas gratuitas salvo Shodan):
-
-```env
-VIRUSTOTAL_API_KEY=    # gratis — virustotal.com
-HUNTER_API_KEY=        # gratis — hunter.io (25 búsquedas/mes, sin tarjeta)
-URLSCAN_API_KEY=       # gratis — urlscan.io (para enviar URLs a escanear)
-SHODAN_API_KEY=        # de pago — shodan.io
-```
+> También puedes configurar todas las keys desde la propia app: botón **🔑 API Keys** en la barra superior. Se guardan en `.env` sin reiniciar el servidor.
 
 ### 4. Iniciar la aplicación
 
 ```bash
+# Windows (doble clic)
+start.bat
+
+# O directamente
 python main.py
 ```
 
@@ -104,28 +179,41 @@ Se abre automáticamente en `http://localhost:8000`.
 
 ---
 
-## Uso básico
+## Uso rápido
 
 ### Importar un documento
 
 1. Pulsa **⊕ Subir doc** en la barra superior
 2. Selecciona un PDF, ODT, TXT o MD
-3. Activa **Guardar automáticamente** para que la IA extraiga notas, comandos, herramientas y CVEs
-4. El grafo de conocimiento se actualiza con las entidades detectadas
+3. Activa **Guardar automáticamente**
+4. La IA extrae notas, comandos, herramientas, CVEs y técnicas MITRE automáticamente
 
-### Grafo de conocimiento
+### Módulo Enumeración (flujo ofensivo)
 
-- Pestaña **⬡ GRAFO**
-- Filtra por tipo de entidad: ⚔ Ataque · 🛡 Defensa · ⚙ Herramienta · 📡 Protocolo · ⚠ Vulnerabilidad · 📋 Metodología · 💡 Concepto
-- Clic en un nodo → descripción, notas relacionadas, entidades conectadas
-- **⚙ Reindexar todo** para re-extraer entidades de documentos ya importados
+1. Pestaña **🗺 ENUMERACIÓN**
+2. **Descubrimiento de red**: introduce el rango y genera el comando con la herramienta elegida
+3. **Análisis de servicios**: usa el generador Nmap para construir ambas fases, luego consulta el acordeón del servicio que encuentres abierto
+4. **Cheatsheet Nmap**: referencia rápida de todos los flags
+
+### Análisis forense
+
+1. Pestaña **🔬 FORENSE**
+2. Pega un hash SHA256
+3. Pulsa **▶ Analizar** — el pipeline corre en segundo plano y crea una nota automáticamente
 
 ### OSINT
 
 1. Pestaña **◎ OSINT**
-2. Selecciona herramienta por categoría (Dominio / IP-Red / Email / URL-Web)
+2. Selecciona herramienta por categoría
 3. Introduce la consulta → **▶ Ejecutar**
-4. Resultados guardados automáticamente en el historial
+4. Resultados guardados en historial automáticamente
+
+### Generar informe de auditoría
+
+1. Pestaña **✓ AUDITORÍAS**
+2. Selecciona tipo (Web App, Red, AD…)
+3. Completa los elementos del checklist
+4. Pulsa **📄 Generar Informe** → elige técnico o ejecutivo → descarga MD o imprime PDF
 
 ---
 
@@ -135,7 +223,7 @@ Se abre automáticamente en `http://localhost:8000`.
 |---|---|---|
 | **Dominio** | WHOIS | No |
 | | DNS Records | No |
-| | Subdominios (crt.sh) | No |
+| | Subdominios (crt.sh + HackerTarget) | No |
 | | SSL Certificate | No |
 | | Wayback Machine | No |
 | | DMARC / SPF / DKIM | No |
@@ -144,12 +232,15 @@ Se abre automáticamente en `http://localhost:8000`.
 | | Reverse DNS (PTR) | No |
 | | ASN / BGP (bgpview.io) | No |
 | | Shodan | Sí (pago) |
-| **Email** | Verificar Email (MX) | No |
-| | Have I Been Pwned | Sí (pago para emails) |
+| | AbuseIPDB | Sí (gratis) |
+| | VirusTotal (hash/IP) | Sí (gratis) |
+| | MalwareBazaar | Sí (gratis) |
+| **Email** | Verificar Email (MX + SMTP) | No |
+| | Have I Been Pwned | Sí (dominio gratis, email pago) |
 | | Hunter.io email finder | Sí (gratis) |
+| | LeakRadar (credenciales filtradas) | Sí (DeHashed) |
 | **URL / Web** | HTTP Headers + seguridad | No |
-| | URLscan.io search | No |
-| | VirusTotal | Sí (gratis) |
+| | URLscan.io | No / Sí (para enviar) |
 
 ---
 
@@ -157,8 +248,13 @@ Se abre automáticamente en `http://localhost:8000`.
 
 ```bash
 pip install pyinstaller
-python -m PyInstaller cyberkb.spec --noconfirm
+pyinstaller cyberkb.spec --noconfirm
 # EXE generado en dist/CyberKB.exe
+```
+
+O usando el script incluido:
+```bash
+build.bat
 ```
 
 ---
@@ -168,15 +264,17 @@ python -m PyInstaller cyberkb.spec --noconfirm
 ```
 CyberKB/
 ├── main.py              # FastAPI app + todos los endpoints
-├── models.py            # Modelos SQLAlchemy (Note, Command, Tool, CVE, GraphEntity…)
+├── models.py            # Modelos SQLAlchemy (Note, Command, Tool, CVE, GraphEntity, MitreTechnique…)
 ├── database.py          # Configuración SQLite
-├── claude_service.py    # Integración Claude API
-├── osint_tools.py       # 15+ herramientas OSINT asíncronas
+├── claude_service.py    # Integración Claude API (análisis, extracción, informes, forense)
+├── osint_tools.py       # 18+ herramientas OSINT asíncronas
 ├── document_parser.py   # Parser PDF / ODT / TXT / MD
 ├── index.html           # Frontend completo (vanilla JS + D3.js, single-file)
 ├── requirements.txt     # Dependencias Python
 ├── cyberkb.spec         # Spec PyInstaller
-├── .env.example         # Plantilla de variables de entorno
+├── start.bat            # Script de inicio (Windows)
+├── build.bat            # Script de compilación EXE
+├── .env.example         # Plantilla de variables de entorno (sin keys reales)
 ├── data/                # Base de datos SQLite (generada al arrancar)
 └── uploads/             # Documentos subidos (excluidos de git)
 ```
@@ -186,9 +284,10 @@ CyberKB/
 ## Stack tecnológico
 
 - **Backend**: FastAPI · Uvicorn · SQLAlchemy · SQLite
-- **IA**: Anthropic Claude Sonnet
+- **IA**: Anthropic Claude Sonnet (análisis, extracción de entidades, informes, síntesis forense)
 - **Frontend**: Vanilla JS · D3.js v7 (grafo fuerza-dirigida)
-- **OSINT**: httpx async · dnspython · python-whois · APIs públicas
+- **OSINT**: httpx async · dnspython · python-whois · 10+ APIs públicas y privadas
+- **Empaquetado**: PyInstaller (EXE Windows standalone)
 
 ---
 

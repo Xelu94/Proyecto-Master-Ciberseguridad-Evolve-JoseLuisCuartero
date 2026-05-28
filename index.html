@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CyberKB v3 — Knowledge Base</title>
+<title>CyberKB v5.6 — Knowledge Base</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Exo+2:wght@300;400;600;700;900&display=swap');
@@ -35,6 +35,8 @@ a{color:var(--blue);text-decoration:none;}a:hover{text-decoration:underline;}
 .tb-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);border-radius:var(--r);padding:5px 11px;cursor:pointer;font-size:11px;font-family:var(--mono);transition:all .15s;white-space:nowrap;}
 .tb-btn:hover{border-color:var(--green);color:var(--green);}
 .tb-btn.active{border-color:var(--blue);color:var(--blue);}
+.tb-btn-api{background:linear-gradient(135deg,rgba(0,255,136,.12),rgba(0,221,255,.08));border:1px solid var(--green);color:var(--green);border-radius:var(--r);padding:5px 18px;cursor:pointer;font-size:12px;font-family:var(--mono);font-weight:700;letter-spacing:1px;transition:all .2s;white-space:nowrap;box-shadow:0 0 12px rgba(0,255,136,.2),inset 0 0 12px rgba(0,255,136,.04);text-shadow:0 0 8px rgba(0,255,136,.4);}
+.tb-btn-api:hover{background:linear-gradient(135deg,rgba(0,255,136,.22),rgba(0,221,255,.14));box-shadow:0 0 22px rgba(0,255,136,.4),inset 0 0 16px rgba(0,255,136,.08);border-color:var(--cyan);color:var(--cyan);text-shadow:0 0 12px rgba(0,221,255,.6);}
 
 /* LAYOUT */
 .layout{display:flex;flex:1;overflow:hidden;}
@@ -205,6 +207,89 @@ pre.code-block{background:var(--bg);border:1px solid var(--border2);border-radiu
 .sev-low{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.25);}
 .sev-info{background:rgba(0,170,255,.1);color:var(--blue);border:1px solid rgba(0,170,255,.25);}
 .nvd-link{font-size:10px;color:var(--blue);font-family:var(--mono);margin-top:4px;display:inline-block;}
+.edb-badge{font-size:9px;font-family:var(--mono);padding:2px 7px;border-radius:10px;cursor:pointer;display:inline-block;transition:all .15s;}
+.edb-pending{background:rgba(122,154,181,.1);color:var(--text3);border:1px solid var(--border2);}
+.edb-pending:hover{border-color:var(--orange);color:var(--orange);}
+.edb-found{background:rgba(255,102,0,.15);color:var(--orange);border:1px solid rgba(255,102,0,.4);cursor:default;font-weight:700;}
+.edb-none{background:rgba(61,90,115,.1);color:var(--text3);border:1px solid var(--border);cursor:default;}
+.forensic-step{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);}
+.fstep-icon{font-size:14px;width:18px;text-align:center;}
+.forensic-timeline{display:flex;align-items:center;gap:0;margin:10px 0;}
+.ftl-node{background:var(--bg4);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:10px;text-align:center;min-width:110px;}
+.ftl-node b{display:block;color:var(--cyan);font-size:11px;margin-bottom:2px;}
+.ftl-arrow{color:var(--text3);font-size:18px;padding:0 4px;flex-shrink:0;}
+
+/* ENUM MODULE */
+.enum-subtabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 10px;gap:2px;flex-shrink:0;}
+.enum-stab{padding:8px 14px;font-size:11px;font-family:var(--mono);color:var(--text3);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .12s;white-space:nowrap;}
+.enum-stab:hover{color:var(--text2);}
+.enum-stab.active{color:var(--cyan);border-bottom-color:var(--cyan);}
+.enum-section{display:none;flex:1;overflow-y:auto;padding:16px;}
+.enum-section.show{display:block;}
+.enum-group{margin-bottom:20px;}
+.enum-group-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-family:var(--mono);margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.enum-cmd-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;margin-bottom:8px;display:flex;flex-direction:column;gap:5px;}
+.enum-cmd-card:hover{border-color:var(--border2);}
+.enum-cmd-row{display:flex;align-items:center;gap:8px;}
+.enum-cmd-code{flex:1;font-family:var(--mono);font-size:12px;color:var(--orange);background:var(--bg);padding:5px 10px;border-radius:var(--r);border:1px solid var(--border);overflow-x:auto;white-space:nowrap;}
+.enum-copy-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text3);border-radius:var(--r);padding:4px 8px;cursor:pointer;font-size:10px;font-family:var(--mono);flex-shrink:0;transition:all .15s;}
+.enum-copy-btn:hover{border-color:var(--green);color:var(--green);}
+.enum-cmd-desc{font-size:11px;color:var(--text2);line-height:1.5;}
+.enum-meta{display:flex;align-items:center;gap:10px;font-size:10px;font-family:var(--mono);color:var(--text3);}
+.noise-tag{padding:2px 6px;border-radius:8px;font-size:9px;}
+.noise-low{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.3);}
+.noise-med{background:rgba(255,204,0,.1);color:var(--yellow);border:1px solid rgba(255,204,0,.3);}
+.noise-high{background:rgba(255,51,68,.1);color:var(--red);border:1px solid rgba(255,51,68,.3);}
+.enum-ttl-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;}
+.enum-ttl-table th{background:var(--bg3);color:var(--text3);padding:6px 12px;text-align:left;font-size:10px;letter-spacing:1px;border-bottom:1px solid var(--border);}
+.enum-ttl-table td{padding:7px 12px;border-bottom:1px solid var(--border);color:var(--text);}
+.enum-ttl-table td:first-child{color:var(--cyan);font-weight:700;}
+.enum-ttl-table tr:hover td{background:var(--bg3);}
+.enum-generator{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:14px;margin-top:8px;}
+.enum-gen-title{font-size:11px;font-weight:700;color:var(--text);font-family:var(--mono);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.enum-gen-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+.enum-gen-label{font-size:10px;color:var(--text3);font-family:var(--mono);min-width:80px;}
+.enum-gen-input{background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:5px 10px;font-size:11px;font-family:var(--mono);outline:none;flex:1;min-width:150px;}
+.enum-gen-input:focus{border-color:var(--cyan);}
+.enum-gen-sel{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);border-radius:var(--r);padding:5px 8px;font-size:11px;font-family:var(--mono);outline:none;cursor:pointer;}
+.enum-output{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);padding:10px 12px;font-family:var(--mono);font-size:12px;color:var(--orange);display:flex;align-items:center;gap:8px;margin-top:10px;}
+.enum-output code{flex:1;word-break:break-all;}
+.enum-phase-flow{display:flex;align-items:center;gap:0;margin:10px 0;flex-wrap:wrap;gap:4px;}
+.enum-phase-box{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:8px 14px;font-family:var(--mono);font-size:11px;text-align:center;}
+.enum-phase-box b{display:block;font-size:10px;color:var(--text3);margin-bottom:2px;letter-spacing:1px;}
+.enum-phase-arrow{color:var(--text3);font-size:18px;padding:0 4px;}
+.enum-accordion{border:1px solid var(--border);border-radius:var(--r2);margin-bottom:6px;overflow:hidden;}
+.enum-acc-hd{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:var(--bg2);user-select:none;transition:background .12s;}
+.enum-acc-hd:hover{background:var(--bg3);}
+.enum-acc-hd.open{background:var(--bg3);border-bottom:1px solid var(--border);}
+.enum-acc-port{font-family:var(--mono);font-size:10px;color:var(--cyan);background:rgba(0,170,255,.1);border:1px solid rgba(0,170,255,.3);border-radius:4px;padding:2px 6px;flex-shrink:0;}
+.enum-acc-name{font-size:13px;font-weight:600;color:var(--text);flex:1;}
+.enum-acc-arrow{color:var(--text3);font-size:10px;transition:transform .2s;flex-shrink:0;}
+.enum-acc-arrow.open{transform:rotate(90deg);}
+.enum-acc-body{display:none;padding:12px 14px;background:var(--bg2);flex-direction:column;gap:8px;}
+.enum-acc-body.open{display:flex;}
+.enum-vectors{font-size:11px;color:var(--text2);line-height:1.8;padding-left:0;list-style:none;}
+.enum-vectors li::before{content:attr(data-n)'. ';color:var(--purple);font-family:var(--mono);}
+.enum-note{background:rgba(255,204,0,.06);border:1px solid rgba(255,204,0,.25);border-radius:var(--r);padding:7px 10px;font-size:11px;color:var(--yellow);margin-top:4px;}
+.enum-danger-note{background:rgba(255,51,68,.06);border:1px solid rgba(255,51,68,.25);border-radius:var(--r);padding:7px 10px;font-size:11px;color:var(--red);margin-top:4px;}
+.enum-nmap-section{margin-bottom:20px;}
+.enum-nmap-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.enum-nmap-row{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;}
+.enum-nmap-flag{font-family:var(--mono);font-size:11px;color:var(--orange);min-width:160px;flex-shrink:0;}
+.enum-nmap-desc{font-size:11px;color:var(--text3);flex:1;}
+.enum-toggle-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.enum-toggle{display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;font-family:var(--mono);color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:4px 9px;user-select:none;transition:all .12s;}
+.enum-toggle.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,221,255,.07);}
+.enum-phase-cmd{margin-bottom:10px;}
+.enum-phase-lbl{font-size:9px;font-family:var(--mono);font-weight:700;letter-spacing:1px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;}
+.enum-service-table{width:100%;border-collapse:collapse;font-size:11px;font-family:var(--mono);}
+.enum-service-table th{background:var(--bg3);color:var(--text3);padding:6px 10px;text-align:left;font-size:10px;border-bottom:1px solid var(--border);}
+.enum-service-table td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2);}
+.enum-service-table td:first-child{color:var(--cyan);}
+.enum-service-table tr:hover td{background:var(--bg3);}
+.enum-save-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text3);border-radius:var(--r);padding:4px 7px;cursor:pointer;font-size:11px;flex-shrink:0;transition:all .15s;}
+.enum-save-btn:hover{border-color:var(--purple);color:var(--purple);}
+.enum-save-btn.saved{border-color:var(--green);color:var(--green);}
 
 /* CHAT */
 .chat-panel{width:310px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .2s;}
@@ -263,6 +348,20 @@ pre.code-block{background:var(--bg);border:1px solid var(--border2);border-radiu
 .modal textarea{min-height:100px;resize:vertical;}
 .modal label{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:1px;}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+/* SETTINGS */
+.settings-row{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:5px;overflow:hidden;max-width:100%;}
+.settings-label{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);}
+.settings-badge{font-size:9px;padding:2px 7px;border-radius:10px;font-family:var(--mono);}
+.settings-badge.required{background:rgba(255,51,68,.12);color:var(--red);border:1px solid rgba(255,51,68,.3);}
+.settings-badge.free{background:rgba(0,255,136,.08);color:var(--green);border:1px solid rgba(0,255,136,.25);}
+.settings-badge.paid{background:rgba(255,153,0,.1);color:#ff9900;border:1px solid rgba(255,153,0,.3);}
+.settings-desc{font-size:11px;color:var(--text3);}
+.settings-input-row{display:flex;gap:6px;align-items:center;min-width:0;overflow:hidden;}
+.settings-input{flex:1;min-width:0;background:var(--bg4)!important;border:1px solid var(--border2)!important;color:var(--text)!important;border-radius:var(--r)!important;padding:6px 10px!important;font-size:12px!important;outline:none!important;font-family:var(--mono)!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
+.settings-input:focus{border-color:var(--cyan)!important;}
+.settings-eye{background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:4px 8px;cursor:pointer;font-size:13px;color:var(--text3);}
+.settings-eye:hover{color:var(--text);}
+.settings-status{font-size:10px;font-family:var(--mono);min-height:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
 
 /* CATEGORY COLORS */
 .cat-reconocimiento{--cc:var(--cyan);}
@@ -317,11 +416,13 @@ pre.code-block{background:var(--bg);border:1px solid var(--border2);border-radiu
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="logo">⬡ CYBER<span>KB</span> <sub>v3</sub></div>
+  <div class="logo">⬡ CYBER<span>KB</span> <sub>v5.6</sub></div>
   <div class="stat-pill"><b id="stNotes">0</b> notas</div>
   <div class="stat-pill"><b id="stTools">0</b> tools</div>
   <div class="stat-pill"><b id="stCmds">0</b> cmds</div>
   <div class="stat-pill"><b id="stCVEs">0</b> CVEs</div>
+  <div class="flex1"></div>
+  <button class="tb-btn-api" onclick="openSettingsModal()" title="Configurar API Keys">🔑 API Keys</button>
   <div class="flex1"></div>
   <button class="tb-btn" onclick="openUploadModal()">⊕ Subir doc</button>
   <button class="tb-btn" onclick="exportAll()">↓ Export</button>
@@ -359,9 +460,12 @@ pre.code-block{background:var(--bg);border:1px solid var(--border2);border-radiu
     <div class="tab" onclick="switchTab('tools')" id="tab-tools">⚙ HERRAMIENTAS</div>
     <div class="tab" onclick="switchTab('commands')" id="tab-commands">⌘ COMANDOS</div>
     <div class="tab" onclick="switchTab('osint')" id="tab-osint">◎ OSINT</div>
+    <div class="tab" onclick="switchTab('enum')" id="tab-enum">🗺 ENUMERACIÓN</div>
     <div class="tab" onclick="switchTab('graph')" id="tab-graph">⬡ GRAFO</div>
     <div class="tab" onclick="switchTab('cves')" id="tab-cves">⚠ CVEs</div>
     <div class="tab" onclick="switchTab('audits')" id="tab-audits">✓ AUDITORÍAS</div>
+    <div class="tab" onclick="switchTab('mitre')" id="tab-mitre">⚡ MITRE</div>
+    <div class="tab" onclick="switchTab('forensic')" id="tab-forensic">🔬 FORENSE</div>
   </div>
 
   <!-- EDITOR PANEL -->
@@ -457,7 +561,10 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
         <button class="os-btn" id="osBtn-windows" onclick="setOsFilter('windows',this)">🪟 Windows</button>
         <button class="os-btn" id="osBtn-powershell" onclick="setOsFilter('powershell',this)">🔵 PowerShell</button>
         <button class="os-btn" id="osBtn-google" onclick="setOsFilter('google',this)">🔍 Google Dorks</button>
+        <button class="os-btn" id="osBtn-privesc" onclick="setOsFilter('privesc',this)" style="color:#f59e0b;border-color:rgba(245,158,11,.4);">⚡ PrivEsc</button>
       </div>
+      <a href="https://gtfobins.github.io" target="_blank" class="tb-btn" style="font-size:10px;text-decoration:none;" title="GTFOBins — Unix SUID/sudo/cap binaries">GTFOBins ↗</a>
+      <a href="https://lolbas-project.github.io" target="_blank" class="tb-btn" style="font-size:10px;text-decoration:none;" title="LOLBAS — Living Off The Land Binaries (Windows)">LOLBAS ↗</a>
       <button class="btn-ai" onclick="openCheatsheetModal()">✦ Cheatsheet</button>
     </div>
     <div class="cmd-list" id="cmdList"><div class="empty-msg">Sin comandos. Sube apuntes o analiza texto.</div></div>
@@ -492,6 +599,9 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
         <button class="osint-tool-btn" onclick="selectOsintTool('hunter',this)" data-tool="hunter">
           🎯 Hunter.io <span class="needs-key">API</span>
         </button>
+        <button class="osint-tool-btn" onclick="selectOsintTool('leakradar',this)" data-tool="leakradar">
+          🔓 LeakRadar <span class="needs-key">API</span>
+        </button>
 
         <div class="sb-section" style="padding:8px 10px 4px;font-size:9px;color:var(--text3);letter-spacing:1px;margin-top:4px;">URL / WEB</div>
         <button class="osint-tool-btn" onclick="selectOsintTool('headers',this)" data-tool="headers">📡 HTTP Headers</button>
@@ -499,6 +609,15 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
         <button class="osint-tool-btn" onclick="selectOsintTool('virustotal',this)" data-tool="virustotal">
           🦠 VirusTotal <span class="needs-key">API</span>
         </button>
+
+        <div class="sb-section" style="padding:8px 10px 4px;font-size:9px;color:var(--text3);letter-spacing:1px;margin-top:4px;">THREAT INTEL</div>
+        <button class="osint-tool-btn" onclick="selectOsintTool('hash-vt',this)" data-tool="hash-vt">
+          🦠 Hash — VT <span class="needs-key">API</span>
+        </button>
+        <button class="osint-tool-btn" onclick="selectOsintTool('abuseipdb',this)" data-tool="abuseipdb">
+          🚨 IP Reputation <span class="needs-key">API</span>
+        </button>
+        <button class="osint-tool-btn" onclick="selectOsintTool('malwarebazaar',this)" data-tool="malwarebazaar">☣ MalwareBazaar</button>
 
         <div class="sb-section" style="padding:8px 10px 4px;font-size:9px;color:var(--text3);letter-spacing:1px;margin-top:4px;">HISTORIAL</div>
         <div id="osintHistoryList" style="font-size:10px;color:var(--text3);padding:0 6px;"></div>
@@ -535,7 +654,7 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
         <button class="os-btn" id="gBtn-concept"     onclick="setGraphGroup('concept',this)"     style="color:#00ddff;border-color:rgba(0,221,255,.4);">💡 Concepto</button>
       </div>
       <button class="btn-outline" style="flex-shrink:0;" onclick="S.graphData=null;renderGraph()">↺ Recargar</button>
-      <button class="btn-outline" style="flex-shrink:0;color:#ff9900;border-color:rgba(255,153,0,.4);" onclick="reindexAllEntities()">⚙ Reindexar todo</button>
+      <button class="btn-outline" style="flex-shrink:0;color:#ff9900;border-color:rgba(255,153,0,.4);" onclick="reindexAllEntities(this)">⚙ Reindexar todo</button>
     </div>
     <div class="graph-container">
       <svg id="knowledgeGraph"></svg>
@@ -570,6 +689,450 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
     </div>
     <div class="cves-body" id="cvesList"><div class="empty-msg">Sin CVEs registrados. Se detectan automáticamente al analizar documentos.</div></div>
   </div>
+  <!-- ENUM PANEL -->
+  <div class="panel" id="panel-enum">
+    <div class="enum-subtabs">
+      <button class="enum-stab active" id="estab-discovery" onclick="switchEnumTab('discovery')">🌐 Descubrimiento de Red</button>
+      <button class="enum-stab" id="estab-services" onclick="switchEnumTab('services')">🔍 Análisis de Servicios</button>
+      <button class="enum-stab" id="estab-nmap" onclick="switchEnumTab('nmap')">⚡ Cheatsheet Nmap</button>
+    </div>
+
+    <!-- SECTION 1: Descubrimiento de Red -->
+    <div class="enum-section show" id="esec-discovery">
+
+      <div class="enum-group">
+        <div class="enum-group-title">Identificación propia</div>
+        <div class="enum-cmd-card">
+          <div class="enum-cmd-row">
+            <div class="enum-cmd-code">ifconfig &nbsp;/&nbsp; ip a</div>
+            <button class="enum-copy-btn" onclick="enumCopy(this,'ip a')">⎘ Copiar</button>
+          </div>
+          <div class="enum-cmd-desc">Ver interfaces de red y dirección IP propia</div>
+        </div>
+        <div class="enum-cmd-card">
+          <div class="enum-cmd-row">
+            <div class="enum-cmd-code">ip route</div>
+            <button class="enum-copy-btn" onclick="enumCopy(this,'ip route')">⎘ Copiar</button>
+          </div>
+          <div class="enum-cmd-desc">Ver gateway y red a la que pertenecemos</div>
+        </div>
+      </div>
+
+      <div class="enum-group">
+        <div class="enum-group-title">Descubrimiento de hosts</div>
+        <div class="enum-cmd-card">
+          <div class="enum-cmd-row">
+            <div class="enum-cmd-code">sudo netdiscover -r 192.168.1.0/24</div>
+            <button class="enum-copy-btn" onclick="enumCopy(this,'sudo netdiscover -r 192.168.1.0/24')">⎘ Copiar</button>
+          </div>
+          <div class="enum-cmd-desc">Descubrimiento ARP pasivo — muestra IP, MAC y fabricante. Identifica VMs por fabricante.</div>
+          <div class="enum-meta"><span class="noise-tag noise-low">🟢 Silencioso</span><span>ARP pasivo — escucha sin emitir</span></div>
+        </div>
+        <div class="enum-cmd-card">
+          <div class="enum-cmd-row">
+            <div class="enum-cmd-code">sudo arp-scan 192.168.1.0/24</div>
+            <button class="enum-copy-btn" onclick="enumCopy(this,'sudo arp-scan 192.168.1.0/24')">⎘ Copiar</button>
+          </div>
+          <div class="enum-cmd-desc">ARP activo, más rápido que netdiscover</div>
+          <div class="enum-meta"><span class="noise-tag noise-med">🟡 Moderado</span><span>Emite paquetes ARP</span></div>
+        </div>
+        <div class="enum-cmd-card">
+          <div class="enum-cmd-row">
+            <div class="enum-cmd-code">nmap -sn 192.168.1.0/24</div>
+            <button class="enum-copy-btn" onclick="enumCopy(this,'nmap -sn 192.168.1.0/24')">⎘ Copiar</button>
+          </div>
+          <div class="enum-cmd-desc">Ping sweep sin escanear puertos. Útil cuando ARP está bloqueado.</div>
+          <div class="enum-meta"><span class="noise-tag noise-med">🟡 Moderado</span><span>ICMP + ARP según entorno</span></div>
+        </div>
+        <div class="enum-cmd-card">
+          <div class="enum-cmd-row">
+            <div class="enum-cmd-code">ping -c 1 IP</div>
+            <button class="enum-copy-btn" onclick="enumCopy(this,'ping -c 1 IP')">⎘ Copiar</button>
+          </div>
+          <div class="enum-cmd-desc">Comprobación individual de conectividad con un host</div>
+          <div class="enum-meta"><span class="noise-tag noise-low">🟢 Silencioso</span><span>Un solo paquete ICMP</span></div>
+        </div>
+        <div class="enum-cmd-card">
+          <div class="enum-cmd-row">
+            <div class="enum-cmd-code" style="font-size:10px;">for i in $(seq 1 254); do ping -c 1 -W 1 192.168.1.$i | grep "bytes from" | cut -d' ' -f4 | tr -d ':' &amp; done</div>
+            <button class="enum-copy-btn" onclick="enumCopy(this,'for i in $(seq 1 254); do ping -c 1 -W 1 192.168.1.$i | grep &quot;bytes from&quot; | cut -d\' \' -f4 | tr -d \':\' & done')">⎘ Copiar</button>
+          </div>
+          <div class="enum-cmd-desc">Ping sweep en bash puro — paralelo, sin herramientas externas</div>
+          <div class="enum-meta"><span class="noise-tag noise-low">🟢 Silencioso</span><span>ICMP, sin dependencias</span></div>
+        </div>
+      </div>
+
+      <div class="enum-group">
+        <div class="enum-group-title">Interpretación del TTL</div>
+        <table class="enum-ttl-table">
+          <thead><tr><th>TTL aproximado</th><th>Sistema Operativo sugerido</th></tr></thead>
+          <tbody>
+            <tr><td>~64</td><td>Linux / Unix</td></tr>
+            <tr><td>~128</td><td>Windows</td></tr>
+            <tr><td>~255</td><td>Router / Switch Cisco</td></tr>
+            <tr><td>~63 ó ~127</td><td>Mismo SO con 1 salto intermedio (ej. VPN de HTB)</td></tr>
+          </tbody>
+        </table>
+        <div class="enum-note" style="margin-top:8px;">⚠ En AWS el ping ICMP está desactivado por defecto. Usar <code style="color:var(--orange);background:var(--bg);padding:1px 4px;border-radius:3px;">nmap -Pn</code> como alternativa.</div>
+      </div>
+
+      <div class="enum-group">
+        <div class="enum-group-title">Generador de comando personalizado</div>
+        <div class="enum-generator">
+          <div class="enum-gen-title">🔧 Construir comando de descubrimiento</div>
+          <div class="enum-gen-row">
+            <span class="enum-gen-label">Rango de red</span>
+            <input type="text" class="enum-gen-input" id="genNetRange" value="192.168.1.0/24" oninput="buildNetCmd()" placeholder="192.168.1.0/24">
+          </div>
+          <div class="enum-gen-row">
+            <span class="enum-gen-label">Herramienta</span>
+            <select class="enum-gen-sel" id="genNetTool" onchange="buildNetCmd()">
+              <option value="netdiscover">netdiscover (ARP pasivo)</option>
+              <option value="arp-scan">arp-scan (ARP activo)</option>
+              <option value="nmap">nmap -sn (ping sweep)</option>
+            </select>
+          </div>
+          <div class="enum-output">
+            <code id="genNetOutput">sudo netdiscover -r 192.168.1.0/24</code>
+            <button class="enum-copy-btn" onclick="enumCopy(this,document.getElementById('genNetOutput').textContent)">⎘ Copiar</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /esec-discovery -->
+
+    <!-- SECTION 2: Análisis de Servicios -->
+    <div class="enum-section" id="esec-services">
+
+      <div class="enum-group">
+        <div class="enum-group-title">Metodología de dos fases</div>
+        <div class="enum-phase-flow">
+          <div class="enum-phase-box"><b>FASE 1</b>Todos los puertos<br>rápido (-p-)</div>
+          <div class="enum-phase-arrow">→</div>
+          <div class="enum-phase-box"><b>FASE 2</b>Solo puertos abiertos<br>análisis profundo</div>
+        </div>
+        <div class="enum-note">💡 Escanear 65 535 puertos con versiones y scripts es muy lento. Separar el proceso hace la enumeración ~10x más rápida.</div>
+      </div>
+
+      <div class="enum-group">
+        <div class="enum-group-title">Generador de comandos Nmap</div>
+        <div class="enum-generator">
+          <div class="enum-gen-title">⚡ Constructor interactivo</div>
+          <div class="enum-gen-row">
+            <span class="enum-gen-label">IP objetivo</span>
+            <input type="text" class="enum-gen-input" id="nmapIP" value="10.10.10.1" oninput="buildNmapCmd()" placeholder="10.10.10.1">
+          </div>
+          <div class="enum-gen-row">
+            <span class="enum-gen-label">Velocidad</span>
+            <select class="enum-gen-sel" id="nmapSpeed" onchange="buildNmapCmd()">
+              <option value="1000">Silencioso (--min-rate 1000)</option>
+              <option value="3000">Normal (--min-rate 3000)</option>
+              <option value="5000" selected>Rápido (--min-rate 5000)</option>
+            </select>
+          </div>
+          <div class="enum-gen-row">
+            <span class="enum-gen-label">Flags fase 1</span>
+            <div class="enum-toggle-row" style="margin:0;">
+              <label class="enum-toggle" id="tgl-pn" onclick="toggleEnumFlag('pn')">-Pn</label>
+              <label class="enum-toggle" id="tgl-v" onclick="toggleEnumFlag('v')">-v</label>
+            </div>
+          </div>
+          <div class="enum-phase-cmd">
+            <div class="enum-phase-lbl">Fase 1 — Descubrimiento de puertos</div>
+            <div class="enum-output">
+              <code id="nmapCmd1" style="word-break:break-all;flex:1;">sudo nmap -p- --min-rate 5000 10.10.10.1</code>
+              <button class="enum-copy-btn" onclick="enumCopy(this,document.getElementById('nmapCmd1').textContent)">⎘ Copiar</button>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px;">
+            <div class="enum-gen-row">
+              <span class="enum-gen-label">Puertos abiertos</span>
+              <input type="text" class="enum-gen-input" id="nmapPorts" placeholder="21,22,80,443..." oninput="buildNmapCmd()">
+            </div>
+            <div class="enum-gen-row">
+              <span class="enum-gen-label">Flags fase 2</span>
+              <div class="enum-toggle-row" style="margin:0;">
+                <label class="enum-toggle active" id="tgl-sV" onclick="toggleEnumFlag('sV')">-sV</label>
+                <label class="enum-toggle active" id="tgl-sC" onclick="toggleEnumFlag('sC')">-sC</label>
+                <label class="enum-toggle" id="tgl-O" onclick="toggleEnumFlag('O')">-O</label>
+                <label class="enum-toggle" id="tgl-A" onclick="toggleEnumFlag('A')">-A</label>
+                <label class="enum-toggle" id="tgl-oN" onclick="toggleEnumFlag('oN')">-oN resultado.txt</label>
+              </div>
+            </div>
+            <div class="enum-phase-cmd">
+              <div class="enum-phase-lbl">Fase 2 — Análisis en profundidad</div>
+              <div class="enum-output" id="nmapCmd2wrap">
+                <code id="nmapCmd2" style="word-break:break-all;flex:1;color:var(--text3);">Introduce puertos de la Fase 1 para generar este comando</code>
+                <button class="enum-copy-btn" id="nmapCmd2copy" onclick="enumCopy(this,document.getElementById('nmapCmd2').textContent)" disabled>⎘ Copiar</button>
+              </div>
+            </div>
+            <div style="margin-top:8px;text-align:right;">
+              <button class="btn-outline" style="font-size:11px;color:var(--purple);border-color:rgba(170,85,255,.4);" onclick="saveNmapResult(this)">💾 Guardar resultado como nota</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="enum-group">
+        <div class="enum-group-title">Análisis por servicio</div>
+
+        <!-- FTP -->
+        <div class="enum-accordion">
+          <div class="enum-acc-hd" onclick="toggleEnumAcc(this)">
+            <span class="enum-acc-port">21/TCP</span>
+            <span class="enum-acc-name">FTP — File Transfer Protocol</span>
+            <span class="enum-acc-arrow">▶</span>
+          </div>
+          <div class="enum-acc-body">
+            <ul class="enum-vectors">
+              <li data-n="1">Sesión anónima (usuario: anonymous, pass: vacía)</li>
+              <li data-n="2">Versión vulnerable con exploit conocido</li>
+              <li data-n="3">Credenciales reutilizadas de otros servicios</li>
+            </ul>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">ftp IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'ftp IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conectar — usuario: <code style="color:var(--orange)">anonymous</code>, contraseña vacía</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script ftp-anon IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script ftp-anon IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Detectar acceso anónimo con script NSE</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">searchsploit vsftpd 2.3.4</div><button class="enum-copy-btn" onclick="enumCopy(this,'searchsploit vsftpd 2.3.4')">⎘ Copiar</button></div><div class="enum-cmd-desc">Buscar exploit por versión del servidor</div></div>
+            <div class="enum-note">💡 Si FTP + puerto 80 activos: subir PHP malicioso por FTP y ejecutarlo desde la web = RCE</div>
+          </div>
+        </div>
+
+        <!-- SSH -->
+        <div class="enum-accordion">
+          <div class="enum-acc-hd" onclick="toggleEnumAcc(this)">
+            <span class="enum-acc-port">22/TCP</span>
+            <span class="enum-acc-name">SSH — Secure Shell</span>
+            <span class="enum-acc-arrow">▶</span>
+          </div>
+          <div class="enum-acc-body">
+            <ul class="enum-vectors">
+              <li data-n="1">Fuerza bruta con credenciales</li>
+              <li data-n="2">Versión vulnerable</li>
+              <li data-n="3">Claves privadas expuestas en el sistema</li>
+            </ul>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">ssh usuario@IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'ssh usuario@IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conexión directa</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">hydra -l usuario -P /usr/share/wordlists/rockyou.txt IP ssh</div><button class="enum-copy-btn" onclick="enumCopy(this,'hydra -l usuario -P /usr/share/wordlists/rockyou.txt IP ssh')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuerza bruta de contraseña</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script ssh-brute IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script ssh-brute IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuerza bruta con script NSE</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">use auxiliary/scanner/ssh/ssh_login</div><button class="enum-copy-btn" onclick="enumCopy(this,'use auxiliary/scanner/ssh/ssh_login')">⎘ Copiar</button></div><div class="enum-cmd-desc">Módulo Metasploit — bruteforce SSH</div></div>
+          </div>
+        </div>
+
+        <!-- Telnet -->
+        <div class="enum-accordion">
+          <div class="enum-acc-hd" onclick="toggleEnumAcc(this)">
+            <span class="enum-acc-port">23/TCP</span>
+            <span class="enum-acc-name">Telnet</span>
+            <span class="enum-acc-arrow">▶</span>
+          </div>
+          <div class="enum-acc-body">
+            <ul class="enum-vectors">
+              <li data-n="1">Protocolo sin cifrado — credenciales visibles en tráfico</li>
+              <li data-n="2">Credenciales por defecto del dispositivo</li>
+            </ul>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">telnet IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'telnet IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conexión directa</div></div>
+            <div class="enum-danger-note">⚠ Telnet no cifra el tráfico. Cualquier sniffer en la red captura las credenciales en texto claro.</div>
+          </div>
+        </div>
+
+        <!-- SMTP -->
+        <div class="enum-accordion">
+          <div class="enum-acc-hd" onclick="toggleEnumAcc(this)">
+            <span class="enum-acc-port">25/TCP</span>
+            <span class="enum-acc-name">SMTP — Simple Mail Transfer Protocol</span>
+            <span class="enum-acc-arrow">▶</span>
+          </div>
+          <div class="enum-acc-body">
+            <ul class="enum-vectors">
+              <li data-n="1">Enumeración de usuarios válidos (VRFY / EXPN)</li>
+              <li data-n="2">Open relay — enviar correo como cualquier dominio</li>
+            </ul>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script smtp-enum-users IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script smtp-enum-users IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Enumerar usuarios válidos del servidor</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script smtp-open-relay IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script smtp-open-relay IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Detectar open relay</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">telnet IP 25</div><button class="enum-copy-btn" onclick="enumCopy(this,'telnet IP 25')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conexión manual para pruebas con comandos SMTP</div></div>
+          </div>
+        </div>
+
+        <!-- DNS -->
+        <div class="enum-accordion">
+          <div class="enum-acc-hd" onclick="toggleEnumAcc(this)">
+            <span class="enum-acc-port">53/TCP+UDP</span>
+            <span class="enum-acc-name">DNS — Domain Name System</span>
+            <span class="enum-acc-arrow">▶</span>
+          </div>
+          <div class="enum-acc-body">
+            <ul class="enum-vectors">
+              <li data-n="1">Zone transfer (AXFR) — vuelca todos los registros DNS</li>
+              <li data-n="2">Subdominios por fuerza bruta</li>
+            </ul>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">dig axfr @IP dominio.com</div><button class="enum-copy-btn" onclick="enumCopy(this,'dig axfr @IP dominio.com')">⎘ Copiar</button></div><div class="enum-cmd-desc">Intentar transferencia de zona completa</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script dns-zone-transfer IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script dns-zone-transfer IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Zone transfer con script NSE</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">dnsrecon -d dominio.com -t axfr</div><button class="enum-copy-btn" onclick="enumCopy(this,'dnsrecon -d dominio.com -t axfr')">⎘ Copiar</button></div><div class="enum-cmd-desc">Reconocimiento DNS completo</div></div>
+          </div>
+        </div>
+
+        <!-- HTTP/S -->
+        <div class="enum-accordion">
+          <div class="enum-acc-hd" onclick="toggleEnumAcc(this)">
+            <span class="enum-acc-port">80/443</span>
+            <span class="enum-acc-name">HTTP / HTTPS — Web</span>
+            <span class="enum-acc-arrow">▶</span>
+          </div>
+          <div class="enum-acc-body">
+            <ul class="enum-vectors">
+              <li data-n="1">Fuzzing de directorios y archivos ocultos</li>
+              <li data-n="2">Versión vulnerable del servidor web</li>
+              <li data-n="3">CGI habilitado — posible Shellshock</li>
+              <li data-n="4">Información en phpinfo.php, robots.txt, .git/</li>
+            </ul>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">ffuf -u http://IP/FUZZ -w /usr/share/dirb/wordlists/common.txt -c</div><button class="enum-copy-btn" onclick="enumCopy(this,'ffuf -u http://IP/FUZZ -w /usr/share/dirb/wordlists/common.txt -c')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuzzing básico de directorios</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">ffuf -u http://IP/FUZZ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -c</div><button class="enum-copy-btn" onclick="enumCopy(this,'ffuf -u http://IP/FUZZ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -c')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuzzing con SecLists (más completo)</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nikto -h http://IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nikto -h http://IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Escáner automático de vulnerabilidades web</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">curl -I http://IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'curl -I http://IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Ver cabeceras HTTP — versión del servidor</div></div>
+            <div class="enum-note">🔍 Siempre revisar manualmente: <code style="color:var(--orange)">/robots.txt</code> · <code style="color:var(--orange)">/phpinfo.php</code> · <code style="color:var(--orange)">/.git/</code></div>
+          </div>
+        </div>
+
+        <!-- SMB -->
+        <div class="enum-accordion">
+          <div class="enum-acc-hd" onclick="toggleEnumAcc(this)">
+            <span class="enum-acc-port">139/445</span>
+            <span class="enum-acc-name">SMB — Server Message Block</span>
+            <span class="enum-acc-arrow">▶</span>
+          </div>
+          <div class="enum-acc-body">
+            <ul class="enum-vectors">
+              <li data-n="1">Enumeración de recursos compartidos anónima</li>
+              <li data-n="2">Versión vulnerable — EternalBlue (MS17-010)</li>
+              <li data-n="3">Credenciales débiles o reutilizadas</li>
+            </ul>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">smbclient -N -L //IP/</div><button class="enum-copy-btn" onclick="enumCopy(this,'smbclient -N -L //IP/')">⎘ Copiar</button></div><div class="enum-cmd-desc">Listar recursos compartidos sin credenciales</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">smbclient //IP/recurso -N</div><button class="enum-copy-btn" onclick="enumCopy(this,'smbclient //IP/recurso -N')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conectar a recurso sin credenciales</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">enum4linux -a IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'enum4linux -a IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Enumeración completa SMB / NetBIOS</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script smb-vuln-ms17-010 IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script smb-vuln-ms17-010 IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Detectar EternalBlue</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">use auxiliary/scanner/smb/smb_version</div><button class="enum-copy-btn" onclick="enumCopy(this,'use auxiliary/scanner/smb/smb_version')">⎘ Copiar</button></div><div class="enum-cmd-desc">Módulo Metasploit — versión SMB</div></div>
+          </div>
+        </div>
+
+        <!-- RDP -->
+        <div class="enum-accordion">
+          <div class="enum-acc-hd" onclick="toggleEnumAcc(this)">
+            <span class="enum-acc-port">3389/TCP</span>
+            <span class="enum-acc-name">RDP — Remote Desktop Protocol</span>
+            <span class="enum-acc-arrow">▶</span>
+          </div>
+          <div class="enum-acc-body">
+            <ul class="enum-vectors">
+              <li data-n="1">Fuerza bruta de credenciales</li>
+              <li data-n="2">BlueKeep — CVE-2019-0708 (pre-auth RCE)</li>
+              <li data-n="3">Credenciales reutilizadas de otros servicios</li>
+            </ul>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script rdp-enum-encryption IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script rdp-enum-encryption IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Detectar cifrado y versión de RDP</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script rdp-vuln-ms12-020 IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script rdp-vuln-ms12-020 IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Detectar vulnerabilidad DoS MS12-020</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">hydra -l Administrator -P wordlist.txt IP rdp</div><button class="enum-copy-btn" onclick="enumCopy(this,'hydra -l Administrator -P wordlist.txt IP rdp')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuerza bruta RDP</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">xfreerdp /u:usuario /p:contraseña /v:IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'xfreerdp /u:usuario /p:contraseña /v:IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conexión RDP desde Linux</div></div>
+          </div>
+        </div>
+
+        <!-- MySQL -->
+        <div class="enum-accordion">
+          <div class="enum-acc-hd" onclick="toggleEnumAcc(this)">
+            <span class="enum-acc-port">3306/TCP</span>
+            <span class="enum-acc-name">MySQL / MariaDB</span>
+            <span class="enum-acc-arrow">▶</span>
+          </div>
+          <div class="enum-acc-body">
+            <ul class="enum-vectors">
+              <li data-n="1">Acceso sin contraseña (root sin pass)</li>
+              <li data-n="2">Credenciales por defecto</li>
+              <li data-n="3">Inyección SQL desde otra capa de la app</li>
+            </ul>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">mysql -u root -h IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'mysql -u root -h IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conexión sin contraseña</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script mysql-empty-password IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script mysql-empty-password IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Detectar acceso sin contraseña</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script mysql-info IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script mysql-info IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Información general del servidor MySQL</div></div>
+          </div>
+        </div>
+
+        <!-- Otros servicios -->
+        <div class="enum-group" style="margin-top:16px;">
+          <div class="enum-group-title">Otros servicios menos comunes</div>
+          <table class="enum-service-table">
+            <thead><tr><th>Puerto</th><th>Servicio</th><th>Comando rápido</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>111</td><td>RPC</td><td><code style="color:var(--orange)">rpcinfo -p IP</code></td><td><button class="enum-copy-btn" onclick="enumCopy(this,'rpcinfo -p IP')">⎘</button></td></tr>
+              <tr><td>2049</td><td>NFS</td><td><code style="color:var(--orange)">showmount -e IP</code></td><td><button class="enum-copy-btn" onclick="enumCopy(this,'showmount -e IP')">⎘</button></td></tr>
+              <tr><td>5900</td><td>VNC</td><td><code style="color:var(--orange)">nmap --script vnc-info IP</code></td><td><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script vnc-info IP')">⎘</button></td></tr>
+              <tr><td>6379</td><td>Redis</td><td><code style="color:var(--orange)">redis-cli -h IP ping</code></td><td><button class="enum-copy-btn" onclick="enumCopy(this,'redis-cli -h IP ping')">⎘</button></td></tr>
+              <tr><td>27017</td><td>MongoDB</td><td><code style="color:var(--orange)">mongo --host IP</code></td><td><button class="enum-copy-btn" onclick="enumCopy(this,'mongo --host IP')">⎘</button></td></tr>
+              <tr><td>5432</td><td>PostgreSQL</td><td><code style="color:var(--orange)">psql -h IP -U postgres</code></td><td><button class="enum-copy-btn" onclick="enumCopy(this,'psql -h IP -U postgres')">⎘</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /esec-services -->
+
+    <!-- SECTION 3: Cheatsheet Nmap -->
+    <div class="enum-section" id="esec-nmap">
+
+      <div class="enum-nmap-section">
+        <div class="enum-group-title">Selección de puertos</div>
+        <div class="enum-nmap-grid">
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-p 80</span><span class="enum-nmap-desc">Puerto específico</span><button class="enum-copy-btn" onclick="enumCopy(this,'-p 80')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-p 80,443,8080</span><span class="enum-nmap-desc">Lista de puertos</span><button class="enum-copy-btn" onclick="enumCopy(this,'-p 80,443,8080')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-p 1-1000</span><span class="enum-nmap-desc">Rango de puertos</span><button class="enum-copy-btn" onclick="enumCopy(this,'-p 1-1000')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-p-</span><span class="enum-nmap-desc">Todos los puertos (1-65535)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-p-')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--top-ports 100</span><span class="enum-nmap-desc">Los 100 más comunes</span><button class="enum-copy-btn" onclick="enumCopy(this,'--top-ports 100')">⎘</button></div>
+        </div>
+      </div>
+
+      <div class="enum-nmap-section">
+        <div class="enum-group-title">Tipos de escaneo</div>
+        <div class="enum-nmap-grid">
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sS</span><span class="enum-nmap-desc">SYN scan (stealth, requiere root)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sS')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sT</span><span class="enum-nmap-desc">TCP connect scan (sin root)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sT')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sU</span><span class="enum-nmap-desc">UDP scan</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sU')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sn</span><span class="enum-nmap-desc">Ping sweep (sin escanear puertos)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sn')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sV</span><span class="enum-nmap-desc">Detección de versiones de servicio</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sV')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sC</span><span class="enum-nmap-desc">Scripts NSE por defecto</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sC')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-O</span><span class="enum-nmap-desc">Detección de sistema operativo</span><button class="enum-copy-btn" onclick="enumCopy(this,'-O')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-A</span><span class="enum-nmap-desc">Agresivo (versiones+scripts+OS+traceroute)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-A')">⎘</button></div>
+        </div>
+      </div>
+
+      <div class="enum-nmap-section">
+        <div class="enum-group-title">Control de velocidad y ruido</div>
+        <div class="enum-nmap-grid">
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--min-rate 5000</span><span class="enum-nmap-desc">Mínimo N paquetes/segundo</span><button class="enum-copy-btn" onclick="enumCopy(this,'--min-rate 5000')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-T0 … -T5</span><span class="enum-nmap-desc">Plantillas (0=paranoico, 5=insano)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-T4')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-Pn</span><span class="enum-nmap-desc">No hacer ping previo (AWS, ICMP bloqueado)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-Pn')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--scan-delay 1s</span><span class="enum-nmap-desc">Delay entre paquetes para evasión IDS</span><button class="enum-copy-btn" onclick="enumCopy(this,'--scan-delay 1s')">⎘</button></div>
+        </div>
+      </div>
+
+      <div class="enum-nmap-section">
+        <div class="enum-group-title">Output</div>
+        <div class="enum-nmap-grid">
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-oN fichero.txt</span><span class="enum-nmap-desc">Guardar en texto normal</span><button class="enum-copy-btn" onclick="enumCopy(this,'-oN resultado.txt')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-oX fichero.xml</span><span class="enum-nmap-desc">Guardar en XML</span><button class="enum-copy-btn" onclick="enumCopy(this,'-oX resultado.xml')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-oG fichero.gnmap</span><span class="enum-nmap-desc">Formato grepeable</span><button class="enum-copy-btn" onclick="enumCopy(this,'-oG resultado.gnmap')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-oA prefijo</span><span class="enum-nmap-desc">Los tres formatos a la vez</span><button class="enum-copy-btn" onclick="enumCopy(this,'-oA resultado')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-v / -vv / -vvvv</span><span class="enum-nmap-desc">Verbosidad creciente</span><button class="enum-copy-btn" onclick="enumCopy(this,'-vv')">⎘</button></div>
+        </div>
+      </div>
+
+      <div class="enum-nmap-section">
+        <div class="enum-group-title">Scripts NSE útiles</div>
+        <div class="enum-nmap-grid">
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script vuln</span><span class="enum-nmap-desc">Todos los scripts de vulnerabilidades</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script vuln')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script ftp-anon</span><span class="enum-nmap-desc">Detectar FTP anónimo</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script ftp-anon')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script smb-vuln-ms17-010</span><span class="enum-nmap-desc">EternalBlue</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script smb-vuln-ms17-010')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script http-title</span><span class="enum-nmap-desc">Título de páginas web</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script http-title')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script ssh-brute</span><span class="enum-nmap-desc">Fuerza bruta SSH</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script ssh-brute')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">/usr/share/nmap/scripts/</span><span class="enum-nmap-desc">Ruta local de scripts NSE</span><button class="enum-copy-btn" onclick="enumCopy(this,'/usr/share/nmap/scripts/')">⎘</button></div>
+        </div>
+      </div>
+
+    </div><!-- /esec-nmap -->
+  </div><!-- /panel-enum -->
+
   <!-- AUDITS PANEL -->
   <div class="panel" id="panel-audits">
     <div class="ed-toolbar" style="flex-wrap:nowrap;overflow-x:auto;gap:6px;">
@@ -586,9 +1149,72 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
       <div style="flex:1"></div>
       <span id="auditProgress" style="font-size:11px;font-family:var(--mono);color:var(--green);flex-shrink:0;"></span>
       <button class="btn-outline" onclick="resetAudit()" style="flex-shrink:0;">↺ Reset</button>
+      <button class="tb-btn" id="btnGenReport" onclick="openReportModal()" style="flex-shrink:0;display:none;border-color:var(--purple);color:var(--purple);">📄 Generar Informe</button>
     </div>
     <div style="flex:1;overflow-y:auto;padding:14px;" id="auditBody">
       <div class="empty-msg">Selecciona un tipo de auditoría</div>
+    </div>
+  </div>
+
+  <!-- MITRE PANEL -->
+  <div class="panel" id="panel-mitre">
+    <div class="ed-toolbar" style="gap:8px;">
+      <span style="font-size:10px;font-family:var(--mono);color:var(--text3);">⚡ MITRE ATT&amp;CK</span>
+      <input type="text" id="mitreSearch" class="sel" placeholder="Buscar técnica, ID o táctica..." style="flex:1;max-width:340px;" oninput="searchMitre(this.value)">
+      <span id="mitreTotalBadge" style="font-size:10px;font-family:var(--mono);color:var(--text3);"></span>
+      <div style="flex:1"></div>
+      <button class="btn-outline" onclick="loadMitre()">↺ Recargar</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:14px;" id="mitreBody">
+      <div class="empty-msg">Cargando técnicas MITRE ATT&amp;CK...</div>
+    </div>
+  </div>
+
+  <!-- FORENSIC PANEL -->
+  <div class="panel" id="panel-forensic">
+    <div class="ed-toolbar" style="gap:8px;flex-wrap:wrap;">
+      <span style="font-size:10px;font-family:var(--mono);color:var(--text3);flex-shrink:0;">🔬 MODO FORENSE</span>
+      <input type="text" id="forensicHash" class="sel" placeholder="SHA256 (64 hex)..." style="flex:1;min-width:240px;font-family:var(--mono);"
+        oninput="document.getElementById('forensicHash').style.borderColor=this.value.length===64?'var(--green)':this.value.length>0?'var(--orange)':''"
+        onkeydown="if(event.key==='Enter')runForensic()">
+      <button class="btn-ai" id="btnForensic" onclick="runForensic()">▶ Analizar</button>
+      <button class="btn-outline" onclick="clearForensic()">✕ Limpiar</button>
+    </div>
+    <!-- Pipeline steps -->
+    <div id="forensicPipeline" style="display:none;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg2);">
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+        <div class="forensic-step" id="fstep-vt">
+          <span class="fstep-icon" id="ficon-vt">⟳</span>
+          <span style="font-size:11px;font-family:var(--mono);">VirusTotal</span>
+        </div>
+        <div style="color:var(--text3);font-size:14px;">→</div>
+        <div class="forensic-step" id="fstep-mb">
+          <span class="fstep-icon" id="ficon-mb">⟳</span>
+          <span style="font-size:11px;font-family:var(--mono);">MalwareBazaar</span>
+        </div>
+        <div style="color:var(--text3);font-size:14px;">→</div>
+        <div class="forensic-step" id="fstep-ar">
+          <span class="fstep-icon" id="ficon-ar">·</span>
+          <span style="font-size:11px;font-family:var(--mono);color:var(--text3);">Any.run</span>
+        </div>
+        <div style="color:var(--text3);font-size:14px;">→</div>
+        <div class="forensic-step" id="fstep-ai">
+          <span class="fstep-icon" id="ficon-ai">·</span>
+          <span style="font-size:11px;font-family:var(--mono);color:var(--text3);">Síntesis IA</span>
+        </div>
+      </div>
+      <div id="forensicProgress" style="display:none;padding:6px 0 2px;">
+        <div class="upload-progress-track" style="height:3px;">
+          <div class="upload-progress-fill indeterminate" style="height:100%;"></div>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:14px;" id="forensicBody">
+      <div style="text-align:center;padding:50px;color:var(--text3);font-family:var(--mono);font-size:12px;">
+        <div style="font-size:36px;margin-bottom:10px;opacity:.3;">🔬</div>
+        Introduce un hash SHA256 para iniciar el análisis forense automático<br>
+        <span style="font-size:10px;">Pipeline: VirusTotal + MalwareBazaar + Any.run → Nota generada por IA</span>
+      </div>
     </div>
   </div>
 
@@ -623,7 +1249,10 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
 
 <div class="statusbar">
   <span class="status-dot"></span>
-  <span id="statusMsg">CyberKB v3 listo — backend conectado</span>
+  <span id="statusMsg">CyberKB v5.6 listo — backend conectado</span>
+  <div id="sbProgressBar" style="display:none;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin:0 10px;width:140px;flex-shrink:0;">
+    <div class="upload-progress-fill indeterminate" style="height:100%;"></div>
+  </div>
   <div class="sb-sep"></div>
   <span id="statusTime" style="color:var(--text3)"></span>
 </div>
@@ -667,6 +1296,153 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
   </div>
 </div>
 
+<!-- SETTINGS MODAL -->
+<div class="overlay" id="settingsModal">
+  <div class="modal" style="max-width:520px;width:95vw;overflow-x:hidden;">
+    <h3>⚙ Configuración de API Keys</h3>
+    <p style="color:var(--text3);font-size:12px;margin-bottom:16px;">Las claves se guardan en el archivo <code>.env</code> local. Nunca se envían a ningún servidor externo salvo a la API correspondiente.</p>
+
+    <div id="settingsBody">
+      <div class="settings-row">
+        <div class="settings-label">
+          <span>ANTHROPIC_API_KEY</span>
+          <span class="settings-badge required">Obligatoria</span>
+        </div>
+        <div class="settings-desc">API key de Anthropic (Claude) — <a href="https://console.anthropic.com/" target="_blank" style="color:var(--blue)">console.anthropic.com</a></div>
+        <div class="settings-input-row">
+          <input type="password" class="settings-input" id="sk-ANTHROPIC_API_KEY" placeholder="sk-ant-…" autocomplete="off">
+          <button class="settings-eye" onclick="toggleKeyVis('ANTHROPIC_API_KEY')">👁</button>
+        </div>
+        <div class="settings-status" id="st-ANTHROPIC_API_KEY"></div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">
+          <span>VIRUSTOTAL_API_KEY</span>
+          <span class="settings-badge free">Gratis</span>
+        </div>
+        <div class="settings-desc">VirusTotal — <a href="https://www.virustotal.com/gui/my-apikey" target="_blank" style="color:var(--blue)">virustotal.com</a></div>
+        <div class="settings-input-row">
+          <input type="password" class="settings-input" id="sk-VIRUSTOTAL_API_KEY" placeholder="64 caracteres hex" autocomplete="off">
+          <button class="settings-eye" onclick="toggleKeyVis('VIRUSTOTAL_API_KEY')">👁</button>
+        </div>
+        <div class="settings-status" id="st-VIRUSTOTAL_API_KEY"></div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">
+          <span>ABUSEIPDB_API_KEY</span>
+          <span class="settings-badge free">Gratis (1000/día)</span>
+        </div>
+        <div class="settings-desc">AbuseIPDB IP reputation — <a href="https://www.abuseipdb.com/api" target="_blank" style="color:var(--blue)">abuseipdb.com</a></div>
+        <div class="settings-input-row">
+          <input type="password" class="settings-input" id="sk-ABUSEIPDB_API_KEY" placeholder="API key…" autocomplete="off">
+          <button class="settings-eye" onclick="toggleKeyVis('ABUSEIPDB_API_KEY')">👁</button>
+        </div>
+        <div class="settings-status" id="st-ABUSEIPDB_API_KEY"></div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">
+          <span>MALWAREBAZAAR_API_KEY</span>
+          <span class="settings-badge free">Gratis</span>
+        </div>
+        <div class="settings-desc">MalwareBazaar (abuse.ch) hash lookup — <a href="https://bazaar.abuse.ch/api/" target="_blank" style="color:var(--blue)">bazaar.abuse.ch</a></div>
+        <div class="settings-input-row">
+          <input type="password" class="settings-input" id="sk-MALWAREBAZAAR_API_KEY" placeholder="API key…" autocomplete="off">
+          <button class="settings-eye" onclick="toggleKeyVis('MALWAREBAZAAR_API_KEY')">👁</button>
+        </div>
+        <div class="settings-status" id="st-MALWAREBAZAAR_API_KEY"></div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">
+          <span>HIBP_API_KEY</span>
+          <span class="settings-badge paid">~$3.50/mes</span>
+        </div>
+        <div class="settings-desc">Have I Been Pwned — búsqueda por email (dominio funciona sin key) — <a href="https://haveibeenpwned.com/API/Key" target="_blank" style="color:var(--blue)">haveibeenpwned.com</a></div>
+        <div class="settings-input-row">
+          <input type="password" class="settings-input" id="sk-HIBP_API_KEY" placeholder="API key…" autocomplete="off">
+          <button class="settings-eye" onclick="toggleKeyVis('HIBP_API_KEY')">👁</button>
+        </div>
+        <div class="settings-status" id="st-HIBP_API_KEY"></div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">
+          <span>LEAKRADAR_API_KEY</span>
+          <span class="settings-badge paid">DeHashed compatible</span>
+        </div>
+        <div class="settings-desc">Búsqueda de credenciales filtradas por email/dominio — <a href="https://dehashed.com" target="_blank" style="color:var(--blue)">dehashed.com</a></div>
+        <div class="settings-input-row">
+          <input type="password" class="settings-input" id="sk-LEAKRADAR_API_KEY" placeholder="API key…" autocomplete="off">
+          <button class="settings-eye" onclick="toggleKeyVis('LEAKRADAR_API_KEY')">👁</button>
+        </div>
+        <div class="settings-status" id="st-LEAKRADAR_API_KEY"></div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">
+          <span>ANYRUN_API_KEY</span>
+          <span class="settings-badge free">Gratis (tier limitado)</span>
+        </div>
+        <div class="settings-desc">Any.run sandbox — análisis forense automático — <a href="https://any.run/plans/" target="_blank" style="color:var(--blue)">any.run</a></div>
+        <div class="settings-input-row">
+          <input type="password" class="settings-input" id="sk-ANYRUN_API_KEY" placeholder="API key…" autocomplete="off">
+          <button class="settings-eye" onclick="toggleKeyVis('ANYRUN_API_KEY')">👁</button>
+        </div>
+        <div class="settings-status" id="st-ANYRUN_API_KEY"></div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">
+          <span>HUNTER_API_KEY</span>
+          <span class="settings-badge free">Gratis (25/mes)</span>
+        </div>
+        <div class="settings-desc">Hunter.io email finder — <a href="https://hunter.io/api-keys" target="_blank" style="color:var(--blue)">hunter.io</a></div>
+        <div class="settings-input-row">
+          <input type="password" class="settings-input" id="sk-HUNTER_API_KEY" placeholder="API key…" autocomplete="off">
+          <button class="settings-eye" onclick="toggleKeyVis('HUNTER_API_KEY')">👁</button>
+        </div>
+        <div class="settings-status" id="st-HUNTER_API_KEY"></div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">
+          <span>SHODAN_API_KEY</span>
+          <span class="settings-badge paid">De pago</span>
+        </div>
+        <div class="settings-desc">Shodan — <a href="https://account.shodan.io/" target="_blank" style="color:var(--blue)">account.shodan.io</a></div>
+        <div class="settings-input-row">
+          <input type="password" class="settings-input" id="sk-SHODAN_API_KEY" placeholder="API key…" autocomplete="off">
+          <button class="settings-eye" onclick="toggleKeyVis('SHODAN_API_KEY')">👁</button>
+        </div>
+        <div class="settings-status" id="st-SHODAN_API_KEY"></div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">
+          <span>URLSCAN_API_KEY</span>
+          <span class="settings-badge free">Gratis</span>
+        </div>
+        <div class="settings-desc">URLscan.io (envío de URLs) — <a href="https://urlscan.io/user/profile/" target="_blank" style="color:var(--blue)">urlscan.io</a></div>
+        <div class="settings-input-row">
+          <input type="password" class="settings-input" id="sk-URLSCAN_API_KEY" placeholder="API key…" autocomplete="off">
+          <button class="settings-eye" onclick="toggleKeyVis('URLSCAN_API_KEY')">👁</button>
+        </div>
+        <div class="settings-status" id="st-URLSCAN_API_KEY"></div>
+      </div>
+    </div>
+
+    <div id="settingsSaveMsg" style="display:none;padding:8px 12px;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.3);border-radius:var(--r);color:var(--green);font-size:12px;margin-top:12px;"></div>
+
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeModal('settingsModal')">Cancelar</button>
+      <button class="btn-ai" onclick="saveSettings()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- CHEATSHEET MODAL -->
 <div class="overlay" id="cheatModal">
   <div class="modal" style="max-width:700px;width:95vw;">
@@ -677,6 +1453,27 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
     <div class="modal-actions">
       <button class="btn-ai" onclick="genCheatsheet()">✦ Generar</button>
       <button class="btn-outline" onclick="closeModal('cheatModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="overlay" id="reportModal">
+  <div class="modal" style="max-width:860px;width:97vw;max-height:90vh;display:flex;flex-direction:column;">
+    <h3>📄 Informe de Auditoría — <span id="reportAuditName"></span></h3>
+    <div style="display:flex;gap:6px;margin:10px 0 8px;">
+      <button class="tb-btn" id="reportTabTech" onclick="switchReportTab('technical')" style="border-color:var(--purple);color:var(--purple);">🔧 Técnico</button>
+      <button class="tb-btn" id="reportTabExec" onclick="switchReportTab('executive')" style="">🏢 Ejecutivo</button>
+      <div style="flex:1;"></div>
+      <button class="btn-outline" id="btnDownloadMd" onclick="downloadReport('md')" style="font-size:11px;">⬇ Descargar .md</button>
+      <button class="btn-outline" id="btnPrintPdf" onclick="printReport()" style="font-size:11px;">🖨 Imprimir / PDF</button>
+    </div>
+    <div id="reportContent" style="flex:1;overflow-y:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:14px;font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--text);white-space:pre-wrap;max-height:60vh;"></div>
+    <div id="reportSpinner" style="display:none;text-align:center;padding:40px;color:var(--text3);font-family:var(--mono);">
+      ✦ Generando informe con IA... <span id="reportSpinnerDots"></span>
+    </div>
+    <div class="modal-actions" style="margin-top:10px;">
+      <button class="btn-outline" onclick="closeModal('reportModal')">Cerrar</button>
     </div>
   </div>
 </div>
@@ -884,7 +1681,7 @@ async function deleteNote(){
 async function analyzeNote(){
   const text=document.getElementById('noteContent').value.trim();
   if(!text){setStatus('Escribe contenido antes de analizar','warn');return;}
-  setStatus('Analizando con IA...');
+  showGlobalProgress('Analizando con IA...');
   document.getElementById('btnAnalyze').disabled=true;
   document.getElementById('btnAnalyze').innerHTML='<span class="dots"><span></span><span></span><span></span></span>';
   try{
@@ -897,8 +1694,8 @@ async function analyzeNote(){
     if(res.summary&&!document.getElementById('noteTitle').value&&res.subcategory)
       document.getElementById('noteTitle').value=res.subcategory;
     await loadAll();
-    setStatus('Análisis completado — '+res.tools.length+' tools, '+res.commands.length+' comandos detectados');
-  }catch(e){setStatus('Error en análisis: '+e.message,'error');}
+    hideGlobalProgress('Análisis completado — '+res.tools.length+' tools, '+res.commands.length+' comandos detectados');
+  }catch(e){hideGlobalProgress('Error en análisis: '+e.message,'error');}
   document.getElementById('btnAnalyze').disabled=false;
   document.getElementById('btnAnalyze').innerHTML='✦ Analizar';
 }
@@ -959,7 +1756,11 @@ function dropFile(e,modal=false){
 async function uploadFile(file,modal=false){
   if(!file) return;
   const autoSave=modal?document.getElementById('autoSave').checked:false;
-  setStatus('Procesando '+file.name+'...');
+  if(modal){
+    setStatus('Procesando '+file.name+'...');
+  } else {
+    showGlobalProgress('Procesando '+file.name+'...');
+  }
   if(modal){
     document.getElementById('modalDropLabel').textContent='⏳ Analizando '+file.name+'...';
     document.getElementById('uploadProgress').style.display='block';
@@ -1003,9 +1804,11 @@ async function uploadFile(file,modal=false){
     S.graphData=null;  // invalidate graph cache
     await loadAll();
     if(!modal) switchTab('editor');
-    setStatus('Documento procesado — '+a.tools.length+' tools, '+a.commands.length+' comandos');
+    if(modal) setStatus('Documento procesado — '+a.tools.length+' tools, '+a.commands.length+' comandos');
+    else hideGlobalProgress('Documento procesado — '+a.tools.length+' tools, '+a.commands.length+' comandos');
   }catch(e){
-    setStatus('Error procesando archivo: '+e.message,'error');
+    if(modal) setStatus('Error procesando archivo: '+e.message,'error');
+    else hideGlobalProgress('Error procesando archivo: '+e.message,'error');
     if(modal){
       document.getElementById('modalDropLabel').textContent='✗ Error: '+e.message;
       document.getElementById('uploadProgress').style.display='none';
@@ -1137,9 +1940,10 @@ function renderCommands(){
   const tool=document.getElementById('cmdFilter').value;
   let cmds=S.commands;
   const osf=S.osFilter||'all';
-  if(osf==='powershell') cmds=cmds.filter(c=>c.os==='powershell');
+  if(osf==='privesc') cmds=cmds.filter(c=>c.category==='privesc');
+  else if(osf==='powershell') cmds=cmds.filter(c=>c.os==='powershell');
   else if(osf==='google') cmds=cmds.filter(c=>c.os==='google');
-  else if(osf!=='all') cmds=cmds.filter(c=>c.os===osf||c.os==='both');
+  else if(osf!=='all') cmds=cmds.filter(c=>(c.os===osf||c.os==='both')&&c.category!=='privesc');
   if(tool) cmds=cmds.filter(c=>(c.tool_name||'').toLowerCase().includes(tool.toLowerCase()));
   if(q) cmds=cmds.filter(c=>c.command.toLowerCase().includes(q)||(c.description||'').toLowerCase().includes(q));
 
@@ -1162,8 +1966,9 @@ function renderCommands(){
     html+=`<div class="cmd-group"><div class="cmd-group-title">${esc(k)} (${cs.length})</div>`;
     cs.slice(0,50).forEach(c=>{
       const osBadge=c.os==='windows'?'<span style="font-size:9px;padding:1px 6px;border-radius:10px;background:rgba(0,170,255,.15);color:var(--blue);border:1px solid rgba(0,170,255,.3);font-family:var(--mono);margin-left:4px">🪟 win</span>':c.os==='linux'?'<span style="font-size:9px;padding:1px 6px;border-radius:10px;background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.25);font-family:var(--mono);margin-left:4px">🐧 linux</span>':c.os==='powershell'?'<span style="font-size:9px;padding:1px 6px;border-radius:10px;background:rgba(0,120,215,.2);color:#5db8ff;border:1px solid rgba(0,120,215,.4);font-family:var(--mono);margin-left:4px">🔵 ps</span>':c.os==='google'?'<span style="font-size:9px;padding:1px 6px;border-radius:10px;background:rgba(255,160,0,.15);color:#ffa000;border:1px solid rgba(255,160,0,.4);font-family:var(--mono);margin-left:4px">🔍 dork</span>':'<span style="font-size:9px;padding:1px 6px;border-radius:10px;background:rgba(170,85,255,.1);color:var(--purple);border:1px solid rgba(170,85,255,.3);font-family:var(--mono);margin-left:4px">⚡ both</span>';
+      const privescBadge=c.category==='privesc'?'<span style="font-size:9px;padding:1px 6px;border-radius:10px;background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.4);font-family:var(--mono);margin-left:4px">⚡ privesc</span>':'';
       html+=`<div class="cmd-entry">
-        <div class="cmd-entry-cmd" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;"><span>${c.os==='google'?'':' $ '}${esc(c.command)}</span>${osBadge}</div>
+        <div class="cmd-entry-cmd" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;"><span>${c.os==='google'?'':' $ '}${esc(c.command)}</span>${osBadge}${privescBadge}</div>
         ${c.description?`<div class="cmd-entry-desc" style="color:#ffffff;opacity:.85">${esc(c.description)}</div>`:''}
         <div class="cmd-entry-foot">${(c.flags||[]).map(f=>`<span class="flag-tag">${esc(f)}</span>`).join('')}</div>
       </div>`;
@@ -1195,8 +2000,11 @@ const OSINT_PLACEHOLDERS={
   ip:'1.1.1.1', 'reverse-dns':'1.1.1.1', asn:'AS13335 o 8.8.8.8',
   shodan:'apache port:80', virustotal:'dominio.com, IP, URL o hash',
   'email-verify':'usuario@dominio.com', hibp:'usuario@dominio.com o dominio.com',
-  hunter:'dominio.com',
+  hunter:'dominio.com', leakradar:'usuario@dominio.com o @dominio.com',
   headers:'https://dominio.com', urlscan:'dominio.com o página',
+  'hash-vt':'MD5 (32), SHA1 (40) o SHA256 (64 hex)',
+  abuseipdb:'1.2.3.4 o 2001:db8::1',
+  malwarebazaar:'SHA256 (64 caracteres hex)',
 };
 
 const OSINT_PARAM={
@@ -1204,8 +2012,9 @@ const OSINT_PARAM={
   wayback:'url', dmarc:'domain', robots:'domain',
   ip:'ip', 'reverse-dns':'ip', asn:'query',
   shodan:'query', virustotal:'target',
-  'email-verify':'email', hibp:'target', hunter:'domain',
+  'email-verify':'email', hibp:'target', hunter:'domain', leakradar:'query',
   headers:'url', urlscan:'query',
+  'hash-vt':'hash', abuseipdb:'ip', malwarebazaar:'hash',
 };
 
 function selectOsintTool(name,btn){
@@ -1289,8 +2098,20 @@ function renderOsintResult(tool,q,data){
 
   // ── SUBDOMINIOS ────────────────────────────────────────
   } else if(tool==='subdomains'){
-    html+=`<div style="margin-bottom:8px;color:var(--text2);font-size:12px">Encontrados: <b style="color:var(--cyan)">${data.count||0}</b> subdominios vía crt.sh</div>`;
-    if(data.subdomains?.length) html+=`<div class="osint-sub-list">${_chips(data.subdomains)}</div>`;
+    const srcInfo=data.sources?`crt.sh: ${data.sources['crt.sh']||0}, HackerTarget: ${data.sources['hackertarget']||0}`:'';
+    html+=`<div style="margin-bottom:8px;color:var(--text2);font-size:12px">Encontrados: <b style="color:var(--cyan)">${data.count||0}</b> subdominios únicos ${srcInfo?`<span style="color:var(--text3);font-size:10px;">(${esc(srcInfo)})</span>`:''}</div>`;
+    if(data.entries?.length){
+      html+=`<table style="width:100%;font-size:11px;border-collapse:collapse;">
+        <tr style="color:var(--text3);font-size:10px;"><td style="padding:3px 6px">Subdominio</td><td style="padding:3px 6px;text-align:right">Fuente</td></tr>
+        ${data.entries.map(e=>`<tr style="border-top:1px solid var(--border)">
+          <td style="padding:3px 6px;color:var(--cyan);font-family:var(--mono)">${esc(e.subdomain)}</td>
+          <td style="padding:3px 6px;text-align:right;">${(e.sources||[]).map(s=>`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--bg4);color:var(--text3);margin-left:3px">${esc(s)}</span>`).join('')}</td>
+        </tr>`).join('')}
+      </table>`;
+    } else if(data.subdomains?.length) {
+      // legacy format fallback
+      html+=`<div class="osint-sub-list">${_chips(data.subdomains)}</div>`;
+    }
 
   // ── SSL CERT ───────────────────────────────────────────
   } else if(tool==='ssl'){
@@ -1425,6 +2246,21 @@ function renderOsintResult(tool,q,data){
         </table>`);
     }
     if(data.notes?.length) html+=_section('Análisis',data.notes.map(n=>`<div style="font-size:12px;margin-bottom:3px">${esc(n)}</div>`).join(''));
+    // Inline HIBP results
+    if(data.hibp){
+      const h=data.hibp;
+      if(h.error){
+        html+=_section('Have I Been Pwned',`<div style="color:var(--text3);font-size:11px">${esc(h.error)}${h.info?` — <a href="${esc(h.info.match(/https?:\/\/\S+/)?.[0]||'')}" target="_blank" style="color:var(--blue)">Más info</a>`:''}</div>`);
+      } else if(!h.breaches?.length){
+        html+=_section('Have I Been Pwned',`<div style="color:var(--green);font-size:12px">✓ No encontrado en ninguna brecha conocida.</div>`);
+      } else {
+        const bHtml=h.breaches.slice(0,10).map(b=>`<div class="breach-item">
+          <div class="breach-name">${esc(b.Name||b.name||'?')}</div>
+          <div class="breach-info">Fecha: ${esc(b.BreachDate||b.breach_date||'?')} · Registros: ${(b.PwnCount||0).toLocaleString()} · Datos: ${esc((b.DataClasses||[]).slice(0,4).join(', '))}</div>
+        </div>`).join('');
+        html+=_section(`Have I Been Pwned — ⚠ ${h.breaches.length} brechas`,bHtml);
+      }
+    }
 
   // ── HIBP ───────────────────────────────────────────────
   } else if(tool==='hibp'){
@@ -1457,6 +2293,29 @@ function renderOsintResult(tool,q,data){
             <td style="padding:3px 6px">${esc([e.first_name,e.last_name].filter(Boolean).join(' '))}</td>
             <td style="padding:3px 6px;color:var(--text3)">${esc(e.position||'')}</td>
             <td style="padding:3px 6px">${e.confidence||0}%</td>
+          </tr>`).join('')}
+        </table>`);
+    }
+
+  // ── LEAKRADAR ─────────────────────────────────────────
+  } else if(tool==='leakradar'){
+    html+=_kv([
+      ['Consulta', data.query],
+      ['Total credenciales', String(data.total||0)],
+      data.balance!=null?['Créditos restantes', String(data.balance)]:[],
+    ].filter(x=>x.length));
+    if(data.results?.length){
+      html+=_section(`Credenciales encontradas (${data.results.length})`,`
+        <table style="width:100%;font-size:11px;border-collapse:collapse;">
+          <tr style="color:var(--text3);font-size:10px;">
+            <td style="padding:3px 6px">Email / Usuario</td>
+            <td style="padding:3px 6px">Contraseña</td>
+            <td style="padding:3px 6px">Base de datos</td>
+          </tr>
+          ${data.results.map(r=>`<tr style="border-top:1px solid var(--border);">
+            <td style="padding:4px 6px;font-family:var(--mono);color:var(--cyan)">${esc(r.email||r.username||'—')}</td>
+            <td style="padding:4px 6px;font-family:var(--mono);color:${r.password?'var(--orange)':'var(--text3)'};">${esc(r.password||r.hashed_password||'—')}</td>
+            <td style="padding:4px 6px;color:var(--text3)">${esc(r.database||'—')}</td>
           </tr>`).join('')}
         </table>`);
     }
@@ -1543,6 +2402,117 @@ function renderOsintResult(tool,q,data){
     } else {
       html+=`<pre class="code-block" style="max-height:400px;overflow-y:auto;white-space:pre-wrap">${esc(JSON.stringify(data,null,2))}</pre>`;
     }
+
+  // ── HASH VT ────────────────────────────────────────────
+  } else if(tool==='hash-vt'){
+    const det=data.detected||0, tot=data.total_engines||0;
+    const pct=tot?Math.round(det/tot*100):0;
+    const col=pct===0?'var(--green)':pct<30?'var(--yellow)':pct<60?'var(--orange)':'var(--red)';
+    html+=`<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap;">
+      <div style="text-align:center;">
+        <div style="font-size:36px;font-weight:700;color:${col};font-family:var(--mono);line-height:1">${det}/${tot}</div>
+        <div style="font-size:10px;color:var(--text3)">motores detectan</div>
+      </div>
+      <div style="flex:1">
+        <div style="height:8px;background:var(--bg4);border-radius:4px;overflow:hidden;margin-bottom:4px">
+          <div style="height:100%;width:${pct}%;background:${col};border-radius:4px;transition:width .5s"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text2)">${esc(data.suggested_label||data.family||'Sin clasificar')}</div>
+      </div>
+    </div>`;
+    html+=_kv([
+      ['Hash', `<code style="font-size:10px">${esc(data.hash)}</code> <span style="color:var(--text3)">(${esc(data.hash_type)})</span>`],
+      ['Nombre', data.file_name],
+      ['Tipo', data.file_type],
+      ['Tamaño', data.file_size?`${(data.file_size/1024).toFixed(1)} KB`:''],
+      ['Familia', data.family],
+      ['Community score', data.community_score>0?`<span style="color:var(--red)">⬆ ${data.community_score} malicious</span>`:`<span style="color:var(--green)">${data.community_score}</span>`],
+      ['Creado', data.created_at],
+      ['1ª subida VT', data.first_submission],
+      ['1ª vez in-the-wild', data.first_seen_itw],
+      ['Último análisis', data.last_analysis],
+    ]);
+    if(data.tags?.length) html+=_section('Tags',`<div class="osint-sub-list">${_chips(data.tags)}</div>`);
+    if(data.names?.length) html+=_section('Nombres alternativos',`<div class="osint-sub-list">${_chips(data.names)}</div>`);
+    if(data.top_detections?.length){
+      html+=_section(`Detecciones AV (${data.top_detections.length})`,`
+        <table style="width:100%;font-size:11px;border-collapse:collapse">
+          <tr style="color:var(--text3)"><td>Antivirus</td><td>Nombre detectado</td></tr>
+          ${data.top_detections.map(d=>`<tr style="border-top:1px solid var(--border)">
+            <td style="padding:2px 8px;color:var(--text2)">${esc(d.av)}</td>
+            <td style="padding:2px 8px;color:var(--red)">${esc(d.result)}</td>
+          </tr>`).join('')}
+        </table>`);
+    }
+    if(data.contacted_domains?.length||data.contacted_ips?.length||data.contacted_urls?.length){
+      const netItems=[];
+      if(data.contacted_domains?.length) netItems.push(...data.contacted_domains.map(d=>({v:d,t:'domain'})));
+      if(data.contacted_ips?.length) netItems.push(...data.contacted_ips.map(i=>({v:i,t:'ip'})));
+      html+=_section('Contactos de red (posibles C2)',`<div style="display:flex;flex-wrap:wrap;gap:4px;">`+
+        netItems.slice(0,20).map(n=>`<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(255,51,68,.1);color:var(--red);border:1px solid rgba(255,51,68,.3);font-family:var(--mono)">${esc(String(n.v))}</span>`).join('')+'</div>');
+    }
+
+  // ── ABUSEIPDB ──────────────────────────────────────────
+  } else if(tool==='abuseipdb'){
+    const score=data.score||0;
+    const col=score<25?'var(--green)':score<75?'var(--yellow)':'var(--red)';
+    const label=score<25?'Bajo riesgo':score<75?'Riesgo moderado':'Alto riesgo';
+    html+=`<div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap;">
+      <div style="text-align:center;">
+        <div style="font-size:40px;font-weight:700;color:${col};font-family:var(--mono);line-height:1">${score}</div>
+        <div style="font-size:10px;color:var(--text3)">Abuse Score</div>
+      </div>
+      <div>
+        <div style="font-size:14px;color:${col};font-weight:600">${label}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${data.total_reports||0} reportes · ${data.distinct_users||0} usuarios distintos</div>
+        <div style="height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-top:6px;width:180px">
+          <div style="height:100%;width:${score}%;background:${col};border-radius:3px"></div>
+        </div>
+      </div>
+    </div>`;
+    html+=_kv([
+      ['IP', data.ip],
+      ['País', data.country],
+      ['ISP', data.isp],
+      ['Dominio', data.domain],
+      ['Tipo uso', data.usage_type],
+      ['Último reporte', data.last_reported],
+      ['Tor', _badge(!data.is_tor,'No es nodo Tor','Nodo Tor detectado')],
+      ['Proxy', _badge(!data.is_proxy,'No es proxy','Proxy público')],
+      ['Whitelisted', data.is_whitelisted?'✓ Sí':'—'],
+    ]);
+    if(data.reports?.length){
+      html+=_section(`Últimos reportes (${data.reports.length})`,`
+        <table style="width:100%;font-size:11px;border-collapse:collapse">
+          <tr style="color:var(--text3)"><td>Fecha</td><td>Categorías</td><td>Comentario</td></tr>
+          ${data.reports.map(r=>`<tr style="border-top:1px solid var(--border)">
+            <td style="padding:3px 6px;white-space:nowrap">${esc(r.date)}</td>
+            <td style="padding:3px 6px;color:var(--orange)">${esc(r.categories.slice(0,3).join(', '))}</td>
+            <td style="padding:3px 6px;color:var(--text3)">${esc(r.comment.substring(0,80))}${r.comment.length>80?'…':''}</td>
+          </tr>`).join('')}
+        </table>`);
+    }
+
+  // ── MALWAREBAZAAR ──────────────────────────────────────
+  } else if(tool==='malwarebazaar'){
+    html+=_kv([
+      ['SHA256', `<code style="font-size:10px">${esc(data.sha256)}</code>`],
+      ['SHA1', `<code style="font-size:10px">${esc(data.sha1)}</code>`],
+      ['MD5', `<code style="font-size:10px">${esc(data.md5)}</code>`],
+      ['Nombre', data.file_name],
+      ['Tipo', data.file_type],
+      ['MIME', data.mime_type],
+      ['Tamaño', data.file_size?`${(data.file_size/1024).toFixed(1)} KB`:''],
+      ['Firma', data.signature],
+      ['Primera vez', data.first_seen],
+      ['Última vez', data.last_seen],
+      ['Origen', data.origin],
+      ['Reporter', data.reporter],
+      ['Entrega', data.delivery_method],
+    ]);
+    if(data.tags?.length) html+=_section('Tags',`<div class="osint-sub-list">${_chips(data.tags)}</div>`);
+    if(data.imphash) html+=_section('Hashes adicionales',_kv([['Imphash',`<code>${esc(data.imphash)}</code>`],['SSDeep',`<code style="font-size:9px">${esc(data.ssdeep||'')}</code>`]]));
+    html+=_section('Enlace',`<a href="https://bazaar.abuse.ch/sample/${esc(data.sha256)}/" target="_blank" style="color:var(--blue);font-size:12px">Ver en MalwareBazaar →</a>`);
   }
 
   html+='</div>';
@@ -1577,6 +2547,7 @@ const ENTITY_TYPES={
   'vuln':        {label:'Vulnerabilidad/CVE',    color:'#ff6600'},
   'methodology': {label:'Metodología',           color:'#aa55ff'},
   'concept':     {label:'Concepto Fundamental',  color:'#00ddff'},
+  'mitre':       {label:'MITRE ATT&CK',          color:'#f59e0b'},
 };
 
 S.graphData=null;  // cache: {nodes, edges}
@@ -1631,6 +2602,17 @@ function showGraphInfo(d, allEdges, nodeById){
       return `<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${ret.color}22;color:${ret.color};border:1px solid ${ret.color}44;cursor:pointer;"
         onclick="event.stopPropagation();">${esc(r.name)}</span>`;
     }).join('')+`</div>`;
+  }
+
+  // ATT&CK link for mitre nodes
+  if(d.type==='mitre'){
+    const tid=d.name.match(/T\d{4}(\.\d{3})?/i);
+    if(tid){
+      const url='https://attack.mitre.org/techniques/'+tid[0].replace('.','/');
+      extra+=`<div style="margin-top:8px;"><a href="${url}" target="_blank"
+        style="font-size:10px;color:#f59e0b;text-decoration:none;font-family:var(--mono);">
+        ⚡ Ver en ATT&amp;CK →</a></div>`;
+    }
   }
 
   document.getElementById('gipExtra').innerHTML=extra;
@@ -1759,6 +2741,8 @@ async function renderGraph(){
 }
 
 // ─── CVEs ─────────────────────────────────────────────────────────────────────
+const _edbCache={};  // cve_id → {count, exploits, loaded}
+
 function renderCVEs(){
   const q=(document.getElementById('cveSearch').value||'').toLowerCase();
   let cves=q?S.cves.filter(c=>c.cve_id.toLowerCase().includes(q)||(c.description||'').toLowerCase().includes(q)):S.cves;
@@ -1766,19 +2750,72 @@ function renderCVEs(){
   if(!cves.length){
     document.getElementById('cvesList').innerHTML='<div class="empty-msg">Sin CVEs registrados.</div>';return;
   }
-  document.getElementById('cvesList').innerHTML=cves.map(c=>`
-    <div class="cve-entry">
+  document.getElementById('cvesList').innerHTML=cves.map(c=>{
+    const sevClass=`sev-${(c.severity||'info').toLowerCase()}`;
+    const edbCached=_edbCache[c.cve_id];
+    const edbBadge=edbCached
+      ? (edbCached.count>0
+          ? `<span class="edb-badge edb-found" title="${edbCached.count} exploit(s) en Exploit-DB">🔥 ${edbCached.count} EXPLOIT${edbCached.count>1?'S':''}</span>`
+          : `<span class="edb-badge edb-none">Sin exploit conocido</span>`)
+      : `<span class="edb-badge edb-pending" id="edb-${c.cve_id.replace(/[^a-z0-9]/gi,'_')}" onclick="loadEDB('${esc(c.cve_id)}',this)">EDB ▸</span>`;
+    return `
+    <div class="cve-entry" id="cve-entry-${c.id}">
       <div>
         <div class="cve-id">${esc(c.cve_id)}</div>
-        ${c.severity?`<span class="cve-sev sev-${(c.severity||'info').toLowerCase()}">${esc(c.severity)}</span>`:''}
+        ${c.severity?`<span class="cve-sev ${sevClass}">${esc(c.severity)}</span>`:''}
         ${c.cvss?`<div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:3px">CVSS ${c.cvss}</div>`:''}
         <a href="https://nvd.nist.gov/vuln/detail/${esc(c.cve_id)}" target="_blank" class="nvd-link">↗ NVD</a>
+        <a href="https://www.exploit-db.com/search?cve=${esc(c.cve_id)}" target="_blank" class="nvd-link" style="color:var(--orange);border-color:rgba(255,102,0,.3);">↗ EDB</a>
+        <div style="margin-top:6px;">${edbBadge}</div>
       </div>
       <div class="cve-body">
         ${c.title?`<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">${esc(c.title)}</div>`:''}
         <div class="cve-desc">${esc(c.description||'Sin descripción')}</div>
+        <div id="edb-detail-${c.id}" style="display:none;margin-top:8px;"></div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+async function loadEDB(cveId, badgeEl){
+  if(_edbCache[cveId]?.loaded) return;
+  if(badgeEl) badgeEl.textContent='⟳ Consultando EDB...';
+  try{
+    const data=await API.get(`/api/cves/${encodeURIComponent(cveId)}/exploits`);
+    _edbCache[cveId]={count:data.count||0,exploits:data.exploits||[],loaded:true};
+    // Update badge
+    const safeId=cveId.replace(/[^a-z0-9]/gi,'_');
+    const el=document.getElementById('edb-'+safeId);
+    if(el){
+      if(data.count>0){
+        el.className='edb-badge edb-found';
+        el.onclick=null;
+        el.innerHTML=`🔥 ${data.count} EXPLOIT${data.count>1?'S':''}`;
+        el.title=data.exploits.map(e=>e.title).join('\n');
+        // Inject detail into parent cve-entry
+        const entry=el.closest('.cve-entry');
+        if(entry){
+          const detailId=entry.id.replace('cve-entry-','');
+          const detailEl=document.getElementById('edb-detail-'+detailId);
+          if(detailEl){
+            detailEl.style.display='block';
+            detailEl.innerHTML=`<div style="font-size:10px;color:var(--text3);margin-bottom:4px;font-family:var(--mono)">EXPLOITS EN EXPLOIT-DB:</div>`+
+              data.exploits.map(e=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+                ${e.verified?'<span style="color:var(--green);font-size:10px">✓</span>':'<span style="color:var(--text3);font-size:10px">·</span>'}
+                <a href="${esc(e.url)}" target="_blank" style="font-size:11px;color:var(--orange)">${esc(e.title||e.id)}</a>
+                <span style="font-size:10px;color:var(--text3)">${esc(e.date)} ${e.type?'· '+esc(e.type):''} ${e.platform?'· '+esc(e.platform):''}</span>
+              </div>`).join('');
+          }
+        }
+      } else {
+        el.className='edb-badge edb-none';
+        el.onclick=null;
+        el.textContent='Sin exploit conocido';
+      }
+    }
+  }catch(err){
+    if(badgeEl){badgeEl.textContent='EDB ▸';badgeEl.title='Error: '+err.message;}
+  }
 }
 
 // ─── CHAT ─────────────────────────────────────────────────────────────────────
@@ -1829,7 +2866,7 @@ function formatAIText(text){
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
 function switchTab(name){
-  ['editor','tools','commands','osint','graph','cves','audits'].forEach(t=>{
+  ['editor','tools','commands','osint','enum','graph','cves','audits','mitre','forensic'].forEach(t=>{
     document.getElementById('panel-'+t).classList.toggle('show',t===name);
     document.getElementById('tab-'+t).classList.toggle('active',t===name);
   });
@@ -1837,12 +2874,87 @@ function switchTab(name){
   if(name==='graph') setTimeout(renderGraph,50);
   if(name==='osint') loadOsintHistory();
   if(name==='audits' && !S.currentAudit) selectAudit('web-app', document.querySelector('.audit-type-btn'));
+  if(name==='mitre') loadMitre();
+  if(name==='enum') initEnumSaveButtons();
 }
 
 // ─── MODALS ───────────────────────────────────────────────────────────────────
 function openUploadModal(){document.getElementById('uploadModal').classList.add('show');}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 function openCheatsheetModal(){document.getElementById('cheatModal').classList.add('show');}
+
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+const SETTINGS_KEYS=['ANTHROPIC_API_KEY','VIRUSTOTAL_API_KEY','ABUSEIPDB_API_KEY','MALWAREBAZAAR_API_KEY','HUNTER_API_KEY','SHODAN_API_KEY','URLSCAN_API_KEY','HIBP_API_KEY','LEAKRADAR_API_KEY','ANYRUN_API_KEY'];
+
+async function openSettingsModal(){
+  document.getElementById('settingsSaveMsg').style.display='none';
+  // Clear inputs first
+  SETTINGS_KEYS.forEach(k=>{
+    const el=document.getElementById('sk-'+k);
+    if(el) el.value='';
+    const st=document.getElementById('st-'+k);
+    if(st) st.textContent='Cargando…';
+  });
+  document.getElementById('settingsModal').classList.add('show');
+  try{
+    const data=await API.get('/api/settings');
+    SETTINGS_KEYS.forEach(k=>{
+      const st=document.getElementById('st-'+k);
+      if(!st) return;
+      const info=data[k]||{};
+      if(info.set){
+        st.innerHTML=`<span style="color:var(--green)">✓ Configurada</span> <span style="color:var(--text3);font-family:var(--mono)">${esc(info.masked)}</span>`;
+      } else {
+        st.innerHTML=`<span style="color:var(--text3)">— No configurada</span>`;
+      }
+    });
+  }catch(e){
+    SETTINGS_KEYS.forEach(k=>{
+      const st=document.getElementById('st-'+k);
+      if(st) st.textContent='';
+    });
+  }
+}
+
+function toggleKeyVis(key){
+  const el=document.getElementById('sk-'+key);
+  if(!el) return;
+  el.type=el.type==='password'?'text':'password';
+}
+
+async function saveSettings(){
+  const keys={};
+  SETTINGS_KEYS.forEach(k=>{
+    const el=document.getElementById('sk-'+k);
+    if(el&&el.value.trim()) keys[k]=el.value.trim();
+  });
+  if(!Object.keys(keys).length){
+    const msg=document.getElementById('settingsSaveMsg');
+    msg.style.display='block';msg.style.background='rgba(255,204,0,.08)';
+    msg.style.borderColor='rgba(255,204,0,.3)';msg.style.color='var(--yellow)';
+    msg.textContent='Introduce al menos una clave para guardar.';
+    return;
+  }
+  try{
+    const res=await API.post('/api/settings',{keys});
+    const msg=document.getElementById('settingsSaveMsg');
+    msg.style.display='block';msg.style.background='rgba(0,255,136,.08)';
+    msg.style.borderColor='rgba(0,255,136,.3)';msg.style.color='var(--green)';
+    msg.textContent=`✓ Guardadas: ${res.saved.join(', ')}. Activas inmediatamente.`;
+    // Clear inputs and refresh status
+    res.saved.forEach(k=>{
+      const el=document.getElementById('sk-'+k);
+      if(el) el.value='';
+    });
+    // Reload status after short delay
+    setTimeout(()=>openSettingsModal(),800);
+  }catch(e){
+    const msg=document.getElementById('settingsSaveMsg');
+    msg.style.display='block';msg.style.background='rgba(255,51,68,.08)';
+    msg.style.borderColor='rgba(255,51,68,.3)';msg.style.color='var(--red)';
+    msg.textContent='Error guardando: '+e.message;
+  }
+}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));});
 
 // ─── EXPORT ───────────────────────────────────────────────────────────────────
@@ -1859,6 +2971,15 @@ async function exportAll(){
 }
 
 // ─── STATUS ───────────────────────────────────────────────────────────────────
+function showGlobalProgress(msg){
+  if(msg) setStatus(msg);
+  document.getElementById('sbProgressBar').style.display='';
+}
+function hideGlobalProgress(msg,type='ok'){
+  document.getElementById('sbProgressBar').style.display='none';
+  if(msg) setStatus(msg,type);
+}
+
 function setStatus(msg,type='ok'){
   const el=document.getElementById('statusMsg');
   el.textContent=msg;
@@ -1866,18 +2987,18 @@ function setStatus(msg,type='ok'){
 }
 
 // ─── GRAPH REINDEX ALL ────────────────────────────────────────────────────────
-async function reindexAllEntities(){
+async function reindexAllEntities(btn){
   if(!confirm('⚙ Reindexar el grafo de conocimiento.\n\nEsto borrará todos los datos actuales del grafo y re-extraerá entidades de TODAS las notas usando IA.\n\nPuede tardar varios minutos según el número de notas. ¿Continuar?')) return;
-  const btn=event.currentTarget;
   const orig=btn.textContent;
   btn.textContent='⏳ Procesando...';
   btn.disabled=true;
+  showGlobalProgress('Reindexando grafo de conocimiento...');
   try{
     const res=await API.post('/api/graph/reindex-all',{});
     S.graphData=null;
     await renderGraph();
-    setStatus(`Grafo reindexado: ${res.notes_processed} notas · ${res.entities_extracted} entidades extraídas${res.errors?` · ${res.errors} errores`:''}`, res.errors?'warn':'');
-  }catch(e){setStatus('Error reindexando: '+e.message,'error');}
+    hideGlobalProgress(`Grafo reindexado: ${res.notes_processed} notas · ${res.entities_extracted} entidades extraídas${res.errors?` · ${res.errors} errores`:''}`, res.errors?'warn':'ok');
+  }catch(e){hideGlobalProgress('Error reindexando: '+e.message,'error');}
   finally{btn.textContent=orig;btn.disabled=false;}
 }
 
@@ -1908,6 +3029,102 @@ function setToolTypeFilter(val,btn){
   document.querySelectorAll('[id^="typeBtn-"]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderToolsGrid();
+}
+
+// ─── MITRE ATT&CK ─────────────────────────────────────────────────────────────
+const TACTIC_ORDER=['Reconnaissance','Resource Development','Initial Access','Execution','Persistence',
+  'Privilege Escalation','Defense Evasion','Credential Access','Discovery','Lateral Movement',
+  'Collection','Command and Control','Exfiltration','Impact'];
+
+function mitreTacticColor(tactic){
+  const idx=TACTIC_ORDER.indexOf(tactic);
+  const colors=['#94a3b8','#64748b','#ef4444','#f97316','#eab308','#a855f7','#6366f1',
+    '#ec4899','#06b6d4','#3b82f6','#10b981','#f59e0b','#14b8a6','#f43f5e'];
+  return idx>=0?colors[idx]:'#f59e0b';
+}
+
+async function loadMitre(){
+  const body=document.getElementById('mitreBody');
+  try{
+    const data=await API.get('/api/mitre');
+    document.getElementById('mitreTotalBadge').textContent=data.total+' técnicas';
+    renderMitreTactics(data.tactics);
+  }catch(e){
+    body.innerHTML=`<div class="empty-msg">Error cargando técnicas: ${esc(String(e))}</div>`;
+  }
+}
+
+function renderMitreTactics(tactics){
+  const body=document.getElementById('mitreBody');
+  if(!tactics||Object.keys(tactics).length===0){
+    body.innerHTML='<div class="empty-msg">No hay técnicas MITRE extraídas aún. Sube documentos con técnicas ATT&CK.</div>';
+    return;
+  }
+  // Sort tactics by canonical order, unknowns last
+  const sorted=Object.keys(tactics).sort((a,b)=>{
+    const ia=TACTIC_ORDER.indexOf(a),ib=TACTIC_ORDER.indexOf(b);
+    if(ia<0&&ib<0) return a.localeCompare(b);
+    if(ia<0) return 1; if(ib<0) return -1;
+    return ia-ib;
+  });
+
+  let html='';
+  for(const tactic of sorted){
+    const techs=tactics[tactic];
+    const col=mitreTacticColor(tactic);
+    html+=`<div style="margin-bottom:18px;">
+      <div style="font-size:11px;font-family:var(--mono);color:${col};text-transform:uppercase;letter-spacing:1px;
+        border-bottom:1px solid ${col}33;padding-bottom:4px;margin-bottom:8px;">
+        ⚡ ${esc(tactic)} <span style="color:var(--text3);font-size:10px;">(${techs.length})</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">`;
+    for(const t of techs){
+      const tid=t.technique_id;
+      const turl='https://attack.mitre.org/techniques/'+tid.replace('.','/');
+      html+=`<div style="background:var(--bg3);border:1px solid ${col}44;border-radius:6px;padding:7px 10px;
+          min-width:180px;max-width:260px;flex:1;cursor:pointer;"
+          title="${esc(t.context_snippet||'')}"
+          onclick="mitreCardClick(${t.note_id},event)">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+          <a href="${turl}" target="_blank" onclick="event.stopPropagation()"
+            style="font-size:11px;font-family:var(--mono);color:${col};text-decoration:none;
+              background:${col}22;padding:1px 6px;border-radius:4px;">${esc(tid)}</a>
+          ${t.note_id?`<span style="font-size:9px;color:var(--text3)">nota #${t.note_id}</span>`:''}
+        </div>
+        <div style="font-size:11px;color:var(--text1);font-weight:500;">${esc(t.technique_name||'')}</div>
+        ${t.context_snippet?`<div style="font-size:10px;color:var(--text3);margin-top:3px;overflow:hidden;
+          text-overflow:ellipsis;white-space:nowrap;">${esc(t.context_snippet.substring(0,80))}</div>`:''}
+      </div>`;
+    }
+    html+=`</div></div>`;
+  }
+  body.innerHTML=html;
+}
+
+function mitreCardClick(noteId,ev){
+  if(!noteId) return;
+  loadNote(noteId);
+  switchTab('editor');
+}
+
+let _mitreSearchTimer=null;
+function searchMitre(q){
+  clearTimeout(_mitreSearchTimer);
+  _mitreSearchTimer=setTimeout(async()=>{
+    if(!q.trim()){loadMitre();return;}
+    try{
+      const rows=await API.get('/api/mitre/search?q='+encodeURIComponent(q));
+      document.getElementById('mitreTotalBadge').textContent=rows.length+' resultados';
+      if(!rows.length){
+        document.getElementById('mitreBody').innerHTML='<div class="empty-msg">Sin resultados para "'+esc(q)+'"</div>';
+        return;
+      }
+      // Re-group by tactic for render
+      const grouped={};
+      rows.forEach(r=>{const t=r.tactic||'Uncategorized';(grouped[t]=grouped[t]||[]).push(r);});
+      renderMitreTactics(grouped);
+    }catch(e){}
+  },280);
 }
 
 // ─── AUDIT ────────────────────────────────────────────────────────────────────
@@ -2141,6 +3358,8 @@ function renderAudit(){
     html+='</div>';
   });
   document.getElementById('auditBody').innerHTML=html;
+  // Show/hide report button
+  document.getElementById('btnGenReport').style.display=doneItems>0?'':'none';
 }
 
 async function toggleAuditItem(type,itemId,event){
@@ -2182,6 +3401,282 @@ async function resetAudit(){
   }catch(e){setStatus('Error: '+e.message,'error');}
 }
 
+// ─── AUDIT REPORT ─────────────────────────────────────────────────────────────
+S.reportData={technical:'',executive:''};
+S.reportTab='technical';
+
+function _collectAuditItems(){
+  const type=S.currentAudit;
+  const tmpl=AUDIT_TEMPLATES[type];
+  if(!tmpl) return [];
+  const prog=S.auditProgress[type]||{};
+  const items=[];
+  tmpl.phases.forEach(phase=>{
+    phase.items.forEach(item=>{
+      const state=prog[item.id]||{};
+      items.push({
+        id:item.id,
+        text:item.text,
+        done:!!(state.done),
+        notes:state.notes||'',
+        severity:item.sev||'medium',
+      });
+    });
+  });
+  return items;
+}
+
+async function openReportModal(){
+  const type=S.currentAudit;
+  const tmpl=AUDIT_TEMPLATES[type];
+  if(!tmpl) return;
+  const items=_collectAuditItems();
+  const done=items.filter(i=>i.done).length;
+  const pct=Math.round(done/items.length*100);
+
+  document.getElementById('reportAuditName').textContent=tmpl.name;
+  document.getElementById('reportContent').style.display='none';
+  document.getElementById('reportSpinner').style.display='block';
+  document.getElementById('reportModal').classList.add('show');
+
+  // Spinner animation
+  let dots=0;
+  const spinInterval=setInterval(()=>{
+    dots=(dots+1)%4;
+    document.getElementById('reportSpinnerDots').textContent='.'.repeat(dots+1);
+  },400);
+
+  try{
+    const result=await API.post('/api/audit/generate-report',{
+      audit_type:type,
+      audit_name:tmpl.name,
+      items:items,
+      progress:pct,
+    });
+    S.reportData=result;
+    S.reportTab='technical';
+    clearInterval(spinInterval);
+    document.getElementById('reportSpinner').style.display='none';
+    document.getElementById('reportContent').style.display='block';
+    switchReportTab('technical');
+  }catch(e){
+    clearInterval(spinInterval);
+    document.getElementById('reportSpinner').style.display='none';
+    document.getElementById('reportContent').style.display='block';
+    document.getElementById('reportContent').textContent='Error generando informe: '+String(e);
+  }
+}
+
+function switchReportTab(tab){
+  S.reportTab=tab;
+  const content=S.reportData[tab]||'Sin contenido.';
+  document.getElementById('reportContent').textContent=content;
+  document.getElementById('reportTabTech').style.borderColor=tab==='technical'?'var(--purple)':'var(--border2)';
+  document.getElementById('reportTabTech').style.color=tab==='technical'?'var(--purple)':'var(--text2)';
+  document.getElementById('reportTabExec').style.borderColor=tab==='executive'?'var(--green)':'var(--border2)';
+  document.getElementById('reportTabExec').style.color=tab==='executive'?'var(--green)':'var(--text2)';
+  document.getElementById('btnDownloadMd').style.display='';
+  document.getElementById('btnPrintPdf').style.display=tab==='executive'?'':'none';
+}
+
+function downloadReport(fmt){
+  const content=S.reportData[S.reportTab]||'';
+  const type=S.currentAudit;
+  const tab=S.reportTab;
+  const filename=`informe_${type}_${tab}_${new Date().toISOString().slice(0,10)}.md`;
+  const blob=new Blob([content],{type:'text/markdown;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function printReport(){
+  const content=S.reportData['executive']||S.reportData['technical']||'';
+  // Convert basic markdown to HTML for print
+  let html=content
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/\n\n/g,'<br><br>');
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>Informe Ejecutivo</title>
+    <style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;line-height:1.6;color:#222;}
+    h1,h2,h3{color:#1a1a2e;}li{margin:4px 0;}@media print{body{margin:20px;}}</style>
+    </head><body>${html}</body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(),300);
+}
+
+// ─── FORENSIC MODE ────────────────────────────────────────────────────────────
+
+async function runForensic(){
+  const hash=(document.getElementById('forensicHash').value||'').trim().toLowerCase();
+  if(hash.length!==64||!/^[0-9a-f]{64}$/.test(hash)){
+    setStatus('SHA256 inválido — debe tener exactamente 64 caracteres hexadecimales','error');
+    return;
+  }
+  const btn=document.getElementById('btnForensic');
+  btn.disabled=true;btn.textContent='⟳ Analizando...';
+  document.getElementById('forensicPipeline').style.display='';
+  document.getElementById('forensicProgress').style.display='';
+
+  // Animate steps
+  ['vt','mb','ar','ai'].forEach(s=>{
+    document.getElementById('ficon-'+s).textContent='·';
+    document.getElementById('fstep-'+s).style.borderColor='var(--border)';
+  });
+  _setFStep('vt','running');_setFStep('mb','running');
+
+  const body=document.getElementById('forensicBody');
+  body.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-family:var(--mono)">
+    <div style="font-size:28px;margin-bottom:8px">⟳</div>
+    Ejecutando pipeline forense...<br>
+    <span style="font-size:10px;">VT + MalwareBazaar en paralelo, luego síntesis IA</span>
+  </div>`;
+
+  try{
+    const r=await fetch(`/api/forensic/analyze?hash=${encodeURIComponent(hash)}`,{method:'POST'});
+    if(!r.ok) throw new Error(await r.text());
+    const data=await r.json();
+    _setFStep('vt', data.vt?.error?'error':'ok');
+    _setFStep('mb', data.mb?.error?'error':'ok');
+    _setFStep('ar', data.anyrun?.error?'error':(data.anyrun?.tasks?.length>0?'ok':'skip'));
+    _setFStep('ai','ok');
+    renderForensicResult(hash, data);
+    await loadAll();  // refresh notes/CVEs/MITRE counts
+    setStatus('Nota forense generada — '+data.title);
+  }catch(e){
+    ['vt','mb','ar','ai'].forEach(s=>_setFStep(s,'error'));
+    body.innerHTML=`<div class="empty-msg" style="color:var(--red)">Error en pipeline: ${esc(String(e))}</div>`;
+    setStatus('Error forense: '+e.message,'error');
+  }finally{
+    btn.disabled=false;btn.textContent='▶ Analizar';
+    document.getElementById('forensicProgress').style.display='none';
+  }
+}
+
+function _setFStep(step,state){
+  const icon=document.getElementById('ficon-'+step);
+  const el=document.getElementById('fstep-'+step);
+  if(!icon||!el) return;
+  const map={running:['⟳','var(--yellow)'],ok:['✓','var(--green)'],error:['✗','var(--red)'],skip:['—','var(--text3)']};
+  const [ic,col]=map[state]||['·','var(--text3)'];
+  icon.textContent=ic;icon.style.color=col;
+  el.style.borderColor=col+'88';
+}
+
+function renderForensicResult(hash, data){
+  const body=document.getElementById('forensicBody');
+  const vt=data.vt||{};
+  const mb=data.mb||{};
+  const anyrun=data.anyrun||{};
+  const tl=data.timeline||{};
+
+  // Severity color
+  const det=vt.detected||0,tot=vt.total_engines||0;
+  const score=tot>0?Math.round(det/tot*100):0;
+  const scoreCol=score>60?'var(--red)':score>20?'var(--orange)':'var(--green)';
+
+  // Timeline HTML
+  const tlPoints=[
+    ['Creación',tl.created],
+    ['1ª subida VT',tl.first_submission],
+    ['1ª vez ITW',tl.first_seen_itw],
+    ['Último análisis',tl.last_analysis],
+  ].filter(([,v])=>v);
+  const tlHtml=tlPoints.length?`
+    <div class="forensic-timeline" style="flex-wrap:wrap;">
+      ${tlPoints.map(([label,val],i)=>`
+        ${i>0?'<span class="ftl-arrow">→</span>':''}
+        <div class="ftl-node"><b>${esc(label)}</b>${esc(val?.slice?.(0,10)||val||'')}</div>
+      `).join('')}
+    </div>`:'';
+
+  let html=`
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+        <span style="font-family:var(--mono);font-size:13px;color:${scoreCol};font-weight:700">${det}/${tot} motores</span>
+        <span style="font-size:12px;color:var(--text2)">${esc(vt.suggested_label||vt.family||mb.file_name||hash.slice(0,16)+'…')}</span>
+        <a href="#" onclick="loadNote(${data.note_id});switchTab('editor');return false"
+          style="font-size:11px;padding:3px 10px;background:var(--bg4);border:1px solid var(--green);border-radius:4px;color:var(--green);text-decoration:none;">
+          ✎ Ver nota #${data.note_id}</a>
+        <span style="font-size:10px;color:var(--text3)">CVEs: ${data.cves_found||0} · MITRE: ${data.mitre_found||0}</span>
+      </div>
+      ${tlHtml}
+    </div>`;
+
+  // VT section
+  if(!vt.error){
+    html+=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:12px;margin-bottom:10px;">
+      <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:8px;">● VIRUSTOTAL</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;font-size:11px;">
+        ${vt.file_name?`<div><span style="color:var(--text3)">Nombre:</span> ${esc(vt.file_name)}</div>`:''}
+        ${vt.file_type?`<div><span style="color:var(--text3)">Tipo:</span> ${esc(vt.file_type)}</div>`:''}
+        ${vt.file_size?`<div><span style="color:var(--text3)">Tamaño:</span> ${(vt.file_size/1024).toFixed(1)} KB</div>`:''}
+        ${vt.family?`<div><span style="color:var(--text3)">Familia:</span> <b style="color:var(--red)">${esc(vt.family)}</b></div>`:''}
+        ${vt.community_score!=null?`<div><span style="color:var(--text3)">Comunidad:</span> ${vt.community_score>0?'⚠ '+vt.community_score:'✓ '+Math.abs(vt.community_score)}</div>`:''}
+      </div>
+      ${vt.top_detections?.length?`<div style="margin-top:8px;font-size:10px;color:var(--text3);margin-bottom:4px;">Top detecciones:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;">
+          ${vt.top_detections.slice(0,8).map(d=>`<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(255,51,68,.1);color:var(--red);border:1px solid rgba(255,51,68,.3)">${esc(d.av)}: ${esc(d.result)}</span>`).join('')}
+        </div>`:''}
+      ${vt.contacted_domains?.length?`<div style="margin-top:8px;font-size:10px;color:var(--text3)">C2 Domains: ${vt.contacted_domains.slice(0,6).map(d=>`<code style="color:var(--orange)">${esc(d)}</code>`).join(', ')}</div>`:''}
+    </div>`;
+  } else {
+    html+=`<div style="color:var(--text3);font-size:12px;padding:8px;border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;">VT: ${esc(vt.error)}</div>`;
+  }
+
+  // MalwareBazaar section
+  if(!mb.error){
+    html+=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:12px;margin-bottom:10px;">
+      <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:8px;">● MALWAREBAZAAR</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;font-size:11px;">
+        ${mb.file_name?`<div><span style="color:var(--text3)">Fichero:</span> ${esc(mb.file_name)}</div>`:''}
+        ${mb.file_type?`<div><span style="color:var(--text3)">Tipo:</span> ${esc(mb.file_type)}</div>`:''}
+        ${mb.signature?`<div><span style="color:var(--text3)">Firma:</span> <b style="color:var(--orange)">${esc(mb.signature)}</b></div>`:''}
+        ${mb.first_seen?`<div><span style="color:var(--text3)">Primera vez:</span> ${esc(mb.first_seen?.slice?.(0,10)||'')}</div>`:''}
+      </div>
+      ${mb.tags?.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">${mb.tags.map(t=>`<span style="font-size:10px;padding:1px 7px;border-radius:10px;background:rgba(255,102,0,.1);color:var(--orange);border:1px solid rgba(255,102,0,.3)">${esc(t)}</span>`).join('')}</div>`:''}
+    </div>`;
+  }
+
+  // Any.run section
+  if(anyrun.tasks?.length){
+    html+=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:12px;margin-bottom:10px;">
+      <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:8px;">● ANY.RUN (${anyrun.tasks.length} tareas)</div>
+      ${anyrun.tasks.map(t=>`<div style="margin-bottom:6px;padding:6px;background:var(--bg4);border-radius:4px;">
+        <div style="font-size:11px;display:flex;gap:8px;align-items:center;">
+          <span style="color:${t.verdict==='malicious'?'var(--red)':'var(--text2)'};font-weight:600">${esc(t.verdict||'?')}</span>
+          <span style="color:var(--text2)">${esc(t.threat_name||t.name||'')}</span>
+          <span style="color:var(--text3);font-size:10px">${esc(t.date)}</span>
+          ${t.url?`<a href="${esc(t.url)}" target="_blank" style="font-size:10px;color:var(--blue)">Ver →</a>`:''}
+        </div>
+        ${t.mitre?.length?`<div style="margin-top:4px;font-size:10px;color:var(--text3)">MITRE: ${t.mitre.map(m=>`<code>${esc(m)}</code>`).join(' ')}</div>`:''}
+      </div>`).join('')}
+    </div>`;
+  } else if(anyrun.link){
+    html+=`<div style="font-size:11px;color:var(--text3);padding:6px;margin-bottom:10px;">Any.run: <a href="${esc(anyrun.link)}" target="_blank" style="color:var(--blue)">Buscar en Any.run →</a>${anyrun.note?' — '+esc(anyrun.note):''}</div>`;
+  }
+
+  body.innerHTML=html;
+}
+
+function clearForensic(){
+  document.getElementById('forensicHash').value='';
+  document.getElementById('forensicHash').style.borderColor='';
+  document.getElementById('forensicPipeline').style.display='none';
+  document.getElementById('forensicBody').innerHTML=`<div style="text-align:center;padding:50px;color:var(--text3);font-family:var(--mono);font-size:12px;">
+    <div style="font-size:36px;margin-bottom:10px;opacity:.3;">🔬</div>
+    Introduce un hash SHA256 para iniciar el análisis forense automático
+  </div>`;
+}
+
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function esc(s){
   if(s===null||s===undefined) return '';
@@ -2199,6 +3694,178 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.key==='Enter') runOsint();
   });
 });
+
+// ─── ENUM MODULE ──────────────────────────────────────────────────────────────
+let _enumSaveBtnsInit=false;
+function initEnumSaveButtons(){
+  if(_enumSaveBtnsInit) return;
+  _enumSaveBtnsInit=true;
+  document.querySelectorAll('#panel-enum .enum-cmd-card').forEach(card=>{
+    const row=card.querySelector('.enum-cmd-row');
+    const codeEl=card.querySelector('.enum-cmd-code');
+    const descEl=card.querySelector('.enum-cmd-desc');
+    if(!row||!codeEl) return;
+    const cmd=codeEl.textContent.replace(/\s+/g,' ').trim();
+    const desc=descEl?descEl.textContent.trim():'';
+    // Infer OS from command content
+    let os='linux';
+    if(/xfreerdp|\.exe|Administrator|powershell/i.test(cmd)) os='windows';
+    else if(/ftp |ssh |smbclient|nmap|hydra|nikto|ffuf|curl|mysql|redis|mongo|psql|rpcinfo|showmount|dnsrecon|dig |telnet|enum4linux|searchsploit/i.test(cmd)) os='linux';
+    // Infer tool_name from accordion header if present
+    const acc=card.closest('.enum-accordion');
+    const toolName=acc?acc.querySelector('.enum-acc-name')?.textContent?.split('—')[0].trim():'';
+    const btn=document.createElement('button');
+    btn.className='enum-save-btn';
+    btn.textContent='💾';
+    btn.title='Guardar en base de conocimiento';
+    btn.onclick=()=>saveEnumCmd(btn,cmd,desc,os,toolName);
+    row.appendChild(btn);
+  });
+  // Also add save buttons to service table rows
+  document.querySelectorAll('#panel-enum .enum-service-table tbody tr').forEach(tr=>{
+    const tds=tr.querySelectorAll('td');
+    if(tds.length<3) return;
+    const cmd=tds[2].textContent.trim();
+    const service=tds[1].textContent.trim();
+    const td=tds[3];
+    if(!td) return;
+    const btn=document.createElement('button');
+    btn.className='enum-save-btn';
+    btn.textContent='💾';
+    btn.title='Guardar en base de conocimiento';
+    btn.onclick=()=>saveEnumCmd(btn,cmd,'Enumeración '+service,'linux',service);
+    td.appendChild(btn);
+  });
+}
+
+async function saveEnumCmd(btn,cmd,desc,os,toolName){
+  const orig=btn.textContent;
+  btn.textContent='⟳';btn.disabled=true;
+  try{
+    await API.post('/api/commands',{
+      command:cmd,
+      description:desc||null,
+      tool_name:toolName||null,
+      os:os||'linux',
+      category:'enumeracion',
+      tags:['enumeracion']
+    });
+    btn.textContent='✓';
+    btn.classList.add('saved');
+    btn.disabled=true;
+    btn.title='Guardado en KB';
+    await loadAll();
+    setStatus('Comando guardado en KB — categoría enumeración');
+  }catch(e){
+    btn.textContent=orig;btn.disabled=false;
+    setStatus('Error guardando comando: '+e.message,'error');
+  }
+}
+
+async function saveNmapResult(btn){
+  const ip=(document.getElementById('nmapIP').value||'TARGET_IP').trim();
+  const cmd1=document.getElementById('nmapCmd1').textContent.trim();
+  const cmd2raw=document.getElementById('nmapCmd2').textContent.trim();
+  const cmd2=cmd2raw.startsWith('Introduce')?null:cmd2raw;
+  const now=new Date().toISOString().slice(0,10);
+  const content=`## Escaneo Nmap — ${ip}  \nFecha: ${now}\n\n### Fase 1 — Descubrimiento de puertos\n\`\`\`\n${cmd1}\n\`\`\`\n\n${cmd2?`### Fase 2 — Análisis en profundidad\n\`\`\`\n${cmd2}\n\`\`\`\n\n`:''}\n> Generado desde el módulo Enumeración de CyberKB`;
+  const orig=btn.textContent;
+  btn.textContent='⟳ Guardando...';btn.disabled=true;
+  try{
+    const res=await API.post('/api/notes',{
+      title:`Nmap — ${ip} — ${now}`,
+      content,
+      category:'tecnica',
+      subcategory:'enumeracion',
+      tags:['nmap','enumeracion',ip]
+    });
+    btn.textContent='✓ Nota creada';
+    btn.style.color='var(--green)';btn.style.borderColor='var(--green)';
+    await loadAll();
+    setStatus('Nota Nmap creada — ID #'+res.id);
+    setTimeout(()=>{btn.textContent=orig;btn.disabled=false;btn.style.color='';btn.style.borderColor='';},2500);
+  }catch(e){
+    btn.textContent=orig;btn.disabled=false;
+    setStatus('Error creando nota: '+e.message,'error');
+  }
+}
+
+function switchEnumTab(name){
+  ['discovery','services','nmap'].forEach(t=>{
+    document.getElementById('esec-'+t).classList.toggle('show',t===name);
+    document.getElementById('estab-'+t).classList.toggle('active',t===name);
+  });
+}
+
+function enumCopy(btn,text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const orig=btn.textContent;
+    btn.textContent='✓';
+    btn.style.color='var(--green)';
+    btn.style.borderColor='var(--green)';
+    setTimeout(()=>{btn.textContent=orig;btn.style.color='';btn.style.borderColor='';},1200);
+  });
+}
+
+function toggleEnumAcc(hd){
+  const body=hd.nextElementSibling;
+  const arrow=hd.querySelector('.enum-acc-arrow');
+  const open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  hd.classList.toggle('open',!open);
+  arrow.classList.toggle('open',!open);
+}
+
+// Network discovery command generator
+const _ENUM_FLAGS={pn:false,v:false,sV:true,sC:true,O:false,A:false,oN:false};
+function toggleEnumFlag(flag){
+  _ENUM_FLAGS[flag]=!_ENUM_FLAGS[flag];
+  document.getElementById('tgl-'+flag).classList.toggle('active',_ENUM_FLAGS[flag]);
+  buildNmapCmd();
+}
+
+function buildNetCmd(){
+  const range=(document.getElementById('genNetRange').value||'192.168.1.0/24').trim();
+  const tool=document.getElementById('genNetTool').value;
+  let cmd='';
+  if(tool==='netdiscover') cmd='sudo netdiscover -r '+range;
+  else if(tool==='arp-scan') cmd='sudo arp-scan '+range;
+  else cmd='nmap -sn '+range;
+  document.getElementById('genNetOutput').textContent=cmd;
+}
+
+function buildNmapCmd(){
+  const ip=(document.getElementById('nmapIP').value||'TARGET_IP').trim();
+  const rate=document.getElementById('nmapSpeed').value;
+  const ports=(document.getElementById('nmapPorts').value||'').trim();
+
+  // Phase 1
+  let cmd1='sudo nmap -p- --min-rate '+rate;
+  if(_ENUM_FLAGS.pn) cmd1+=' -Pn';
+  if(_ENUM_FLAGS.v)  cmd1+=' -v';
+  cmd1+=' '+ip;
+  document.getElementById('nmapCmd1').textContent=cmd1;
+
+  // Phase 2
+  const cmd2el=document.getElementById('nmapCmd2');
+  const copyBtn=document.getElementById('nmapCmd2copy');
+  if(!ports){
+    cmd2el.textContent='Introduce puertos de la Fase 1 para generar este comando';
+    cmd2el.style.color='var(--text3)';
+    copyBtn.disabled=true;
+    return;
+  }
+  let cmd2='sudo nmap -p '+ports;
+  if(_ENUM_FLAGS.sV) cmd2+=' -sV';
+  if(_ENUM_FLAGS.sC) cmd2+=' -sC';
+  if(_ENUM_FLAGS.O)  cmd2+=' -O';
+  if(_ENUM_FLAGS.A)  cmd2+=' -A';
+  if(_ENUM_FLAGS.oN) cmd2+=' -oN resultado.txt';
+  cmd2+=' '+ip;
+  cmd2el.textContent=cmd2;
+  cmd2el.style.color='var(--orange)';
+  copyBtn.disabled=false;
+}
 </script>
 </body>
 </html>

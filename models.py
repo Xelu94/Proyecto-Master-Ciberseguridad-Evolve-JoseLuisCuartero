@@ -34,9 +34,10 @@ class Note(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    commands = relationship("Command", back_populates="note", cascade="all, delete-orphan")
-    cves = relationship("CVE", back_populates="note", cascade="all, delete-orphan")
-    tools = relationship("Tool", secondary=tool_note, back_populates="tools")
+    commands         = relationship("Command",        back_populates="note", cascade="all, delete-orphan")
+    cves             = relationship("CVE",            back_populates="note", cascade="all, delete-orphan")
+    tools            = relationship("Tool",           secondary=tool_note,  back_populates="tools")
+    mitre_techniques = relationship("MitreTechnique", back_populates="note", cascade="all, delete-orphan")
 
 
 class Command(Base):
@@ -124,6 +125,21 @@ class OsintResult(Base):
     query_type = Column(String(50), nullable=False)
     result = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class MitreTechnique(Base):
+    """MITRE ATT&CK technique extracted from a note."""
+    __tablename__ = "mitre_techniques"
+
+    id             = Column(Integer,     primary_key=True, autoincrement=True)
+    note_id        = Column(Integer,     ForeignKey("notes.id"), nullable=True)
+    technique_id   = Column(String(20),  nullable=False)   # e.g. T1055, T1555.003
+    technique_name = Column(String(300), nullable=True)
+    tactic         = Column(String(100), nullable=True)    # Persistence, Credential Access…
+    context_snippet= Column(Text,        nullable=True)
+    created_at     = Column(DateTime,    default=datetime.utcnow)
+
+    note = relationship("Note", back_populates="mitre_techniques")
 
 
 class AuditProgress(Base):
