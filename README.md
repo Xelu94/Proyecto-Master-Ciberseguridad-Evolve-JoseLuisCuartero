@@ -1,4 +1,4 @@
-# CyberKB v5.6 — Cybersecurity Knowledge Base
+# CyberKB v5.7 — Cybersecurity Knowledge Base
 
 > Base de conocimiento de ciberseguridad potenciada por IA (Claude Sonnet). Gestiona notas, comandos, herramientas, CVEs, consultas OSINT, threat intelligence y análisis forense desde una interfaz local sin depender de servicios externos.
 
@@ -7,7 +7,7 @@
 ![SQLite](https://img.shields.io/badge/SQLite-local-lightgrey)
 ![Claude](https://img.shields.io/badge/IA-Claude%20Sonnet-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-5.6-purple)
+![Version](https://img.shields.io/badge/version-5.7-purple)
 
 ---
 
@@ -30,15 +30,45 @@ Cuando estudias ciberseguridad acumulas cientos de notas, PDFs, comandos y CVEs 
 |---|---|
 | 📝 **Editor** | Notas con categoría, subcategoría, tags, análisis IA automático al subir documentos |
 | ⚙ **Herramientas** | Catálogo de tools detectadas automáticamente con URL, tipo y casos de uso |
-| ⌘ **Comandos** | Cheatsheet filtrable por OS: Linux / Windows / PowerShell / Google Dorks / PrivEsc |
+| ⌘ **Comandos** | Cheatsheet filtrable por OS: Linux / Windows / PowerShell / Google Dorks / PrivEsc. Incluye generadores: SQLi, reverse shells, estabilización de shell |
 | ◎ **OSINT** | 18+ herramientas agrupadas por objetivo: dominio, IP, email, URL, credenciales filtradas |
-| 🗺 **Enumeración** | Módulo ofensivo completo: descubrimiento de red, análisis de servicios por puerto, generador Nmap interactivo y cheatsheet |
+| 🗺 **Enumeración** | Módulo ofensivo completo: descubrimiento de red, análisis de servicios por puerto, generador Nmap interactivo, cheatsheet y sección Windows/AD |
 | ⬡ **Grafo** | Grafo D3.js de entidades reales: ataques, defensas, herramientas, protocolos, vulnerabilidades, MITRE |
 | ⚠ **CVEs** | Lista de CVEs con severidad, descripción y badges Exploit-DB en tiempo real |
 | ✓ **Auditorías** | Checklists de auditoría (web, red, AD, móvil) con progreso guardado e informes PDF/MD |
 | ⚡ **MITRE ATT&CK** | Técnicas extraídas automáticamente de tus notas, organizadas por táctica con enlace directo |
 | 🔬 **Forense** | Pipeline forense automático SHA256: VirusTotal + MalwareBazaar + Any.run → nota IA |
 | ✦ **Chat IA** | Claude con contexto de toda tu base de conocimiento |
+
+---
+
+## Novedades v5.7
+
+Bloque de herramientas ofensivas interactivas, todas frontend (sin llamadas externas) y con botón "Guardar en KB" que persiste el comando en la base de datos:
+
+### 💉 Generador de Payloads SQLi
+- Modal en el módulo de Comandos con selector de tipo de campo (login usuario/contraseña, buscador, parámetro URL) y objetivo (bypass auth, detección, UNION-based, comentar query)
+- Payloads regenerados en tiempo real, cada uno con explicación, copiar y guardar en KB (categoría `SQL Injection`)
+
+### 🪟 Sección Windows / AD en Enumeración
+- Nuevo cuarto tab del módulo Enumeración
+- SMB (smbclient, enum4linux), MSSQL e Impacket (mssqlclient, secuencia xp_cmdshell completa, comprobación sysadmin), post-explotación (psexec, secretsdump) y tabla de equivalencias Windows vs Linux
+
+### ⚡ Catálogo de técnicas de escalada de privilegios
+- Tarjetas de técnica en el filtro PrivEsc: nombre, comando de detección, comando de explotación y campo de referencia editable para notas propias
+- 4 técnicas precargadas (PATH Hijacking, SUID interactivo, vi/vim vía sudo, historial PowerShell)
+- El usuario puede añadir sus propias técnicas desde la UI; todo persiste en `localStorage`
+
+### 🐚 Estabilización de shell (TTY upgrade)
+- Snippet de los 5 pasos copiable de una vez y paso a paso, con aviso de que Ctrl+Z y fg son acciones manuales
+
+### 🔌 Generador de Reverse Shells
+- Modal con IP, puerto y técnica (PHP simple, PHP mkfifo, Bash /dev/tcp, PowerShell + nc64.exe)
+- Comandos con IP/puerto interpolados y recordatorio dinámico del listener (`nc -lvnp PUERTO`)
+
+### 📰 Checklist de auditoría WordPress
+- Nuevo tipo de checklist en Auditorías con 8 ítems (information disclosure en login, enumeración de usuarios, fuerza bruta, plugins/temas vulnerables, file upload, permisos de ficheros sensibles)
+- Comandos `wpscan` integrados y progreso guardado igual que el resto de auditorías
 
 ---
 
