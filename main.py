@@ -1409,7 +1409,19 @@ class CommandIn(BaseModel):
 
 @app.post("/api/commands", status_code=201)
 def create_command(data: CommandIn, db: Session = Depends(get_db)):
-    """Create a single command directly (e.g. from Enum module 'Save to KB' button)."""
+    """Create a single command directly (e.g. from Enum/WebVuln 'Save to KB' button).
+
+    INSERT OR IGNORE semantics: if an identical command already exists in the same
+    category, return it instead of creating a duplicate.
+    """
+    existing = (
+        db.query(Command)
+        .filter(Command.command == data.command, Command.category == data.category)
+        .first()
+    )
+    if existing:
+        return _cmd_dict(existing)
+
     c = Command(
         command=data.command,
         description=data.description,

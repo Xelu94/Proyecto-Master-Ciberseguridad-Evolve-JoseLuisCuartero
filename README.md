@@ -1,4 +1,4 @@
-# CyberKB v5.7 — Cybersecurity Knowledge Base
+# CyberKB v5.8 — Cybersecurity Knowledge Base
 
 > Base de conocimiento de ciberseguridad potenciada por IA (Claude Sonnet). Gestiona notas, comandos, herramientas, CVEs, consultas OSINT, threat intelligence y análisis forense desde una interfaz local sin depender de servicios externos.
 
@@ -7,7 +7,7 @@
 ![SQLite](https://img.shields.io/badge/SQLite-local-lightgrey)
 ![Claude](https://img.shields.io/badge/IA-Claude%20Sonnet-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-5.7-purple)
+![Version](https://img.shields.io/badge/version-5.8-purple)
 
 ---
 
@@ -33,12 +33,44 @@ Cuando estudias ciberseguridad acumulas cientos de notas, PDFs, comandos y CVEs 
 | ⌘ **Comandos** | Cheatsheet filtrable por OS: Linux / Windows / PowerShell / Google Dorks / PrivEsc. Incluye generadores: SQLi, reverse shells, estabilización de shell |
 | ◎ **OSINT** | 18+ herramientas agrupadas por objetivo: dominio, IP, email, URL, credenciales filtradas |
 | 🗺 **Enumeración** | Módulo ofensivo completo: descubrimiento de red, análisis de servicios por puerto, generador Nmap interactivo, cheatsheet y sección Windows/AD |
+| 🕷 **Vulnerabilidades Web** | Fichas de Path Traversal/LFI/RFI, XXE, SSRF y SSTI con detección, payloads y bypass; identificador de motor SSTI |
 | ⬡ **Grafo** | Grafo D3.js de entidades reales: ataques, defensas, herramientas, protocolos, vulnerabilidades, MITRE |
 | ⚠ **CVEs** | Lista de CVEs con severidad, descripción y badges Exploit-DB en tiempo real |
 | ✓ **Auditorías** | Checklists de auditoría (web, red, AD, móvil) con progreso guardado e informes PDF/MD |
 | ⚡ **MITRE ATT&CK** | Técnicas extraídas automáticamente de tus notas, organizadas por táctica con enlace directo |
 | 🔬 **Forense** | Pipeline forense automático SHA256: VirusTotal + MalwareBazaar + Any.run → nota IA |
 | ✦ **Chat IA** | Claude con contexto de toda tu base de conocimiento |
+
+---
+
+## Novedades v5.8
+
+Bloque de explotación web enfocado en la metodología de pentesting web. Todo frontend, con "Guardar en KB" que persiste el payload/comando en la base de datos (INSERT OR IGNORE, sin duplicados).
+
+### 🕷 Módulo de Vulnerabilidades Web
+- Nuevo módulo central con una ficha por vulnerabilidad: descripción, cómo detectarla, payloads copiables y técnicas de bypass
+- **Path Traversal / LFI / RFI**: traversal, bypass de filtros no recursivos, URL y double URL encoding, null byte, RFI, y ficheros clave a leer
+- **XXE**: payload base y variantes (id_rsa, código fuente PHP vía php://filter)
+- **SSRF**: bypasses agrupados (sin restricción, blacklist, whitelist, open redirect) + recordatorio de escaneo de red interna con Burp
+- **SSTI**: polyglot de detección, tabla de identificación de motor y RCE de Jinja2
+
+### 🧪 Identificador de motor SSTI
+- Herramienta interactiva: seleccionas el payload probado y pegas la respuesta del servidor
+- Devuelve el/los motores que corresponden y su payload de RCE específico, copiable
+- Cubre Jinja2, Tornado, Mako (Python), ERB (Ruby), FreeMarker, Velocity, Thymeleaf (Java), Twig, Smarty (PHP), Nunjucks (Node.js) y Razor (.NET)
+
+### 📚 Diccionarios y polyglots
+- Payloads polyglot SSTI y XSS, rutas exactas de diccionarios de SecLists (LFI, directorios, template engines, subdominios DNS) y enumeración de parámetros ocultos con x8
+
+### ⚡ Nuevas técnicas de escalada de privilegios
+- Sobreescritura de binario con permisos de escritura, bypass de rbash y persistencia con clave SSH
+- Se fusionan automáticamente en la biblioteca del usuario sin pisar sus técnicas propias
+
+### 🧭 Checklist de Metodología Web
+- Nuevo checklist en Auditorías con el flujo completo: reconocimiento (Nmap, whatweb, código fuente, robots, fuzzing recursivo, CMS) y análisis/explotación por contexto
+
+### 🔧 Correcciones
+- Escapado seguro de payloads con comillas simples y caracteres HTML en todos los botones de copiar/guardar (evita que payloads como los de XSS/SSTI rompan la interfaz)
 
 ---
 

