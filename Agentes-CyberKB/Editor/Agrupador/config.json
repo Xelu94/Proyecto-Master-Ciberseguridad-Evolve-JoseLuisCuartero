@@ -1,0 +1,89 @@
+{
+  "modelo": {
+    "principal": "claude-opus-5",
+    "respaldo": "claude-opus-4-8",
+    "max_tokens": 8000,
+    "effort": "medium"
+  },
+
+  "categorias": [
+    "reconocimiento",
+    "enumeracion",
+    "explotacion",
+    "post-explotacion",
+    "web-hacking",
+    "redes",
+    "criptografia",
+    "forense",
+    "malware",
+    "osint",
+    "ingenieria-social",
+    "herramienta",
+    "comandos",
+    "vulnerabilidad",
+    "metodologia",
+    "teoria"
+  ],
+
+  "tipos_entidad": [
+    "attack",
+    "defense",
+    "tool",
+    "protocol",
+    "vuln",
+    "methodology",
+    "concept",
+    "mitre"
+  ],
+
+  "tacticas_mitre": [
+    "Reconnaissance",
+    "Resource Development",
+    "Initial Access",
+    "Execution",
+    "Persistence",
+    "Privilege Escalation",
+    "Defense Evasion",
+    "Credential Access",
+    "Discovery",
+    "Lateral Movement",
+    "Collection",
+    "Command and Control",
+    "Exfiltration",
+    "Impact"
+  ],
+
+  "sistemas_comando": ["linux", "windows", "powershell", "google", "both"],
+
+  "limites": {
+    "caracteres_minimos": 200,
+    "max_entidades": 30,
+    "max_relaciones": 40,
+    "max_comandos": 15,
+    "max_herramientas": 20,
+    "max_cves": 15,
+    "max_mitre": 15,
+    "max_etiquetas": 10,
+    "longitud_nombre_entidad": 200,
+    "recorte_resumen": 20000
+  },
+
+  "bbdd": {
+    "url": "http://localhost:8000/api/bbdd/ingesta",
+    "timeout_segundos": 60
+  },
+
+  "obsi": {
+    "url": "http://localhost:8000/api/obsi/ingesta",
+    "timeout_segundos": 60
+  },
+
+  "salida": {
+    "directorio": "agrupaciones"
+  },
+
+  "errores": {
+    "generico": "Ha habido un error",
+    "resumen_corto": "El resumen es demasiado corto para agrupar."
+  }
+}

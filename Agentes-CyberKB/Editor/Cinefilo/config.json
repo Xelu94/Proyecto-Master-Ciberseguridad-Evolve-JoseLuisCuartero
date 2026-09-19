@@ -1,0 +1,52 @@
+{
+  "clasificador": {
+    "modelo": "claude-opus-5",
+    "modelo_respaldo": "claude-opus-4-8",
+    "max_tokens": 2000,
+    "effort": "low",
+    "certeza_minima_para_descartar": 0.8
+  },
+
+  "subtitulos": {
+    "usar_oficiales": true,
+    "usar_automaticos": false,
+    "idiomas": ["es", "en"],
+    "formato": "vtt"
+  },
+
+  "transcripcion": {
+    "modelo": "gpt-transcribe",
+    "idioma": null,
+    "max_reintentos": 2,
+    "terminos_dominio": "Transcripcion de una charla tecnica de ciberseguridad. Terminos frecuentes: ransomware, phishing, malware, exploit, backdoor, botnet, DDoS, APT, CVE, CVSS, NVD, parcheo, vulnerabilidad, RGPD, NIS2, DORA, ISO 27001, ENS, PCI DSS, SOC 2, SIEM, SOC, EDR, XDR, IAM, PAM, MFA, RBAC, zero trust, pentesting, red team, blue team, threat intel, IOC, MITRE ATT&CK, forense, cadena de custodia, SBOM, SAST, DAST, hardening, cifrado, seudonimizacion, DPIA, RTO, RPO."
+  },
+
+  "limites": {
+    "duracion_maxima_segundos": 5400,
+    "troceo_segundos": 1200,
+    "caracteres_minimos": 200,
+    "timeout_descarga_segundos": 600,
+    "timeout_transcripcion_segundos": 300,
+    "timeout_ffmpeg_segundos": 600
+  },
+
+  "red": {
+    "esquemas_permitidos": ["http", "https"],
+    "bloquear_direcciones_privadas": true
+  },
+
+  "salida": {
+    "directorio": "videos"
+  },
+
+  "escritor": {
+    "url": "http://localhost:8000/api/escritor/resumen-agente",
+    "timeout_segundos": 120
+  },
+
+  "errores": {
+    "url_invalida": "Comprueba la URL, no parece ser de video.",
+    "no_ciberseguridad": "Esto no es ciberseguridad.",
+    "generico": "Ha pasado algo, vuelve a intentarlo."
+  }
+}

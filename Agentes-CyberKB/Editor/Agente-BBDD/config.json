@@ -1,0 +1,30 @@
+{
+  "comportamiento": {
+    "incrementar_contadores": true,
+    "conservar_valor_si_el_nuevo_esta_vacio": true
+  },
+
+  "longitudes": {
+    "note_title": 500,
+    "note_category": 100,
+    "note_subcategory": 100,
+    "tool_name": 200,
+    "tool_url": 500,
+    "tool_type": 20,
+    "tool_category": 100,
+    "command_tool_name": 200,
+    "command_os": 20,
+    "command_category": 100,
+    "cve_id": 50,
+    "cve_title": 500,
+    "cve_severity": 20,
+    "mitre_technique_id": 20,
+    "mitre_technique_name": 300,
+    "entity_name": 200,
+    "entity_type": 50
+  },
+
+  "errores": {
+    "generico": "Ha habido un error"
+  }
+}

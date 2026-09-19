@@ -1,0 +1,19 @@
+{
+  "modelo": {
+    "id": "claude-opus-5",
+    "respaldo": "claude-opus-4-8",
+    "max_tokens": 16000,
+    "effort": "medium"
+  },
+
+  "limites": {
+    "min_caracteres_entrada": 4000,
+    "extensiones": [".pdf", ".odt", ".txt", ".md", ".log"],
+    "timeout_agrupador_segundos": 30
+  },
+
+  "mensajes": {
+    "min_caracteres": "El resumen no llega al minimo de caracteres requeridos para iniciar el resumen.",
+    "error": "Ha pasado algo, vuelve a intentarlo."
+  }
+}

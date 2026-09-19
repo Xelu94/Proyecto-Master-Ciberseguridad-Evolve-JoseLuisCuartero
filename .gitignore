@@ -36,3 +36,8 @@ Thumbs.db
 # Keep these dirs tracked
 !data/.gitkeep
 !uploads/.gitkeep
+
+# Salidas de los agentes (ficheros generados)
+Agentes-CyberKB/Editor/*/videos/
+Agentes-CyberKB/Editor/*/resumenes/
+Agentes-CyberKB/Editor/*/agrupaciones/
