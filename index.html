@@ -875,7 +875,7 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
 
       <div class="enum-group">
         <details class="enum-nmap-ref">
-          <summary style="cursor:pointer;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-family:var(--mono);padding:8px 0;user-select:none;">📖 Glosario de siglas y términos (clic para desplegar)</summary>
+          <summary style="cursor:pointer;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-family:var(--mono);padding:8px 0;user-select:none;">📖 Glosario — términos de esta pestaña (clic para desplegar)</summary>
           <div style="padding-top:10px;">
             <table class="enum-service-table">
               <thead><tr><th>Término</th><th>Qué significa</th></tr></thead>
@@ -883,17 +883,6 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
                 <tr><td>ARP</td><td>Protocolo que asocia IP ↔ MAC dentro de la red local. No cruza routers.</td></tr>
                 <tr><td>TTL</td><td>Time To Live: contador que cada salto de red resta 1; delata el SO por su valor inicial.</td></tr>
                 <tr><td>CIDR (/24)</td><td>Notación del tamaño de la subred. /24 = 256 direcciones; /26 = 64.</td></tr>
-                <tr><td>NSE</td><td>Nmap Scripting Engine: los scripts de nmap que se lanzan con <code style="color:var(--orange)">--script</code>.</td></tr>
-                <tr><td>Sesión nula</td><td>Conexión a SMB sin usuario ni contraseña (<code style="color:var(--orange)">-N</code>).</td></tr>
-                <tr><td>Fuzzing</td><td>Probar automáticamente muchas rutas/valores para descubrir contenido oculto.</td></tr>
-                <tr><td>AXFR</td><td>Transferencia de zona DNS: si está mal configurada, vuelca todos los registros.</td></tr>
-                <tr><td>Open relay</td><td>Servidor SMTP que reenvía correo de cualquiera; permite suplantar dominios.</td></tr>
-                <tr><td>EternalBlue (MS17-010)</td><td>Vulnerabilidad crítica de SMB que da ejecución remota.</td></tr>
-                <tr><td>BlueKeep (CVE-2019-0708)</td><td>Vulnerabilidad pre-auth de RDP con ejecución remota.</td></tr>
-                <tr><td>Impacket</td><td>Colección de herramientas Python para hablar protocolos de Windows (SMB, MSSQL…).</td></tr>
-                <tr><td>sysadmin</td><td>Rol de administrador total en SQL Server.</td></tr>
-                <tr><td>NTLM</td><td>Formato de los hashes de credenciales de Windows.</td></tr>
-                <tr><td>RCE</td><td>Remote Code Execution: ejecutar comandos en la máquina objetivo.</td></tr>
               </tbody>
             </table>
           </div>
@@ -1038,6 +1027,22 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
         </details>
       </div>
 
+      <div class="enum-group">
+        <details class="enum-nmap-ref">
+          <summary style="cursor:pointer;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-family:var(--mono);padding:8px 0;user-select:none;">📖 Glosario — términos de esta pestaña (clic para desplegar)</summary>
+          <div style="padding-top:10px;">
+            <table class="enum-service-table">
+              <thead><tr><th>Término</th><th>Qué significa</th></tr></thead>
+              <tbody>
+                <tr><td>SYN scan (-sS)</td><td>Escaneo sigiloso que no completa la conexión TCP; requiere permisos de root.</td></tr>
+                <tr><td>Ping sweep (-sn)</td><td>Barrido que solo comprueba qué hosts están vivos, sin escanear puertos.</td></tr>
+                <tr><td>NSE</td><td>Nmap Scripting Engine: los scripts de nmap que se lanzan con --script (p. ej. -sC).</td></tr>
+                <tr><td>EternalBlue (MS17-010)</td><td>Vulnerabilidad crítica de SMB con ejecución remota; se detecta con un script NSE.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </div>
     </div><!-- /esec-scan -->
 
     <!-- SECTION 3: Enumerar servicios (por servicio + Windows/AD) -->
@@ -1303,13 +1308,6 @@ EXEC xp_cmdshell 'whoami';</pre>
       <!-- Windows / AD (id esec-winad conservado para la categorización de guardado en KB) -->
       <div id="esec-winad">
       <div class="enum-group">
-        <div class="enum-group-title">Post-explotación Windows</div>
-        <div class="enum-danger-note" style="margin-bottom:8px;">⚠ Fase de POST-EXPLOTACIÓN, no enumeración: parte de que ya tienes credenciales o acceso válido. Se incluye para tener la secuencia completa a mano, pero conceptualmente va después de enumerar.</div>
-        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">impacket-psexec administrador:contraseña@IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'impacket-psexec administrador:contraseña@IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Ejecución remota de comandos como SYSTEM vía SMB</div></div>
-        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">impacket-secretsdump dominio/usuario:contraseña@IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'impacket-secretsdump dominio/usuario:contraseña@IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Extraer hashes NTLM del Active Directory (SAM, LSA, NTDS.dit)</div></div>
-      </div>
-
-      <div class="enum-group">
         <div class="enum-group-title">Referencia rápida — Windows vs Linux</div>
         <table class="enum-ttl-table">
           <thead><tr><th>Acción</th><th>Linux</th><th>Windows</th></tr></thead>
@@ -1324,6 +1322,26 @@ EXEC xp_cmdshell 'whoami';</pre>
       </div>
       </div>
 
+      <div class="enum-group">
+        <details class="enum-nmap-ref">
+          <summary style="cursor:pointer;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-family:var(--mono);padding:8px 0;user-select:none;">📖 Glosario — términos de esta pestaña (clic para desplegar)</summary>
+          <div style="padding-top:10px;">
+            <table class="enum-service-table">
+              <thead><tr><th>Término</th><th>Qué significa</th></tr></thead>
+              <tbody>
+                <tr><td>Fuzzing</td><td>Probar automáticamente muchas rutas o valores para descubrir contenido oculto (ffuf).</td></tr>
+                <tr><td>AXFR</td><td>Transferencia de zona DNS: si está mal configurada, vuelca todos los registros.</td></tr>
+                <tr><td>Open relay</td><td>Servidor SMTP que reenvía correo de cualquiera; permite suplantar dominios.</td></tr>
+                <tr><td>EternalBlue (MS17-010)</td><td>Vulnerabilidad crítica de SMB con ejecución remota.</td></tr>
+                <tr><td>BlueKeep (CVE-2019-0708)</td><td>Vulnerabilidad pre-auth de RDP con ejecución remota.</td></tr>
+                <tr><td>Impacket</td><td>Colección de herramientas Python para hablar protocolos de Windows (SMB, MSSQL…).</td></tr>
+                <tr><td>sysadmin</td><td>Rol de administrador total en SQL Server.</td></tr>
+                <tr><td>RCE</td><td>Remote Code Execution: ejecutar comandos en la máquina objetivo.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </div>
     </div><!-- /esec-services -->
   </div><!-- /panel-enum -->
 
