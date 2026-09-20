@@ -756,6 +756,12 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
   </div>
   <!-- ENUM PANEL -->
   <div class="panel" id="panel-enum">
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;">
+      <span style="font-size:10px;font-family:var(--mono);color:var(--text3);white-space:nowrap;">🎯 OBJETIVO</span>
+      <input type="text" id="enumTarget" placeholder="IP o dominio (ej. 10.10.10.5) — rellena todos los comandos" oninput="applyEnumTarget()"
+        style="flex:1;max-width:340px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:3px 9px;font-size:11px;font-family:var(--mono);outline:none;"
+        onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='var(--border2)'">
+    </div>
     <div class="enum-subtabs">
       <button class="enum-stab active" id="estab-discovery" onclick="switchEnumTab('discovery')">① 🌐 Descubrir la red</button>
       <button class="enum-stab" id="estab-scan" onclick="switchEnumTab('scan')">② ⚡ Escanear puertos</button>
@@ -3112,7 +3118,7 @@ function switchTab(name){
   if(name==='osint') loadOsintHistory();
   if(name==='audits' && !S.currentAudit) selectAudit('web-app', document.querySelector('.audit-type-btn'));
   if(name==='mitre') loadMitre();
-  if(name==='enum') initEnumSaveButtons();
+  if(name==='enum'){ initEnumSaveButtons(); initEnumTarget(); }
   if(name==='webvuln') renderWebVulnList();
 }
 
@@ -4576,6 +4582,41 @@ function switchEnumTab(name){
     document.getElementById('esec-'+t).classList.toggle('show',t===name);
     document.getElementById('estab-'+t).classList.toggle('active',t===name);
   });
+}
+
+// ─── Objetivo global de Enumeración ─────────────────────────────────────────
+const _ENUM_EXAMPLE_IP='10.10.10.1';
+const _ENUM_EXAMPLE_RANGE='192.168.1.0/24';
+let _enumTargetInit=false;
+function initEnumTarget(){
+  if(_enumTargetInit) return;
+  _enumTargetInit=true;
+  // Guarda la plantilla original (con el token IP) de cada comando y reenlaza
+  // su botón de copiar al texto ya sustituido.
+  document.querySelectorAll('#panel-enum .enum-cmd-code').forEach(code=>{
+    if(!/\bIP\b/.test(code.textContent)) return;
+    code.dataset.tpl=code.textContent;
+    const btn=code.closest('.enum-cmd-row')?.querySelector('.enum-copy-btn');
+    if(btn) btn.onclick=()=>enumCopy(btn,code.textContent);
+  });
+  applyEnumTarget();
+}
+function applyEnumTarget(){
+  const t=(document.getElementById('enumTarget').value||'').trim();
+  // Tarjetas: IP → objetivo, o vuelve a "IP" si el campo está vacío
+  document.querySelectorAll('#panel-enum .enum-cmd-code[data-tpl]').forEach(code=>{
+    code.textContent = t ? code.dataset.tpl.replace(/\bIP\b/g,t) : code.dataset.tpl;
+  });
+  // Generador Nmap (②): usa el objetivo, o la IP de ejemplo si está vacío
+  const ipField=document.getElementById('nmapIP');
+  if(ipField){ ipField.value = t || _ENUM_EXAMPLE_IP; buildNmapCmd(); }
+  // Generador de descubrimiento (①): si el objetivo es una IPv4, deriva su /24
+  const netField=document.getElementById('genNetRange');
+  if(netField){
+    if(/^\d{1,3}(\.\d{1,3}){3}$/.test(t)) netField.value=t.replace(/\.\d{1,3}$/,'.0')+'/24';
+    else if(!t) netField.value=_ENUM_EXAMPLE_RANGE;
+    buildNetCmd();
+  }
 }
 
 function enumCopy(btn,text){
