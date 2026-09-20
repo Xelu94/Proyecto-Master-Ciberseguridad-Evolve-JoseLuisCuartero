@@ -790,15 +790,15 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <div class="enum-cmd-code">sudo netdiscover -r 192.168.1.0/24</div>
             <button class="enum-copy-btn" onclick="enumCopy(this,'sudo netdiscover -r 192.168.1.0/24')">⎘ Copiar</button>
           </div>
-          <div class="enum-cmd-desc">Descubrimiento ARP pasivo — muestra IP, MAC y fabricante. Identifica VMs por fabricante.</div>
-          <div class="enum-meta"><span class="noise-tag noise-low">🟢 Silencioso</span><span>ARP pasivo — escucha sin emitir</span></div>
+          <div class="enum-cmd-desc">Recorre todo el rango de la red enviando peticiones ARP y lista los hosts vivos con su IP, su dirección MAC y el fabricante. El fabricante ayuda a distinguir máquinas virtuales (VMware, VirtualBox) de equipos físicos. Solo funciona dentro de tu misma red local, porque ARP no cruza routers.</div>
+          <div class="enum-meta"><span class="noise-tag noise-med">🟡 Moderado</span><span>ARP activo — emite peticiones por todo el rango</span></div>
         </div>
         <div class="enum-cmd-card">
           <div class="enum-cmd-row">
             <div class="enum-cmd-code">sudo arp-scan 192.168.1.0/24</div>
             <button class="enum-copy-btn" onclick="enumCopy(this,'sudo arp-scan 192.168.1.0/24')">⎘ Copiar</button>
           </div>
-          <div class="enum-cmd-desc">ARP activo, más rápido que netdiscover</div>
+          <div class="enum-cmd-desc">Descubre hosts por ARP igual que netdiscover, pero de forma más rápida y directa. También está limitado a tu red local, ya que ARP no atraviesa routers.</div>
           <div class="enum-meta"><span class="noise-tag noise-med">🟡 Moderado</span><span>Emite paquetes ARP</span></div>
         </div>
         <div class="enum-cmd-card">
@@ -806,7 +806,7 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <div class="enum-cmd-code">nmap -sn 192.168.1.0/24</div>
             <button class="enum-copy-btn" onclick="enumCopy(this,'nmap -sn 192.168.1.0/24')">⎘ Copiar</button>
           </div>
-          <div class="enum-cmd-desc">Ping sweep sin escanear puertos. Útil cuando ARP está bloqueado.</div>
+          <div class="enum-cmd-desc">Barrido de ping (ping sweep): comprueba qué hosts responden sin llegar a escanear sus puertos — la opción <code style="color:var(--orange)">-sn</code> desactiva el escaneo de puertos. Útil cuando ARP no sirve, por ejemplo si el objetivo está en otra red al otro lado de un router.</div>
           <div class="enum-meta"><span class="noise-tag noise-med">🟡 Moderado</span><span>ICMP + ARP según entorno</span></div>
         </div>
         <div class="enum-cmd-card">
@@ -814,7 +814,7 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <div class="enum-cmd-code">ping -c 1 IP</div>
             <button class="enum-copy-btn" onclick="enumCopy(this,'ping -c 1 IP')">⎘ Copiar</button>
           </div>
-          <div class="enum-cmd-desc">Comprobación individual de conectividad con un host</div>
+          <div class="enum-cmd-desc">Envía un único paquete ICMP (<code style="color:var(--orange)">-c 1</code> = un solo intento) para comprobar si un host concreto está vivo y responde. Si contesta, la respuesta incluye su TTL, que sirve para adivinar el sistema operativo con la tabla de abajo.</div>
           <div class="enum-meta"><span class="noise-tag noise-low">🟢 Silencioso</span><span>Un solo paquete ICMP</span></div>
         </div>
         <div class="enum-cmd-card">
@@ -822,7 +822,7 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <div class="enum-cmd-code" style="font-size:10px;">for i in $(seq 1 254); do ping -c 1 -W 1 192.168.1.$i | grep "bytes from" | cut -d' ' -f4 | tr -d ':' &amp; done</div>
             <button class="enum-copy-btn" onclick="enumCopy(this,'for i in $(seq 1 254); do ping -c 1 -W 1 192.168.1.$i | grep &quot;bytes from&quot; | cut -d\' \' -f4 | tr -d \':\' & done')">⎘ Copiar</button>
           </div>
-          <div class="enum-cmd-desc">Ping sweep en bash puro — paralelo, sin herramientas externas</div>
+          <div class="enum-cmd-desc">Barrido de ping casero hecho solo con bash: recorre las 254 direcciones del rango, una a una y en paralelo, y muestra las que contestan. No necesita instalar nada — útil si netdiscover o nmap no están disponibles en la máquina.</div>
           <div class="enum-meta"><span class="noise-tag noise-low">🟢 Silencioso</span><span>ICMP, sin dependencias</span></div>
         </div>
       </div>
@@ -830,14 +830,15 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
       <div class="enum-group">
         <div class="enum-group-title">Interpretación del TTL</div>
         <table class="enum-ttl-table">
-          <thead><tr><th>TTL aproximado</th><th>Sistema Operativo sugerido</th></tr></thead>
+          <thead><tr><th>Sistema Operativo sugerido</th><th>TTL observado</th></tr></thead>
           <tbody>
-            <tr><td>~64</td><td>Linux / Unix</td></tr>
-            <tr><td>~128</td><td>Windows</td></tr>
-            <tr><td>~255</td><td>Router / Switch Cisco</td></tr>
-            <tr><td>~63 ó ~127</td><td>Mismo SO con 1 salto intermedio (ej. VPN de HTB)</td></tr>
+            <tr><td>Linux / Unix</td><td>64 o menos</td></tr>
+            <tr><td>macOS</td><td>64 o menos</td></tr>
+            <tr><td>Windows</td><td>128 o menos</td></tr>
+            <tr><td>Router / Switch Cisco</td><td>255 o menos</td></tr>
           </tbody>
         </table>
+        <div class="enum-note" style="margin-top:8px;">💡 Es «o menos» porque cada salto de red (cada router que atraviesa el paquete) resta 1 al TTL. Un TTL de 63 suele ser un Linux a un salto de distancia. Ojo: Linux y macOS comparten el 64, así que el TTL por sí solo no los distingue.</div>
         <div class="enum-note" style="margin-top:8px;">⚠ En AWS el ping ICMP está desactivado por defecto. Usar <code style="color:var(--orange);background:var(--bg);padding:1px 4px;border-radius:3px;">nmap -Pn</code> como alternativa.</div>
       </div>
 
