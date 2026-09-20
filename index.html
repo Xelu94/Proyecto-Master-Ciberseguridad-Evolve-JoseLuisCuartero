@@ -1061,6 +1061,7 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">hydra -l usuario -P /usr/share/wordlists/rockyou.txt IP ssh</div><button class="enum-copy-btn" onclick="enumCopy(this,'hydra -l usuario -P /usr/share/wordlists/rockyou.txt IP ssh')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuerza bruta de contraseña</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script ssh-brute IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script ssh-brute IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuerza bruta con script NSE</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">use auxiliary/scanner/ssh/ssh_login</div><button class="enum-copy-btn" onclick="enumCopy(this,'use auxiliary/scanner/ssh/ssh_login')">⎘ Copiar</button></div><div class="enum-cmd-desc">Módulo Metasploit — bruteforce SSH</div></div>
+            <div class="enum-danger-note">⚠ <code style="color:var(--orange)">hydra</code>, <code style="color:var(--orange)">ssh-brute</code> y <code style="color:var(--orange)">ssh_login</code> son FUERZA BRUTA = fase de ATAQUE, no enumeración. Enumerar es solo identificar el servicio; probar credenciales ya es atacar.</div>
           </div>
         </div>
 
@@ -1193,7 +1194,7 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
               <div class="svc-lbl">Comandos</div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script rdp-enum-encryption IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script rdp-enum-encryption IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Detectar cifrado y versión de RDP</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script rdp-vuln-ms12-020 IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script rdp-vuln-ms12-020 IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Detectar vulnerabilidad DoS MS12-020</div></div>
-            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">hydra -l Administrator -P wordlist.txt IP rdp</div><button class="enum-copy-btn" onclick="enumCopy(this,'hydra -l Administrator -P wordlist.txt IP rdp')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuerza bruta RDP</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">hydra -l Administrator -P wordlist.txt IP rdp</div><button class="enum-copy-btn" onclick="enumCopy(this,'hydra -l Administrator -P wordlist.txt IP rdp')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuerza bruta RDP</div><div class="enum-danger-note">⚠ <code style="color:var(--orange)">hydra ... rdp</code> es FUERZA BRUTA = fase de ATAQUE, no enumeración.</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">xfreerdp /u:usuario /p:contraseña /v:IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'xfreerdp /u:usuario /p:contraseña /v:IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conexión RDP desde Linux</div></div>
           </div>
         </div>
@@ -1220,6 +1221,40 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
           </div>
         </div>
 
+        <!-- MSSQL -->
+        <div class="enum-accordion">
+          <div class="enum-acc-hd" onclick="toggleEnumAcc(this)">
+            <span class="enum-acc-port">1433/TCP</span>
+            <span class="enum-acc-name">MSSQL — Microsoft SQL Server</span>
+            <span class="enum-acc-arrow">▶</span>
+          </div>
+          <div class="enum-acc-body">
+            <div class="svc-whatis"><b>Qué es:</b> Base de datos de Microsoft, muy común en entornos Windows / Active Directory. Se maneja con las herramientas de Impacket. Interesa porque con credenciales de Windows válidas puedes acceder y, si eres administrador (sysadmin), llegar a ejecutar comandos del sistema.</div>
+            <div class="svc-lbl">Qué buscar</div>
+            <ul class="enum-vectors">
+              <li data-n="1">Acceso con autenticación de Windows (credenciales del dominio)</li>
+              <li data-n="2">Usuario actual con rol sysadmin</li>
+              <li data-n="3">xp_cmdshell activable → ejecución de comandos del sistema (ya es explotación)</li>
+            </ul>
+            <div class="svc-lbl">Comandos</div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">impacket-mssqlclient HOSTNAME/usuario@IP -windows-auth</div><button class="enum-copy-btn" onclick="enumCopy(this,'impacket-mssqlclient HOSTNAME/usuario@IP -windows-auth')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conexión a MSSQL con Impacket usando autenticación de Windows</div></div>
+            <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">SELECT IS_SRVROLEMEMBER('sysadmin');</div><button class="enum-copy-btn" onclick="enumCopy(this,&quot;SELECT IS_SRVROLEMEMBER('sysadmin');&quot;)">⎘ Copiar</button></div><div class="enum-cmd-desc">Verificar si el usuario actual es administrador (sysadmin) de SQL</div></div>
+            <div class="enum-cmd-card">
+              <div class="enum-cmd-row" style="align-items:flex-start;">
+                <pre id="xpCmdBlock" class="enum-cmd-code" style="white-space:pre;margin:0;line-height:1.6;">EXEC sp_configure 'show advanced options', 1;
+RECONFIGURE;
+EXEC sp_configure 'xp_cmdshell', 1;
+RECONFIGURE;
+EXEC xp_cmdshell 'whoami';</pre>
+                <button class="enum-copy-btn" onclick="enumCopy(this,document.getElementById('xpCmdBlock').textContent)">⎘ Copiar</button>
+                <button class="enum-save-btn" title="Guardar en KB" onclick="saveCmdKB(this,document.getElementById('xpCmdBlock').textContent,'Activar xp_cmdshell en MSSQL para ejecución de comandos','windows','MSSQL','windows-ad',['windows-ad','mssql'])">💾</button>
+              </div>
+              <div class="enum-cmd-desc">Secuencia completa para activar <code style="color:var(--orange)">xp_cmdshell</code> y ejecutar comandos del sistema desde MSSQL</div>
+              <div class="enum-danger-note">⚠ Esto ya es EXPLOTACIÓN, no enumeración: ejecuta comandos en el sistema. Requiere ser <code style="color:var(--orange)">sysadmin</code> en SQL y pertenece a una fase posterior; está aquí por continuidad.</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Otros servicios -->
         <div class="enum-group" style="margin-top:16px;">
           <div class="enum-group-title">Otros servicios menos comunes</div>
@@ -1240,34 +1275,6 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
 
       <!-- Windows / AD (id esec-winad conservado para la categorización de guardado en KB) -->
       <div id="esec-winad">
-      <div class="enum-group">
-        <div class="enum-group-title">SMB — Recursos compartidos</div>
-        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">smbclient -N -L //IP/</div><button class="enum-copy-btn" onclick="enumCopy(this,'smbclient -N -L //IP/')">⎘ Copiar</button></div><div class="enum-cmd-desc">Listar recursos compartidos sin credenciales (sesión nula)</div></div>
-        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">smbclient -N //IP/recurso</div><button class="enum-copy-btn" onclick="enumCopy(this,'smbclient -N //IP/recurso')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conectarse a un recurso compartido específico sin credenciales</div></div>
-        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">enum4linux -a IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'enum4linux -a IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Enumeración completa SMB / NetBIOS (usuarios, grupos, shares, políticas)</div></div>
-      </div>
-
-      <div class="enum-group">
-        <div class="enum-group-title">MSSQL e Impacket</div>
-        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">impacket-mssqlclient HOSTNAME/usuario@IP -windows-auth</div><button class="enum-copy-btn" onclick="enumCopy(this,'impacket-mssqlclient HOSTNAME/usuario@IP -windows-auth')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conexión a MSSQL con Impacket usando autenticación de Windows</div></div>
-
-        <div class="enum-cmd-card">
-          <div class="enum-cmd-row" style="align-items:flex-start;">
-            <pre id="xpCmdBlock" class="enum-cmd-code" style="white-space:pre;margin:0;line-height:1.6;">EXEC sp_configure 'show advanced options', 1;
-RECONFIGURE;
-EXEC sp_configure 'xp_cmdshell', 1;
-RECONFIGURE;
-EXEC xp_cmdshell 'whoami';</pre>
-            <button class="enum-copy-btn" onclick="enumCopy(this,document.getElementById('xpCmdBlock').textContent)">⎘ Copiar</button>
-            <button class="enum-save-btn" title="Guardar en KB" onclick="saveCmdKB(this,document.getElementById('xpCmdBlock').textContent,'Activar xp_cmdshell en MSSQL para ejecución de comandos','windows','MSSQL','windows-ad',['windows-ad','mssql'])">💾</button>
-          </div>
-          <div class="enum-cmd-desc">Secuencia completa para activar <code style="color:var(--orange)">xp_cmdshell</code> y ejecutar comandos del sistema desde MSSQL</div>
-          <div class="enum-danger-note">⚠ Esto ya es EXPLOTACIÓN, no enumeración: ejecuta comandos en el sistema. Requiere ser <code style="color:var(--orange)">sysadmin</code> en SQL y pertenece a una fase posterior; está aquí por continuidad.</div>
-        </div>
-
-        <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">SELECT IS_SRVROLEMEMBER('sysadmin');</div><button class="enum-copy-btn" onclick="enumCopy(this,&quot;SELECT IS_SRVROLEMEMBER('sysadmin');&quot;)">⎘ Copiar</button></div><div class="enum-cmd-desc">Verificar si el usuario actual es administrador (sysadmin) de SQL</div></div>
-      </div>
-
       <div class="enum-group">
         <div class="enum-group-title">Post-explotación Windows</div>
         <div class="enum-danger-note" style="margin-bottom:8px;">⚠ Fase de POST-EXPLOTACIÓN, no enumeración: parte de que ya tienes credenciales o acceso válido. Se incluye para tener la secuencia completa a mano, pero conceptualmente va después de enumerar.</div>
@@ -4634,12 +4641,19 @@ function initEnumTarget(){
     const btn=code.closest('.enum-cmd-row')?.querySelector('.enum-copy-btn');
     if(btn) btn.onclick=()=>enumCopy(btn,code.textContent);
   });
+  // Tabla "Otros servicios menos comunes": comandos en celdas de tabla
+  document.querySelectorAll('#panel-enum .enum-service-table td code').forEach(code=>{
+    if(!/\bIP\b/.test(code.textContent)) return;
+    code.dataset.tpl=code.textContent;
+    const btn=code.closest('tr')?.querySelector('.enum-copy-btn');
+    if(btn) btn.onclick=()=>enumCopy(btn,code.textContent);
+  });
   applyEnumTarget();
 }
 function applyEnumTarget(){
   const t=(document.getElementById('enumTarget').value||'').trim();
-  // Tarjetas con host: IP → objetivo, o vuelve a "IP" si el campo está vacío
-  document.querySelectorAll('#panel-enum .enum-cmd-code[data-tpl]').forEach(code=>{
+  // Tarjetas con host (y celdas de tabla): IP → objetivo, o "IP" si está vacío
+  document.querySelectorAll('#panel-enum [data-tpl]').forEach(code=>{
     code.textContent = t ? code.dataset.tpl.replace(/\bIP\b/g,t) : code.dataset.tpl;
   });
   // Generador Nmap (②): usa el objetivo, o la IP de ejemplo si está vacío
