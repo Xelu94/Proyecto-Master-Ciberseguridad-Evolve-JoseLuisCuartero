@@ -830,12 +830,12 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
       <div class="enum-group">
         <div class="enum-group-title">Interpretación del TTL</div>
         <table class="enum-ttl-table">
-          <thead><tr><th>Sistema Operativo</th><th>TTL inicial</th><th>Lo que observas al recibirlo</th></tr></thead>
+          <thead><tr><th>Sistema Operativo</th><th>TTL inicial</th></tr></thead>
           <tbody>
-            <tr><td>Linux / Unix</td><td>64</td><td>64 − nº de saltos (63, 62…)</td></tr>
-            <tr><td>macOS</td><td>64</td><td>64 − nº de saltos (comparte inicial con Linux)</td></tr>
-            <tr><td>Windows</td><td>128</td><td>128 − nº de saltos (127, 126…)</td></tr>
-            <tr><td>Router / Switch Cisco</td><td>255</td><td>255 − nº de saltos</td></tr>
+            <tr><td>Linux / Unix</td><td>64</td></tr>
+            <tr><td>macOS</td><td>64</td></tr>
+            <tr><td>Windows</td><td>128</td></tr>
+            <tr><td>Router / Switch Cisco</td><td>255</td></tr>
           </tbody>
         </table>
         <div class="enum-note" style="margin-top:8px;">💡 Cada equipo emite sus paquetes con un TTL inicial fijo según su sistema operativo. Cada salto de red (cada router que atraviesa el paquete) le resta 1, así que lo que ves al hacer ping es el valor inicial menos el número de saltos: un TTL de 125 es un Windows a 3 saltos; un 63, un Linux a 1 salto.</div>
