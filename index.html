@@ -851,25 +851,13 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
       </div>
 
       <div class="enum-group">
-        <div class="enum-group-title">Generador de comando personalizado</div>
+        <div class="enum-group-title">Rango de red</div>
         <div class="enum-generator">
-          <div class="enum-gen-title">🔧 Construir comando de descubrimiento</div>
           <div class="enum-gen-row">
-            <span class="enum-gen-label">Rango de red</span>
+            <span class="enum-gen-label">Rango</span>
             <input type="text" class="enum-gen-input" id="genNetRange" value="192.168.1.0/24" oninput="syncEnumRange()" placeholder="192.168.1.0/24">
           </div>
-          <div class="enum-gen-row">
-            <span class="enum-gen-label">Herramienta</span>
-            <select class="enum-gen-sel" id="genNetTool" onchange="buildNetCmd()">
-              <option value="netdiscover">netdiscover (ARP pasivo)</option>
-              <option value="arp-scan">arp-scan (ARP activo)</option>
-              <option value="nmap">nmap -sn (ping sweep)</option>
-            </select>
-          </div>
-          <div class="enum-output">
-            <code id="genNetOutput">sudo netdiscover -r 192.168.1.0/24</code>
-            <button class="enum-copy-btn" onclick="enumCopy(this,document.getElementById('genNetOutput').textContent)">⎘ Copiar</button>
-          </div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:8px;line-height:1.5;">Gobierna todos los comandos de descubrimiento de arriba. Escribe aquí la máscara (/24, /26…); se rellena sola con el /24 del objetivo.</div>
         </div>
       </div>
 
@@ -4721,7 +4709,6 @@ function syncEnumRange(){
   document.querySelectorAll('#panel-enum .enum-cmd-code[data-rangetpl]').forEach(code=>{
     code.textContent=code.dataset.rangetpl.replace('§R§',range);
   });
-  buildNetCmd();
 }
 
 function enumCopy(btn,text){
@@ -4749,16 +4736,6 @@ function toggleEnumFlag(flag){
   _ENUM_FLAGS[flag]=!_ENUM_FLAGS[flag];
   document.getElementById('tgl-'+flag).classList.toggle('active',_ENUM_FLAGS[flag]);
   buildNmapCmd();
-}
-
-function buildNetCmd(){
-  const range=(document.getElementById('genNetRange').value||'192.168.1.0/24').trim();
-  const tool=document.getElementById('genNetTool').value;
-  let cmd='';
-  if(tool==='netdiscover') cmd='sudo netdiscover -r '+range;
-  else if(tool==='arp-scan') cmd='sudo arp-scan '+range;
-  else cmd='nmap -sn '+range;
-  document.getElementById('genNetOutput').textContent=cmd;
 }
 
 function buildNmapCmd(){
