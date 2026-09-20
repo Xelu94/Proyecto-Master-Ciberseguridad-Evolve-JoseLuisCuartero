@@ -854,7 +854,7 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
           <div class="enum-gen-title">🔧 Construir comando de descubrimiento</div>
           <div class="enum-gen-row">
             <span class="enum-gen-label">Rango de red</span>
-            <input type="text" class="enum-gen-input" id="genNetRange" value="192.168.1.0/24" oninput="buildNetCmd()" placeholder="192.168.1.0/24">
+            <input type="text" class="enum-gen-input" id="genNetRange" value="192.168.1.0/24" oninput="syncEnumRange()" placeholder="192.168.1.0/24">
           </div>
           <div class="enum-gen-row">
             <span class="enum-gen-label">Herramienta</span>
@@ -4588,14 +4588,18 @@ function switchEnumTab(name){
 const _ENUM_EXAMPLE_IP='10.10.10.1';
 const _ENUM_EXAMPLE_RANGE='192.168.1.0/24';
 let _enumTargetInit=false;
+const _CIDR_RE=/\d{1,3}(?:\.\d{1,3}){3}\/\d{1,2}/;
 function initEnumTarget(){
   if(_enumTargetInit) return;
   _enumTargetInit=true;
-  // Guarda la plantilla original (con el token IP) de cada comando y reenlaza
-  // su botón de copiar al texto ya sustituido.
   document.querySelectorAll('#panel-enum .enum-cmd-code').forEach(code=>{
-    if(!/\bIP\b/.test(code.textContent)) return;
-    code.dataset.tpl=code.textContent;
+    const txt=code.textContent;
+    // Tarjetas con host: plantilla con token IP
+    if(/\bIP\b/.test(txt)) code.dataset.tpl=txt;
+    // Tarjetas con rango CIDR (descubrimiento): plantilla con token §R§
+    else if(_CIDR_RE.test(txt)) code.dataset.rangetpl=txt.replace(_CIDR_RE,'§R§');
+    else return;
+    // Reenlaza el botón copiar al texto ya sustituido
     const btn=code.closest('.enum-cmd-row')?.querySelector('.enum-copy-btn');
     if(btn) btn.onclick=()=>enumCopy(btn,code.textContent);
   });
@@ -4603,7 +4607,7 @@ function initEnumTarget(){
 }
 function applyEnumTarget(){
   const t=(document.getElementById('enumTarget').value||'').trim();
-  // Tarjetas: IP → objetivo, o vuelve a "IP" si el campo está vacío
+  // Tarjetas con host: IP → objetivo, o vuelve a "IP" si el campo está vacío
   document.querySelectorAll('#panel-enum .enum-cmd-code[data-tpl]').forEach(code=>{
     code.textContent = t ? code.dataset.tpl.replace(/\bIP\b/g,t) : code.dataset.tpl;
   });
@@ -4615,8 +4619,19 @@ function applyEnumTarget(){
   if(netField){
     if(/^\d{1,3}(\.\d{1,3}){3}$/.test(t)) netField.value=t.replace(/\.\d{1,3}$/,'.0')+'/24';
     else if(!t) netField.value=_ENUM_EXAMPLE_RANGE;
-    buildNetCmd();
   }
+  syncEnumRange();
+}
+// El campo de rango del generador es la única fuente de verdad del rango:
+// alimenta el comando del generador y las tarjetas de descubrimiento (incluida
+// la máscara — /24, /26… lo que el usuario ponga ahí).
+function syncEnumRange(){
+  const netField=document.getElementById('genNetRange');
+  const range=(netField&&netField.value.trim())||_ENUM_EXAMPLE_RANGE;
+  document.querySelectorAll('#panel-enum .enum-cmd-code[data-rangetpl]').forEach(code=>{
+    code.textContent=code.dataset.rangetpl.replace('§R§',range);
+  });
+  buildNetCmd();
 }
 
 function enumCopy(btn,text){
