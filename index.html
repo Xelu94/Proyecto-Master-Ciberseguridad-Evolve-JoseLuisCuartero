@@ -757,10 +757,9 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
   <!-- ENUM PANEL -->
   <div class="panel" id="panel-enum">
     <div class="enum-subtabs">
-      <button class="enum-stab active" id="estab-discovery" onclick="switchEnumTab('discovery')">🌐 Descubrimiento de Red</button>
-      <button class="enum-stab" id="estab-services" onclick="switchEnumTab('services')">🔍 Análisis de Servicios</button>
-      <button class="enum-stab" id="estab-nmap" onclick="switchEnumTab('nmap')">⚡ Cheatsheet Nmap</button>
-      <button class="enum-stab" id="estab-winad" onclick="switchEnumTab('winad')">🪟 Windows / AD</button>
+      <button class="enum-stab active" id="estab-discovery" onclick="switchEnumTab('discovery')">① 🌐 Descubrir la red</button>
+      <button class="enum-stab" id="estab-scan" onclick="switchEnumTab('scan')">② ⚡ Escanear puertos</button>
+      <button class="enum-stab" id="estab-services" onclick="switchEnumTab('services')">③ 🔍 Enumerar servicios</button>
     </div>
 
     <!-- SECTION 1: Descubrimiento de Red -->
@@ -866,9 +865,8 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
       </div>
     </div><!-- /esec-discovery -->
 
-    <!-- SECTION 2: Análisis de Servicios -->
-    <div class="enum-section" id="esec-services">
-
+    <!-- SECTION 2: Escanear puertos (generador Nmap + referencia) -->
+    <div class="enum-section" id="esec-scan">
       <div class="enum-group">
         <div class="enum-group-title">Metodología de dos fases</div>
         <div class="enum-phase-flow">
@@ -938,6 +936,76 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
         </div>
       </div>
 
+      <div class="enum-group">
+        <details class="enum-nmap-ref">
+          <summary style="cursor:pointer;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-family:var(--mono);padding:8px 0;user-select:none;">📖 Referencia rápida de Nmap — flags (clic para desplegar)</summary>
+          <div style="padding-top:10px;">
+
+      <div class="enum-nmap-section">
+        <div class="enum-group-title">Selección de puertos</div>
+        <div class="enum-nmap-grid">
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-p 80</span><span class="enum-nmap-desc">Puerto específico</span><button class="enum-copy-btn" onclick="enumCopy(this,'-p 80')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-p 80,443,8080</span><span class="enum-nmap-desc">Lista de puertos</span><button class="enum-copy-btn" onclick="enumCopy(this,'-p 80,443,8080')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-p 1-1000</span><span class="enum-nmap-desc">Rango de puertos</span><button class="enum-copy-btn" onclick="enumCopy(this,'-p 1-1000')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-p-</span><span class="enum-nmap-desc">Todos los puertos (1-65535)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-p-')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--top-ports 100</span><span class="enum-nmap-desc">Los 100 más comunes</span><button class="enum-copy-btn" onclick="enumCopy(this,'--top-ports 100')">⎘</button></div>
+        </div>
+      </div>
+
+      <div class="enum-nmap-section">
+        <div class="enum-group-title">Tipos de escaneo</div>
+        <div class="enum-nmap-grid">
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sS</span><span class="enum-nmap-desc">SYN scan (stealth, requiere root)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sS')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sT</span><span class="enum-nmap-desc">TCP connect scan (sin root)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sT')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sU</span><span class="enum-nmap-desc">UDP scan</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sU')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sn</span><span class="enum-nmap-desc">Ping sweep (sin escanear puertos)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sn')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sV</span><span class="enum-nmap-desc">Detección de versiones de servicio</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sV')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sC</span><span class="enum-nmap-desc">Scripts NSE por defecto</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sC')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-O</span><span class="enum-nmap-desc">Detección de sistema operativo</span><button class="enum-copy-btn" onclick="enumCopy(this,'-O')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-A</span><span class="enum-nmap-desc">Agresivo (versiones+scripts+OS+traceroute)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-A')">⎘</button></div>
+        </div>
+      </div>
+
+      <div class="enum-nmap-section">
+        <div class="enum-group-title">Control de velocidad y ruido</div>
+        <div class="enum-nmap-grid">
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--min-rate 5000</span><span class="enum-nmap-desc">Mínimo N paquetes/segundo</span><button class="enum-copy-btn" onclick="enumCopy(this,'--min-rate 5000')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-T0 … -T5</span><span class="enum-nmap-desc">Plantillas (0=paranoico, 5=insano)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-T4')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-Pn</span><span class="enum-nmap-desc">No hacer ping previo (AWS, ICMP bloqueado)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-Pn')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--scan-delay 1s</span><span class="enum-nmap-desc">Delay entre paquetes para evasión IDS</span><button class="enum-copy-btn" onclick="enumCopy(this,'--scan-delay 1s')">⎘</button></div>
+        </div>
+      </div>
+
+      <div class="enum-nmap-section">
+        <div class="enum-group-title">Output</div>
+        <div class="enum-nmap-grid">
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-oN fichero.txt</span><span class="enum-nmap-desc">Guardar en texto normal</span><button class="enum-copy-btn" onclick="enumCopy(this,'-oN resultado.txt')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-oX fichero.xml</span><span class="enum-nmap-desc">Guardar en XML</span><button class="enum-copy-btn" onclick="enumCopy(this,'-oX resultado.xml')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-oG fichero.gnmap</span><span class="enum-nmap-desc">Formato grepeable</span><button class="enum-copy-btn" onclick="enumCopy(this,'-oG resultado.gnmap')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-oA prefijo</span><span class="enum-nmap-desc">Los tres formatos a la vez</span><button class="enum-copy-btn" onclick="enumCopy(this,'-oA resultado')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">-v / -vv / -vvvv</span><span class="enum-nmap-desc">Verbosidad creciente</span><button class="enum-copy-btn" onclick="enumCopy(this,'-vv')">⎘</button></div>
+        </div>
+      </div>
+
+      <div class="enum-nmap-section">
+        <div class="enum-group-title">Scripts NSE útiles</div>
+        <div class="enum-nmap-grid">
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script vuln</span><span class="enum-nmap-desc">Todos los scripts de vulnerabilidades</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script vuln')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script ftp-anon</span><span class="enum-nmap-desc">Detectar FTP anónimo</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script ftp-anon')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script smb-vuln-ms17-010</span><span class="enum-nmap-desc">EternalBlue</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script smb-vuln-ms17-010')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script http-title</span><span class="enum-nmap-desc">Título de páginas web</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script http-title')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script ssh-brute</span><span class="enum-nmap-desc">Fuerza bruta SSH</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script ssh-brute')">⎘</button></div>
+          <div class="enum-nmap-row"><span class="enum-nmap-flag">/usr/share/nmap/scripts/</span><span class="enum-nmap-desc">Ruta local de scripts NSE</span><button class="enum-copy-btn" onclick="enumCopy(this,'/usr/share/nmap/scripts/')">⎘</button></div>
+        </div>
+      </div>
+          </div>
+        </details>
+      </div>
+
+    </div><!-- /esec-scan -->
+
+    <!-- SECTION 3: Enumerar servicios (por servicio + Windows/AD) -->
+    <div class="enum-section" id="esec-services">
       <div class="enum-group">
         <div class="enum-group-title">Análisis por servicio</div>
 
@@ -1133,74 +1201,9 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
         </div>
       </div>
 
-    </div><!-- /esec-services -->
 
-    <!-- SECTION 3: Cheatsheet Nmap -->
-    <div class="enum-section" id="esec-nmap">
-
-      <div class="enum-nmap-section">
-        <div class="enum-group-title">Selección de puertos</div>
-        <div class="enum-nmap-grid">
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-p 80</span><span class="enum-nmap-desc">Puerto específico</span><button class="enum-copy-btn" onclick="enumCopy(this,'-p 80')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-p 80,443,8080</span><span class="enum-nmap-desc">Lista de puertos</span><button class="enum-copy-btn" onclick="enumCopy(this,'-p 80,443,8080')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-p 1-1000</span><span class="enum-nmap-desc">Rango de puertos</span><button class="enum-copy-btn" onclick="enumCopy(this,'-p 1-1000')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-p-</span><span class="enum-nmap-desc">Todos los puertos (1-65535)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-p-')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">--top-ports 100</span><span class="enum-nmap-desc">Los 100 más comunes</span><button class="enum-copy-btn" onclick="enumCopy(this,'--top-ports 100')">⎘</button></div>
-        </div>
-      </div>
-
-      <div class="enum-nmap-section">
-        <div class="enum-group-title">Tipos de escaneo</div>
-        <div class="enum-nmap-grid">
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sS</span><span class="enum-nmap-desc">SYN scan (stealth, requiere root)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sS')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sT</span><span class="enum-nmap-desc">TCP connect scan (sin root)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sT')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sU</span><span class="enum-nmap-desc">UDP scan</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sU')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sn</span><span class="enum-nmap-desc">Ping sweep (sin escanear puertos)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sn')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sV</span><span class="enum-nmap-desc">Detección de versiones de servicio</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sV')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-sC</span><span class="enum-nmap-desc">Scripts NSE por defecto</span><button class="enum-copy-btn" onclick="enumCopy(this,'-sC')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-O</span><span class="enum-nmap-desc">Detección de sistema operativo</span><button class="enum-copy-btn" onclick="enumCopy(this,'-O')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-A</span><span class="enum-nmap-desc">Agresivo (versiones+scripts+OS+traceroute)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-A')">⎘</button></div>
-        </div>
-      </div>
-
-      <div class="enum-nmap-section">
-        <div class="enum-group-title">Control de velocidad y ruido</div>
-        <div class="enum-nmap-grid">
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">--min-rate 5000</span><span class="enum-nmap-desc">Mínimo N paquetes/segundo</span><button class="enum-copy-btn" onclick="enumCopy(this,'--min-rate 5000')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-T0 … -T5</span><span class="enum-nmap-desc">Plantillas (0=paranoico, 5=insano)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-T4')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-Pn</span><span class="enum-nmap-desc">No hacer ping previo (AWS, ICMP bloqueado)</span><button class="enum-copy-btn" onclick="enumCopy(this,'-Pn')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">--scan-delay 1s</span><span class="enum-nmap-desc">Delay entre paquetes para evasión IDS</span><button class="enum-copy-btn" onclick="enumCopy(this,'--scan-delay 1s')">⎘</button></div>
-        </div>
-      </div>
-
-      <div class="enum-nmap-section">
-        <div class="enum-group-title">Output</div>
-        <div class="enum-nmap-grid">
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-oN fichero.txt</span><span class="enum-nmap-desc">Guardar en texto normal</span><button class="enum-copy-btn" onclick="enumCopy(this,'-oN resultado.txt')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-oX fichero.xml</span><span class="enum-nmap-desc">Guardar en XML</span><button class="enum-copy-btn" onclick="enumCopy(this,'-oX resultado.xml')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-oG fichero.gnmap</span><span class="enum-nmap-desc">Formato grepeable</span><button class="enum-copy-btn" onclick="enumCopy(this,'-oG resultado.gnmap')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-oA prefijo</span><span class="enum-nmap-desc">Los tres formatos a la vez</span><button class="enum-copy-btn" onclick="enumCopy(this,'-oA resultado')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">-v / -vv / -vvvv</span><span class="enum-nmap-desc">Verbosidad creciente</span><button class="enum-copy-btn" onclick="enumCopy(this,'-vv')">⎘</button></div>
-        </div>
-      </div>
-
-      <div class="enum-nmap-section">
-        <div class="enum-group-title">Scripts NSE útiles</div>
-        <div class="enum-nmap-grid">
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script vuln</span><span class="enum-nmap-desc">Todos los scripts de vulnerabilidades</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script vuln')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script ftp-anon</span><span class="enum-nmap-desc">Detectar FTP anónimo</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script ftp-anon')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script smb-vuln-ms17-010</span><span class="enum-nmap-desc">EternalBlue</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script smb-vuln-ms17-010')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script http-title</span><span class="enum-nmap-desc">Título de páginas web</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script http-title')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">--script ssh-brute</span><span class="enum-nmap-desc">Fuerza bruta SSH</span><button class="enum-copy-btn" onclick="enumCopy(this,'--script ssh-brute')">⎘</button></div>
-          <div class="enum-nmap-row"><span class="enum-nmap-flag">/usr/share/nmap/scripts/</span><span class="enum-nmap-desc">Ruta local de scripts NSE</span><button class="enum-copy-btn" onclick="enumCopy(this,'/usr/share/nmap/scripts/')">⎘</button></div>
-        </div>
-      </div>
-
-    </div><!-- /esec-nmap -->
-
-    <!-- SECTION 4: Windows / AD -->
-    <div class="enum-section" id="esec-winad">
-
+      <!-- Windows / AD (id esec-winad conservado para la categorización de guardado en KB) -->
+      <div id="esec-winad">
       <div class="enum-group">
         <div class="enum-group-title">SMB — Recursos compartidos</div>
         <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">smbclient -N -L //IP/</div><button class="enum-copy-btn" onclick="enumCopy(this,'smbclient -N -L //IP/')">⎘ Copiar</button></div><div class="enum-cmd-desc">Listar recursos compartidos sin credenciales (sesión nula)</div></div>
@@ -1247,8 +1250,9 @@ EXEC xp_cmdshell 'whoami';</pre>
           </tbody>
         </table>
       </div>
+      </div>
 
-    </div><!-- /esec-winad -->
+    </div><!-- /esec-services -->
   </div><!-- /panel-enum -->
 
   <!-- WEB VULN PANEL -->
@@ -4567,7 +4571,7 @@ async function saveNmapResult(btn){
 }
 
 function switchEnumTab(name){
-  ['discovery','services','nmap','winad'].forEach(t=>{
+  ['discovery','scan','services'].forEach(t=>{
     document.getElementById('esec-'+t).classList.toggle('show',t===name);
     document.getElementById('estab-'+t).classList.toggle('active',t===name);
   });
