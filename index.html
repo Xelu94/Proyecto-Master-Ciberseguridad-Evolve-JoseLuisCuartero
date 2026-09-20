@@ -270,6 +270,8 @@ pre.code-block{background:var(--bg);border:1px solid var(--border2);border-radiu
 .enum-acc-body.open{display:flex;}
 .enum-vectors{font-size:11px;color:var(--text2);line-height:1.8;padding-left:0;list-style:none;}
 .enum-vectors li::before{content:attr(data-n)'. ';color:var(--purple);font-family:var(--mono);}
+.svc-whatis{font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:12px;background:var(--bg3);border-left:2px solid var(--cyan);border-radius:var(--r);padding:7px 10px;}
+.svc-lbl{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-family:var(--mono);margin:10px 0 6px;}
 .enum-note{background:rgba(255,204,0,.06);border:1px solid rgba(255,204,0,.25);border-radius:var(--r);padding:7px 10px;font-size:11px;color:var(--yellow);margin-top:4px;}
 .enum-danger-note{background:rgba(255,51,68,.06);border:1px solid rgba(255,51,68,.25);border-radius:var(--r);padding:7px 10px;font-size:11px;color:var(--red);margin-top:4px;}
 .enum-nmap-section{margin-bottom:20px;}
@@ -1024,11 +1026,14 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <span class="enum-acc-arrow">▶</span>
           </div>
           <div class="enum-acc-body">
+              <div class="svc-whatis"><b>Qué es:</b> Servicio de transferencia de archivos. Interesa porque a menudo permite acceso anónimo o guarda ficheros y credenciales que dan el primer punto de entrada.</div>
+              <div class="svc-lbl">Qué buscar</div>
             <ul class="enum-vectors">
               <li data-n="1">Sesión anónima (usuario: anonymous, pass: vacía)</li>
               <li data-n="2">Versión vulnerable con exploit conocido</li>
               <li data-n="3">Credenciales reutilizadas de otros servicios</li>
             </ul>
+              <div class="svc-lbl">Comandos</div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">ftp IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'ftp IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conectar — usuario: <code style="color:var(--orange)">anonymous</code>, contraseña vacía</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script ftp-anon IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script ftp-anon IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Detectar acceso anónimo con script NSE</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">searchsploit vsftpd 2.3.4</div><button class="enum-copy-btn" onclick="enumCopy(this,'searchsploit vsftpd 2.3.4')">⎘ Copiar</button></div><div class="enum-cmd-desc">Buscar exploit por versión del servidor</div></div>
@@ -1044,11 +1049,14 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <span class="enum-acc-arrow">▶</span>
           </div>
           <div class="enum-acc-body">
+              <div class="svc-whatis"><b>Qué es:</b> Acceso a shell remota cifrada. Es un objetivo directo: si consigues credenciales o una clave privada, entras con consola en la máquina.</div>
+              <div class="svc-lbl">Qué buscar</div>
             <ul class="enum-vectors">
               <li data-n="1">Fuerza bruta con credenciales</li>
               <li data-n="2">Versión vulnerable</li>
               <li data-n="3">Claves privadas expuestas en el sistema</li>
             </ul>
+              <div class="svc-lbl">Comandos</div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">ssh usuario@IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'ssh usuario@IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conexión directa</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">hydra -l usuario -P /usr/share/wordlists/rockyou.txt IP ssh</div><button class="enum-copy-btn" onclick="enumCopy(this,'hydra -l usuario -P /usr/share/wordlists/rockyou.txt IP ssh')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuerza bruta de contraseña</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script ssh-brute IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script ssh-brute IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuerza bruta con script NSE</div></div>
@@ -1064,10 +1072,13 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <span class="enum-acc-arrow">▶</span>
           </div>
           <div class="enum-acc-body">
+              <div class="svc-whatis"><b>Qué es:</b> Acceso remoto a consola pero sin cifrado. Interesa porque las credenciales viajan en texto claro y suele traer contraseñas por defecto.</div>
+              <div class="svc-lbl">Qué buscar</div>
             <ul class="enum-vectors">
               <li data-n="1">Protocolo sin cifrado — credenciales visibles en tráfico</li>
               <li data-n="2">Credenciales por defecto del dispositivo</li>
             </ul>
+              <div class="svc-lbl">Comandos</div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">telnet IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'telnet IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conexión directa</div></div>
             <div class="enum-danger-note">⚠ Telnet no cifra el tráfico. Cualquier sniffer en la red captura las credenciales en texto claro.</div>
           </div>
@@ -1081,10 +1092,13 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <span class="enum-acc-arrow">▶</span>
           </div>
           <div class="enum-acc-body">
+              <div class="svc-whatis"><b>Qué es:</b> Servicio de correo saliente. Interesa para enumerar usuarios válidos del sistema y detectar servidores mal configurados (open relay).</div>
+              <div class="svc-lbl">Qué buscar</div>
             <ul class="enum-vectors">
               <li data-n="1">Enumeración de usuarios válidos (VRFY / EXPN)</li>
               <li data-n="2">Open relay — enviar correo como cualquier dominio</li>
             </ul>
+              <div class="svc-lbl">Comandos</div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script smtp-enum-users IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script smtp-enum-users IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Enumerar usuarios válidos del servidor</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script smtp-open-relay IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script smtp-open-relay IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Detectar open relay</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">telnet IP 25</div><button class="enum-copy-btn" onclick="enumCopy(this,'telnet IP 25')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conexión manual para pruebas con comandos SMTP</div></div>
@@ -1099,10 +1113,13 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <span class="enum-acc-arrow">▶</span>
           </div>
           <div class="enum-acc-body">
+              <div class="svc-whatis"><b>Qué es:</b> Servicio de resolución de nombres. Interesa porque una transferencia de zona mal configurada puede volcarte todo el mapa de la red.</div>
+              <div class="svc-lbl">Qué buscar</div>
             <ul class="enum-vectors">
               <li data-n="1">Zone transfer (AXFR) — vuelca todos los registros DNS</li>
               <li data-n="2">Subdominios por fuerza bruta</li>
             </ul>
+              <div class="svc-lbl">Comandos</div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">dig axfr @IP dominio.com</div><button class="enum-copy-btn" onclick="enumCopy(this,'dig axfr @IP dominio.com')">⎘ Copiar</button></div><div class="enum-cmd-desc">Intentar transferencia de zona completa</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script dns-zone-transfer IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script dns-zone-transfer IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Zone transfer con script NSE</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">dnsrecon -d dominio.com -t axfr</div><button class="enum-copy-btn" onclick="enumCopy(this,'dnsrecon -d dominio.com -t axfr')">⎘ Copiar</button></div><div class="enum-cmd-desc">Reconocimiento DNS completo</div></div>
@@ -1117,12 +1134,15 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <span class="enum-acc-arrow">▶</span>
           </div>
           <div class="enum-acc-body">
+              <div class="svc-whatis"><b>Qué es:</b> Servicio web. Suele ser la mayor superficie de ataque: rutas ocultas, versiones vulnerables del servidor y ficheros expuestos.</div>
+              <div class="svc-lbl">Qué buscar</div>
             <ul class="enum-vectors">
               <li data-n="1">Fuzzing de directorios y archivos ocultos</li>
               <li data-n="2">Versión vulnerable del servidor web</li>
               <li data-n="3">CGI habilitado — posible Shellshock</li>
               <li data-n="4">Información en phpinfo.php, robots.txt, .git/</li>
             </ul>
+              <div class="svc-lbl">Comandos</div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">ffuf -u http://IP/FUZZ -w /usr/share/dirb/wordlists/common.txt -c</div><button class="enum-copy-btn" onclick="enumCopy(this,'ffuf -u http://IP/FUZZ -w /usr/share/dirb/wordlists/common.txt -c')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuzzing básico de directorios</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">ffuf -u http://IP/FUZZ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -c</div><button class="enum-copy-btn" onclick="enumCopy(this,'ffuf -u http://IP/FUZZ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -c')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuzzing con SecLists (más completo)</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nikto -h http://IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nikto -h http://IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Escáner automático de vulnerabilidades web</div></div>
@@ -1139,11 +1159,14 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <span class="enum-acc-arrow">▶</span>
           </div>
           <div class="enum-acc-body">
+              <div class="svc-whatis"><b>Qué es:</b> Compartición de ficheros de Windows. Interesa por recursos accesibles sin credenciales y por vulnerabilidades críticas como EternalBlue.</div>
+              <div class="svc-lbl">Qué buscar</div>
             <ul class="enum-vectors">
               <li data-n="1">Enumeración de recursos compartidos anónima</li>
               <li data-n="2">Versión vulnerable — EternalBlue (MS17-010)</li>
               <li data-n="3">Credenciales débiles o reutilizadas</li>
             </ul>
+              <div class="svc-lbl">Comandos</div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">smbclient -N -L //IP/</div><button class="enum-copy-btn" onclick="enumCopy(this,'smbclient -N -L //IP/')">⎘ Copiar</button></div><div class="enum-cmd-desc">Listar recursos compartidos sin credenciales</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">smbclient //IP/recurso -N</div><button class="enum-copy-btn" onclick="enumCopy(this,'smbclient //IP/recurso -N')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conectar a recurso sin credenciales</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">enum4linux -a IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'enum4linux -a IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Enumeración completa SMB / NetBIOS</div></div>
@@ -1160,11 +1183,14 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <span class="enum-acc-arrow">▶</span>
           </div>
           <div class="enum-acc-body">
+              <div class="svc-whatis"><b>Qué es:</b> Escritorio remoto de Windows. Interesa como acceso gráfico directo si hay credenciales débiles o vulnerabilidades pre-auth (BlueKeep).</div>
+              <div class="svc-lbl">Qué buscar</div>
             <ul class="enum-vectors">
               <li data-n="1">Fuerza bruta de credenciales</li>
               <li data-n="2">BlueKeep — CVE-2019-0708 (pre-auth RCE)</li>
               <li data-n="3">Credenciales reutilizadas de otros servicios</li>
             </ul>
+              <div class="svc-lbl">Comandos</div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script rdp-enum-encryption IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script rdp-enum-encryption IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Detectar cifrado y versión de RDP</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script rdp-vuln-ms12-020 IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script rdp-vuln-ms12-020 IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Detectar vulnerabilidad DoS MS12-020</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">hydra -l Administrator -P wordlist.txt IP rdp</div><button class="enum-copy-btn" onclick="enumCopy(this,'hydra -l Administrator -P wordlist.txt IP rdp')">⎘ Copiar</button></div><div class="enum-cmd-desc">Fuerza bruta RDP</div></div>
@@ -1180,11 +1206,14 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
             <span class="enum-acc-arrow">▶</span>
           </div>
           <div class="enum-acc-body">
+              <div class="svc-whatis"><b>Qué es:</b> Base de datos. Interesa por accesos sin contraseña o por defecto que exponen datos y, en algunos casos, permiten escribir ficheros en el sistema.</div>
+              <div class="svc-lbl">Qué buscar</div>
             <ul class="enum-vectors">
               <li data-n="1">Acceso sin contraseña (root sin pass)</li>
               <li data-n="2">Credenciales por defecto</li>
               <li data-n="3">Inyección SQL desde otra capa de la app</li>
             </ul>
+              <div class="svc-lbl">Comandos</div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">mysql -u root -h IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'mysql -u root -h IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Conexión sin contraseña</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script mysql-empty-password IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script mysql-empty-password IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Detectar acceso sin contraseña</div></div>
             <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">nmap --script mysql-info IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'nmap --script mysql-info IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Información general del servidor MySQL</div></div>
@@ -1233,6 +1262,7 @@ EXEC xp_cmdshell 'whoami';</pre>
             <button class="enum-save-btn" title="Guardar en KB" onclick="saveCmdKB(this,document.getElementById('xpCmdBlock').textContent,'Activar xp_cmdshell en MSSQL para ejecución de comandos','windows','MSSQL','windows-ad',['windows-ad','mssql'])">💾</button>
           </div>
           <div class="enum-cmd-desc">Secuencia completa para activar <code style="color:var(--orange)">xp_cmdshell</code> y ejecutar comandos del sistema desde MSSQL</div>
+          <div class="enum-danger-note">⚠ Esto ya es EXPLOTACIÓN, no enumeración: ejecuta comandos en el sistema. Requiere ser <code style="color:var(--orange)">sysadmin</code> en SQL y pertenece a una fase posterior; está aquí por continuidad.</div>
         </div>
 
         <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">SELECT IS_SRVROLEMEMBER('sysadmin');</div><button class="enum-copy-btn" onclick="enumCopy(this,&quot;SELECT IS_SRVROLEMEMBER('sysadmin');&quot;)">⎘ Copiar</button></div><div class="enum-cmd-desc">Verificar si el usuario actual es administrador (sysadmin) de SQL</div></div>
@@ -1240,6 +1270,7 @@ EXEC xp_cmdshell 'whoami';</pre>
 
       <div class="enum-group">
         <div class="enum-group-title">Post-explotación Windows</div>
+        <div class="enum-danger-note" style="margin-bottom:8px;">⚠ Fase de POST-EXPLOTACIÓN, no enumeración: parte de que ya tienes credenciales o acceso válido. Se incluye para tener la secuencia completa a mano, pero conceptualmente va después de enumerar.</div>
         <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">impacket-psexec administrador:contraseña@IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'impacket-psexec administrador:contraseña@IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Ejecución remota de comandos como SYSTEM vía SMB</div></div>
         <div class="enum-cmd-card"><div class="enum-cmd-row"><div class="enum-cmd-code">impacket-secretsdump dominio/usuario:contraseña@IP</div><button class="enum-copy-btn" onclick="enumCopy(this,'impacket-secretsdump dominio/usuario:contraseña@IP')">⎘ Copiar</button></div><div class="enum-cmd-desc">Extraer hashes NTLM del Active Directory (SAM, LSA, NTDS.dit)</div></div>
       </div>
