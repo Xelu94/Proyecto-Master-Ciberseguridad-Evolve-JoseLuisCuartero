@@ -960,13 +960,41 @@ async def cve_exploits(cve_id: str):
 
 @app.get("/api/exploit-search")
 async def exploit_search(q: str):
-    """Query Exploit-DB by free text (product + version) — para el paso
-    'tengo una versión → ¿es vulnerable?' del módulo de enumeración."""
-    import httpx
+    """Busca en Exploit-DB por texto libre (producto + versión).
+
+    QUÉ ES
+        Endpoint de solo lectura que resuelve el paso "tengo una versión →
+        ¿existe exploit público?" del módulo de Enumeración (en el frontend es
+        el buscador «Versión → ¿exploit conocido?» de la pestaña ③ Enumerar
+        servicios). Es el gemelo funcional de GET /api/cves/{cve_id}/exploits,
+        que hace lo mismo pero buscando por CVE en vez de por texto.
+
+    ORIGEN / DEPENDENCIA EXTERNA
+        Los datos NO son nuestros: vienen en vivo de la búsqueda JSON (no
+        documentada oficialmente) de https://www.exploit-db.com/search, que
+        responde en formato DataTables — de ahí los parámetros 'draw',
+        'columns[..]' y 'order[..]'. No requiere API key.
+
+    DÓNDE ENCAJA EN UNA ARQUITECTURA POR CAPAS
+        Esta función mezcla hoy tres responsabilidades. Al separar en capas
+        conviene repartirlas así:
+          • Presentación / ruta (controller): la firma del endpoint, validar
+            'q' y devolver la respuesta. Es lo único que debería quedarse
+            aquí (o en algo tipo routers/exploits.py).
+          • Servicio / integración externa: TODO el bloque httpx (headers,
+            params, llamada a exploit-db.com y manejo de errores de red) →
+            services/exploitdb.py o integrations/exploit_db.py.
+          • Mapeo a DTO: el bucle que convierte la fila cruda de EDB al dict
+            {id,title,date,type,platform,cve,url,verified} → un schema o
+            serializer (p. ej. un modelo Pydantic ExploitResult).
+        No accede a base de datos: NO necesita la capa de repositorio/ORM.
+    """
+    import httpx  # local a propósito; en la capa de servicio iría arriba del módulo
     query = (q or "").strip()
     if not query:
         return {"query": q, "count": 0, "exploits": []}
     try:
+        # --- [capa de integración externa] petición a la búsqueda JSON de Exploit-DB ---
         headers = {
             "User-Agent": "CyberKB/3.0",
             "X-Requested-With": "XMLHttpRequest",
@@ -996,6 +1024,9 @@ async def exploit_search(q: str):
             return {"query": query, "count": 0, "exploits": [], "error": f"EDB HTTP {r.status_code}"}
         data = r.json()
         rows = data.get("data", [])
+        # --- [mapeo a DTO] fila cruda de Exploit-DB → objeto de respuesta propio ---
+        # (EDB devuelve el título en description[1], la plataforma en platform_id,
+        #  el tipo en type_id y el CVE dentro de code[]; lo normalizamos aquí)
         exploits = []
         for row in rows[:15]:
             eid = row.get("id", "")
