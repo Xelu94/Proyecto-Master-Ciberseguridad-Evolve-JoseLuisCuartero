@@ -4460,7 +4460,7 @@ const WEB_VULNS=[
   },
   {
     id:'ssti', owasp:'A03', icon:'🧩', name:'SSTI (Server-Side Template Injection)', tag:'Template Injection',
-    sub:'Inyección en motores de plantillas → de reflected a RCE.',
+    sub:'Inyección en motores de plantillas → de inyección simple a RCE.',
     desc:'La entrada del usuario se concatena directamente en una plantilla del lado servidor. Según el motor puede escalar de simple inyección a ejecución remota de comandos.',
     detection:`Inyectar el polyglot \${{<%[%'"}}%\\ para provocar error, luego probar {{7*7}} — si la respuesta muestra 49, hay evaluación de plantilla.`,
     engineTable:[
@@ -4534,11 +4534,11 @@ const WEB_VULNS=[
   },
 ];
 
-function renderWebVulnList(){
+let _wvListScroll=0;
+function renderWebVulnList(restore){
   document.getElementById('webvulnDetail').style.display='none';
   const list=document.getElementById('webvulnList');
   list.style.display='block';
-  const sc=document.getElementById('webvulnScroll'); if(sc) sc.scrollTop=0;
   list.innerHTML=`<div style="margin-bottom:14px;">
     <div style="font-size:15px;font-weight:700;color:var(--text);font-family:var(--sans);">🕷 Vulnerabilidades Web</div>
     <div style="font-size:11px;color:var(--text3);margin-top:2px;">Metodología: mapea la web → prueba cada clase de vulnerabilidad → explota. Fichas agrupadas por OWASP Top 10 2021. Solo para entornos autorizados.</div>
@@ -4573,6 +4573,8 @@ function renderWebVulnList(){
         <div class="wv-card-sub">${esc(v.sub)}</div>
       </div>`).join('')}</div>`;
   }).join('')}`;
+  // Al volver de una ficha, restaura la posición de scroll de la lista; en entrada nueva, arriba
+  const sc=document.getElementById('webvulnScroll'); if(sc) sc.scrollTop = restore ? _wvListScroll : 0;
 }
 
 function wvPayloadCard(code, desc){
@@ -4685,11 +4687,12 @@ function renderWebshell(){
 function openWebVuln(id){
   const v=WEB_VULNS.find(x=>x.id===id);
   if(!v) return;
+  const _lsc=document.getElementById('webvulnScroll'); if(_lsc) _wvListScroll=_lsc.scrollTop;
   document.getElementById('webvulnList').style.display='none';
   const d=document.getElementById('webvulnDetail');
   d.style.display='block';
   let html=`<div class="wv-detail-hd">
-    <button class="wv-back" onclick="renderWebVulnList()">← Volver</button>
+    <button class="wv-back" onclick="renderWebVulnList(true)">← Volver</button>
     <span style="font-size:22px;">${v.icon}</span>
     <div style="flex:1;">
       <div style="font-size:16px;font-weight:700;color:var(--text);font-family:var(--sans);">${esc(v.name)}</div>
