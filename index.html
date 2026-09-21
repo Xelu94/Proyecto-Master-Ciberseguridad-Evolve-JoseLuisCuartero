@@ -1036,6 +1036,16 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
       </div>
 
       <div class="enum-group">
+        <div class="enum-group-title">Versión → ¿exploit conocido?</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="edbQuery" placeholder="producto y versión — ej: vsftpd 2.3.4" onkeydown="if(event.key==='Enter')searchExploitDB()" style="flex:1;min-width:200px;max-width:320px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:5px 10px;font-size:11px;font-family:var(--mono);outline:none;">
+          <button class="btn-ai" onclick="searchExploitDB()">🔎 Buscar en Exploit-DB</button>
+        </div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:5px;">Cuando el escaneo te da una versión (p. ej. con <code style="color:var(--orange)">-sV</code>), búscala aquí para ver si tiene exploit público. Consulta Exploit-DB en vivo.</div>
+        <div id="edbResults" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="enum-group">
         <div class="enum-group-title">Análisis por servicio</div>
 
         <!-- FTP -->
@@ -4768,6 +4778,28 @@ function highlightServices(){
     : 'Escribe aquí los puertos abiertos (o rellénalos en ②) para resaltar sus servicios.';
 }
 function onNmapPortsChanged(){ buildNmapCmd(); highlightServices(); }
+
+// #10 Versión → exploit conocido (consulta Exploit-DB en vivo)
+async function searchExploitDB(){
+  const q=(document.getElementById('edbQuery').value||'').trim();
+  const out=document.getElementById('edbResults');
+  if(!q){ out.innerHTML=''; return; }
+  out.innerHTML='<div style="font-size:11px;color:var(--text3);font-family:var(--mono)">Buscando en Exploit-DB…</div>';
+  try{
+    const data=await API.get('/api/exploit-search?q='+encodeURIComponent(q));
+    if(!data.count){
+      out.innerHTML='<div style="font-size:11px;color:var(--text3)">Sin exploits públicos para <b>'+esc(q)+'</b>.'+(data.error?' <span style="color:var(--orange)">('+esc(data.error)+')</span>':'')+'</div>';
+      return;
+    }
+    out.innerHTML='<div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;">'+data.count+' resultado(s) en Exploit-DB:</div>'+
+      data.exploits.map(e=>`<div class="enum-cmd-card" style="margin-bottom:6px;">
+        <a href="${esc(e.url)}" target="_blank" style="color:var(--cyan);font-size:12px;text-decoration:none;">${esc(e.title)} ↗</a>
+        <div class="enum-meta" style="margin-top:4px;">${e.type?`<span>${esc(e.type)}</span>`:''}${e.platform?`<span>${esc(e.platform)}</span>`:''}${e.date?`<span>${esc(e.date)}</span>`:''}${e.cve?`<span class="auth-tag auth-req">${esc(e.cve)}</span>`:''}${e.verified?'<span class="noise-tag noise-low">✓ verificado</span>':''}</div>
+      </div>`).join('');
+  }catch(err){
+    out.innerHTML='<div style="color:var(--red);font-size:11px">Error consultando Exploit-DB: '+esc(err.message)+'</div>';
+  }
+}
 function onSvcPortsChanged(){
   const np=document.getElementById('nmapPorts');
   if(np) np.value=document.getElementById('svcOpenPorts').value;
