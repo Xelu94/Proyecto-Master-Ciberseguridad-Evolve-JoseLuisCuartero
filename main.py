@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
 from layers.routers.osint import router as osint_router
+from layers.routers.notes import router as notes_router
 
 # ─── Path resolution (works both as script and PyInstaller exe) ───────────────
 def _bundle_dir() -> Path:
@@ -375,99 +376,10 @@ def get_stats(db: Session = Depends(get_db)):
 
 # ─── Notes ─────────────────────────────────────────────────────────────────────
 
-class NoteIn(BaseModel):
-    title: str
-    content: str
-    category: str = "teoria"
-    subcategory: Optional[str] = None
-    summary: Optional[str] = None
-    tags: Optional[list[str]] = None
-    source_file: Optional[str] = None
 
 
-@app.get("/api/notes")
-def list_notes(
-    search: Optional[str] = None,
-    category: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 200,
-    db: Session = Depends(get_db),
-):
-    q = db.query(Note)
-    if category and category != "all":
-        q = q.filter(Note.category == category)
-    if search:
-        q = q.filter(
-            Note.title.ilike(f"%{search}%") | Note.content.ilike(f"%{search}%")
-        )
-    notes = q.order_by(Note.updated_at.desc()).offset(skip).limit(limit).all()
-    return [_note_dict(n) for n in notes]
 
-
-@app.get("/api/notes/{note_id}")
-def get_note(note_id: int, db: Session = Depends(get_db)):
-    n = db.query(Note).filter(Note.id == note_id).first()
-    if not n:
-        raise HTTPException(404, "Note not found")
-    return _note_dict(n, full=True)
-
-
-@app.post("/api/notes", status_code=201)
-def create_note(data: NoteIn, db: Session = Depends(get_db)):
-    n = Note(
-        title=data.title,
-        content=data.content,
-        category=data.category,
-        subcategory=data.subcategory,
-        summary=data.summary,
-        tags=json.dumps(data.tags or []),
-        source_file=data.source_file,
-    )
-    db.add(n)
-    db.commit()
-    db.refresh(n)
-    return _note_dict(n)
-
-
-@app.put("/api/notes/{note_id}")
-def update_note(note_id: int, data: NoteIn, db: Session = Depends(get_db)):
-    n = db.query(Note).filter(Note.id == note_id).first()
-    if not n:
-        raise HTTPException(404, "Note not found")
-    n.title = data.title
-    n.content = data.content
-    n.category = data.category
-    n.subcategory = data.subcategory
-    n.summary = data.summary
-    n.tags = json.dumps(data.tags or [])
-    n.updated_at = datetime.utcnow()
-    db.commit()
-    db.refresh(n)
-    return _note_dict(n)
-
-
-@app.delete("/api/notes/all", status_code=204)
-def delete_all_notes(db: Session = Depends(get_db)):
-    """Wipe all notes, commands, CVEs, tool-note associations and graph data."""
-    from sqlalchemy import text
-    db.execute(text("DELETE FROM tool_notes"))
-    db.execute(text("DELETE FROM entity_note_map"))
-    db.execute(text("DELETE FROM entity_relations"))
-    db.execute(text("DELETE FROM graph_entities"))
-    db.query(MitreTechnique).delete()
-    db.query(CVE).delete()
-    db.query(Command).delete()
-    db.query(Note).delete()
-    db.commit()
-
-
-@app.delete("/api/notes/{note_id}", status_code=204)
-def delete_note(note_id: int, db: Session = Depends(get_db)):
-    n = db.query(Note).filter(Note.id == note_id).first()
-    if not n:
-        raise HTTPException(404, "Note not found")
-    db.delete(n)
-    db.commit()
+app.include_router(notes_router)
 
 
 def _note_dict(n: Note, full: bool = False) -> dict:
