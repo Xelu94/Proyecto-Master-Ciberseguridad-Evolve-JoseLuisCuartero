@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 
 from layers.routers.osint import router as osint_router
 from layers.routers.notes import router as notes_router
+from layers.routers.analyze import router as analyze_router
 
 # ─── Path resolution (works both as script and PyInstaller exe) ───────────────
 def _bundle_dir() -> Path:
@@ -404,142 +405,7 @@ def _note_dict(n: Note, full: bool = False) -> dict:
 
 # ─── Analyze & Upload ──────────────────────────────────────────────────────────
 
-class AnalyzeIn(BaseModel):
-    text: str
-    title: Optional[str] = None
-
-
-@app.post("/api/analyze")
-def analyze_text(data: AnalyzeIn, db: Session = Depends(get_db)):
-    result = ai.analyze_content(data.text)
-    # Persist tools discovered
-    _persist_tools(result.get("tools", []), db)
-    return result
-
-
-@app.post("/api/upload")
-async def upload_document(
-    file: UploadFile = File(...),
-    auto_save: bool = Form(False),
-    db: Session = Depends(get_db),
-):
-    ext = Path(file.filename).suffix.lower()
-    if ext not in (".pdf", ".odt", ".txt", ".md", ".log"):
-        raise HTTPException(400, f"Unsupported file type: {ext}")
-
-    dest = UPLOAD_DIR / f"{uuid.uuid4()}{ext}"
-    with open(dest, "wb") as f:
-        shutil.copyfileobj(file.file, f)
-
-    text = parser.parse_file(str(dest), file.filename)
-    if not text.strip():
-        raise HTTPException(422, "No text could be extracted from the file.")
-
-    analysis = ai.analyze_content(text)
-    tools = _persist_tools(analysis.get("tools", []), db)
-
-    note_id = None
-    if auto_save:
-        n = Note(
-            title=Path(file.filename).stem,
-            content=text[:20000],
-            category=analysis.get("category", "teoria"),
-            subcategory=analysis.get("subcategory"),
-            summary=analysis.get("summary"),
-            tags=json.dumps(analysis.get("tags", [])),
-            source_file=file.filename,
-        )
-        db.add(n)
-        db.commit()
-        db.refresh(n)
-        _persist_commands(analysis.get("commands", []), n, db)
-        _persist_cves(analysis.get("cves", []), n, db)
-        _persist_mitre(analysis.get("mitre_techniques", []), n, db)
-        for t in tools:
-            if t not in n.tools:
-                n.tools.append(t)
-        db.commit()
-        # Extract graph entities asynchronously (best-effort)
-        try:
-            ent_result = ai.extract_entities(text[:6000])
-            _persist_entities(ent_result.get("entities", []), ent_result.get("relations", []), n, db)
-        except Exception as _e:
-            pass  # entity extraction failure must not break upload
-        note_id = n.id
-
-    return {
-        "filename": file.filename,
-        "text_length": len(text),
-        "analysis": analysis,
-        "note_id": note_id,
-    }
-
-
-def _persist_tools(tools_data: list, db: Session) -> list:
-    result = []
-    for td in tools_data:
-        name = td.get("name", "").strip()
-        if not name:
-            continue
-        t = db.query(Tool).filter(Tool.name.ilike(name)).first()
-        if t:
-            t.mention_count = (t.mention_count or 0) + 1
-            if not t.url and td.get("url"):
-                t.url = td["url"]
-            if not t.description and td.get("description"):
-                t.description = td["description"]
-        else:
-            url = td.get("url")
-            if not url:
-                name_lower = name.lower()
-                url = ai.KNOWN_TOOLS.get(name_lower)
-            t = Tool(
-                name=name,
-                url=url,
-                description=td.get("description"),
-                tool_type=td.get("tool_type", ai.detect_tool_type(name)),
-                mention_count=1,
-            )
-            db.add(t)
-        db.commit()
-        db.refresh(t)
-        result.append(t)
-    return result
-
-
-def _persist_commands(cmds: list, note: Note, db: Session):
-    for cd in cmds:
-        cmd_str = cd.get("command", "").strip()
-        if not cmd_str:
-            continue
-        detected_os = cd.get("os") or ai.detect_command_os(cmd_str)
-        c = Command(
-            command=cmd_str,
-            description=cd.get("description"),
-            tool_name=cd.get("tool"),
-            os=detected_os,
-            flags=json.dumps(cd.get("flags", [])),
-            note_id=note.id,
-        )
-        db.add(c)
-    db.commit()
-
-
-def _persist_cves(cves: list, note: Note, db: Session):
-    for cd in cves:
-        cve_id = cd.get("id", "").strip()
-        if not cve_id:
-            continue
-        existing = db.query(CVE).filter(CVE.cve_id == cve_id).first()
-        if not existing:
-            c = CVE(
-                cve_id=cve_id,
-                description=cd.get("description"),
-                note_id=note.id,
-            )
-            db.add(c)
-    db.commit()
-
+app.include_router(analyze_router)
 
 def _persist_mitre(techniques: list, note: Note, db: Session):
     """Upsert MITRE ATT&CK techniques extracted from a note."""
