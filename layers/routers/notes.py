@@ -4,85 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from database import get_db
 from models import Note, Command, CVE, Tool, MitreTechnique
 import json
-from pydantic import BaseModel
 from datetime import datetime
 
-
-class NoteIn(BaseModel):
-    title: str
-    content: str
-    category: str = "teoria"
-    subcategory: Optional[str] = None
-    summary: Optional[str] = None
-    tags: Optional[list[str]] = None
-    source_file: Optional[str] = None
+from layers.routers_functions import _note_dict, NoteIn
 
 
 router = APIRouter()
-
-
-def _cve_dict(c: CVE) -> dict:
-    return {
-        "id": c.id,
-        "cve_id": c.cve_id,
-        "title": c.title,
-        "description": c.description,
-        "severity": c.severity,
-        "cvss": c.cvss,
-        "note_id": c.note_id,
-    }
-
-
-def _cmd_dict(c: Command) -> dict:
-    return {
-        "id": c.id,
-        "command": c.command,
-        "description": c.description,
-        "tool_name": c.tool_name,
-        "os": c.os or "linux",
-        "flags": json.loads(c.flags or "[]"),
-        "examples": json.loads(c.examples or "[]"),
-        "tags": json.loads(c.tags or "[]"),
-        "category": c.category,
-        "note_id": c.note_id,
-    }
-
-
-def _tool_dict(t: Tool) -> dict:
-    return {
-        "id": t.id,
-        "name": t.name,
-        "url": t.url,
-        "description": t.description,
-        "category": t.category,
-        "tool_type": t.tool_type or "software",
-        "use_cases": json.loads(t.use_cases or "[]"),
-        "tags": json.loads(t.tags or "[]"),
-        "requires_api": t.requires_api,
-        "api_info": t.api_info,
-        "mention_count": t.mention_count,
-        "created_at": t.created_at.isoformat() if t.created_at else None,
-    }
-
-
-def _note_dict(n: Note, full: bool = False) -> dict:
-    d = {
-        "id": n.id,
-        "title": n.title,
-        "category": n.category,
-        "subcategory": n.subcategory,
-        "summary": n.summary,
-        "tags": json.loads(n.tags or "[]"),
-        "source_file": n.source_file,
-        "created_at": n.created_at.isoformat() if n.created_at else None,
-        "updated_at": n.updated_at.isoformat() if n.updated_at else None,
-    }
-    if full:
-        d["content"] = n.content
-        d["commands"] = [_cmd_dict(c) for c in n.commands]
-        d["cves"] = [_cve_dict(c) for c in n.cves]
-        d["tools"] = [_tool_dict(t) for t in n.tools]
-    return d
 
 
 @router.get("/api/notes")

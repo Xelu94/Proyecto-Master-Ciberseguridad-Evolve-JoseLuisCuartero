@@ -7,14 +7,10 @@ from database import get_db
 from models import OsintResult
 import osint_tools as osint
 
+from layers.routers_functions import _save_osint
+
 
 router = APIRouter()
-
-
-def _save_osint(query: str, qtype: str, result: dict, db: Session):
-    r = OsintResult(query=query, query_type=qtype, result=json.dumps(result))
-    db.add(r)
-    db.commit()
 
 
 @router.post("/api/osint/whois")
