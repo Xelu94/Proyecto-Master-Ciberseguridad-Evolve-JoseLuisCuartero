@@ -1353,7 +1353,7 @@ EXEC xp_cmdshell 'whoami';</pre>
 
   <!-- WEB VULN PANEL -->
   <div class="panel" id="panel-webvuln">
-    <div style="flex:1;overflow-y:auto;padding:16px;">
+    <div id="webvulnScroll" style="flex:1;overflow-y:auto;padding:16px;">
       <div id="webvulnList"></div>
       <div id="webvulnDetail" style="display:none;"></div>
     </div>
@@ -4341,6 +4341,7 @@ function openShellStabModal(){
     </div>`;
   }).join('');
   document.getElementById('shellStabModal').classList.add('show');
+  const _sm=document.querySelector('#shellStabModal .modal'); if(_sm) _sm.scrollTop=0;
 }
 
 // ─── REVERSE SHELL GENERATOR ──────────────────────────────────────────────────
@@ -4526,29 +4527,16 @@ function renderWebVulnList(){
   document.getElementById('webvulnDetail').style.display='none';
   const list=document.getElementById('webvulnList');
   list.style.display='block';
-  const probeOpts=['{{7*7}}','<%= 7*7 %>','${7*7}','@(7*7)','#{7*7}','{7*7}','#set($x=7*7)$x']
-    .map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');
+  const sc=document.getElementById('webvulnScroll'); if(sc) sc.scrollTop=0;
   list.innerHTML=`<div style="margin-bottom:14px;">
     <div style="font-size:15px;font-weight:700;color:var(--text);font-family:var(--sans);">🕷 Vulnerabilidades Web</div>
     <div style="font-size:11px;color:var(--text3);margin-top:2px;">Metodología: mapea la web → prueba cada clase de vulnerabilidad → explota. Fichas agrupadas por OWASP Top 10 2021. Solo para entornos autorizados.</div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
     <span style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-family:var(--mono);">Arsenal</span>
-    <button class="wv-arsenal-btn" onclick="openRevShellModal()">🔌 Reverse shells</button>
+    <a href="https://www.revshells.com/" target="_blank" class="wv-arsenal-btn" style="text-decoration:none;">🔌 Reverse shells ↗</a>
     <button class="wv-arsenal-btn" onclick="openShellStabModal()">🐚 Estabilizar shell</button>
     <button class="wv-arsenal-btn" onclick="openDictModal()">📚 Diccionarios / polyglots</button>
-  </div>
-  <div class="enum-generator" style="margin-bottom:16px;border-color:rgba(0,221,255,.3);">
-    <div class="enum-gen-title">🧪 Identificador de motor SSTI</div>
-    <div class="enum-gen-row">
-      <span class="enum-gen-label">Payload probado</span>
-      <select class="enum-gen-sel" id="sstiProbe" onchange="identifySsti()" style="flex:1;">${probeOpts}</select>
-    </div>
-    <div class="enum-gen-row" style="align-items:flex-start;">
-      <span class="enum-gen-label">Respuesta vista</span>
-      <input type="text" class="enum-gen-input" id="sstiResp" oninput="identifySsti()" placeholder="Pega lo que devolvió el servidor (ej: 49)">
-    </div>
-    <div id="sstiIdOut" style="margin-top:8px;"></div>
   </div>
   ${OWASP_CATS.map(cat=>{
     const cards=WEB_VULNS.filter(v=>v.owasp===cat.id);
@@ -4562,7 +4550,6 @@ function renderWebVulnList(){
         <div class="wv-card-sub">${esc(v.sub)}</div>
       </div>`).join('')}</div>`;
   }).join('')}`;
-  identifySsti();
 }
 
 function wvPayloadCard(code, desc){
@@ -4684,6 +4671,17 @@ function openWebVuln(id){
       </tbody></table></div>`;
   }
 
+  if(v.id==='ssti'){
+    const probeOpts=['{{7*7}}','<%= 7*7 %>','${7*7}','@(7*7)','#{7*7}','{7*7}','#set($x=7*7)$x']
+      .map(pp=>`<option value="${esc(pp)}">${esc(pp)}</option>`).join('');
+    html+=`<div class="wv-sec"><div class="wv-sec-title pay">Identificador de motor (interactivo)</div>
+      <div class="enum-generator" style="border-color:rgba(0,221,255,.3);">
+        <div class="enum-gen-row"><span class="enum-gen-label">Payload probado</span><select class="enum-gen-sel" id="sstiProbe" onchange="identifySsti()" style="flex:1;">${probeOpts}</select></div>
+        <div class="enum-gen-row" style="align-items:flex-start;"><span class="enum-gen-label">Respuesta vista</span><input type="text" class="enum-gen-input" id="sstiResp" oninput="identifySsti()" placeholder="Pega lo que devolvió el servidor (ej: 49)"></div>
+        <div id="sstiIdOut" style="margin-top:8px;"></div>
+      </div></div>`;
+  }
+
   if(v.payloads){
     html+=`<div class="wv-sec"><div class="wv-sec-title pay">Payloads</div>${v.payloads.map(p=>wvPayloadCard(p.code,p.d)).join('')}</div>`;
   }
@@ -4705,7 +4703,9 @@ function openWebVuln(id){
   }
 
   d.innerHTML=html;
+  const sc=document.getElementById('webvulnScroll'); if(sc) sc.scrollTop=0;
   if(v.generator){ _sqliCat='detect'; renderSqliGen(); }
+  if(v.id==='ssti') identifySsti();
 }
 
 // ─── SSTI ENGINE IDENTIFIER ───────────────────────────────────────────────────
@@ -4799,6 +4799,7 @@ function openDictModal(){
 
   document.getElementById('dictBody').innerHTML=html;
   document.getElementById('dictModal').classList.add('show');
+  const _dm=document.querySelector('#dictModal .modal'); if(_dm) _dm.scrollTop=0;
 }
 
 async function saveNmapResult(btn){
