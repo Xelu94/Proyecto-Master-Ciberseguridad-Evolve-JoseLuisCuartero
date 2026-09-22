@@ -3228,7 +3228,7 @@ function renderCVEs(){
         ${c.cvss?`<div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:3px">CVSS ${c.cvss}</div>`:''}
         <a href="https://nvd.nist.gov/vuln/detail/${esc(c.cve_id)}" target="_blank" class="nvd-link">↗ NVD</a>
         <a href="https://www.exploit-db.com/search?cve=${esc(c.cve_id)}" target="_blank" class="nvd-link" style="color:var(--orange);border-color:rgba(255,102,0,.3);">↗ EDB</a>
-        <button class="nvd-link" style="cursor:pointer;background:none;color:var(--cyan);border-color:rgba(0,221,255,.3);" onclick="enrichCVE('${esc(c.cve_id)}',this)" title="Rellenar CVSS, severidad y descripción oficiales desde NVD">↻ Enriquecer</button>
+        <button class="nvd-link" style="cursor:pointer;background:none;border:none;padding:0;color:var(--cyan);" onclick="enrichCVE('${esc(c.cve_id)}',this)" title="Rellenar CVSS, severidad y descripción oficiales desde NVD">↻ Enriquecer</button>
         <div style="margin-top:6px;">${edbBadge}</div>
       </div>
       <div class="cve-body">
