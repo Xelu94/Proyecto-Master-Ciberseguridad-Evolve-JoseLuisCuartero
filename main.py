@@ -921,6 +921,7 @@ async def _edb_search(extra_params: dict, limit: int = 15):
     ('cve' o 'q'). El mapeo de la fila cruda de EDB es común a los dos.
     """
     import httpx
+    import asyncio
     params = {
         "action": "search", "draw": "1",
         "columns[0][data]": "id", "columns[1][data]": "date_published",
@@ -930,36 +931,47 @@ async def _edb_search(extra_params: dict, limit: int = 15):
         "start": "0", "length": str(limit),
         **extra_params,
     }
-    try:
-        async with httpx.AsyncClient(timeout=15, headers=_EDB_HEADERS) as client:
-            r = await client.get("https://www.exploit-db.com/search", params=params)
-        if r.status_code != 200:
-            return [], f"EDB HTTP {r.status_code}"
-        rows = r.json().get("data", [])
-        exploits = []
-        for row in rows[:limit]:
-            eid = row.get("id", "")
-            desc = row.get("description")
-            title = desc[1] if isinstance(desc, list) and len(desc) > 1 else (row.get("title") or "")
-            platform = row.get("platform_id") or (
-                row.get("platform", {}).get("platform", "") if isinstance(row.get("platform"), dict) else "")
-            typ = row.get("type_id") or (
-                row.get("type", {}).get("name", "") if isinstance(row.get("type"), dict) else "")
-            cve = ""
-            code = row.get("code")
-            if isinstance(code, list) and code and isinstance(code[0], dict):
-                c0 = code[0].get("code", "")
-                if re.match(r"^\d{4}-\d{3,}$", c0):
-                    cve = "CVE-" + c0
-            exploits.append({
-                "id": eid, "title": title, "date": (row.get("date_published") or "")[:10],
-                "type": typ, "platform": platform, "cve": cve,
-                "url": f"https://www.exploit-db.com/exploits/{eid}" if eid else "",
-                "verified": bool(row.get("verified")),
-            })
-        return exploits, None
-    except Exception as e:
-        return [], str(e)
+    # Exploit-DB va detrás de Cloudflare y responde lento/intermitente (502, 429,
+    # timeouts). Un reintento absorbe la mayoría de los fallos transitorios.
+    last_err = None
+    for attempt in range(2):
+        try:
+            async with httpx.AsyncClient(timeout=20, headers=_EDB_HEADERS) as client:
+                r = await client.get("https://www.exploit-db.com/search", params=params)
+            if r.status_code == 200:
+                return _edb_map(r.json().get("data", []), limit), None
+            last_err = f"Exploit-DB devolvió HTTP {r.status_code}"
+        except Exception as e:
+            last_err = str(e)
+        if attempt == 0:
+            await asyncio.sleep(1.2)
+    return [], last_err
+
+
+def _edb_map(rows: list, limit: int) -> list:
+    """Normaliza las filas crudas de Exploit-DB al objeto que devolvemos."""
+    exploits = []
+    for row in rows[:limit]:
+        eid = row.get("id", "")
+        desc = row.get("description")
+        title = desc[1] if isinstance(desc, list) and len(desc) > 1 else (row.get("title") or "")
+        platform = row.get("platform_id") or (
+            row.get("platform", {}).get("platform", "") if isinstance(row.get("platform"), dict) else "")
+        typ = row.get("type_id") or (
+            row.get("type", {}).get("name", "") if isinstance(row.get("type"), dict) else "")
+        cve = ""
+        code = row.get("code")
+        if isinstance(code, list) and code and isinstance(code[0], dict):
+            c0 = code[0].get("code", "")
+            if re.match(r"^\d{4}-\d{3,}$", c0):
+                cve = "CVE-" + c0
+        exploits.append({
+            "id": eid, "title": title, "date": (row.get("date_published") or "")[:10],
+            "type": typ, "platform": platform, "cve": cve,
+            "url": f"https://www.exploit-db.com/exploits/{eid}" if eid else "",
+            "verified": bool(row.get("verified")),
+        })
+    return exploits
 
 
 @app.get("/api/cves/{cve_id}/exploits")
