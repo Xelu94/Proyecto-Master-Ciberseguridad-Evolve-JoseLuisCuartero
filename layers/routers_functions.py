@@ -42,6 +42,15 @@ class ToolUpdate(BaseModel):
     api_info: Optional[str] = None
 
 
+class CommandIn(BaseModel):
+    command: str
+    description: Optional[str] = None
+    tool_name: Optional[str] = None
+    os: str = "linux"
+    category: Optional[str] = None
+    tags: Optional[list[str]] = None
+
+
 def _save_osint(query: str, qtype: str, result: dict, db: Session):
     r = OsintResult(query=query, query_type=qtype, result=json.dumps(result))
     db.add(r)

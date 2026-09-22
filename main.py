@@ -23,6 +23,7 @@ from layers.routers.analyze import router as analyze_router
 from layers.routers.chat import router as chat_router
 from layers.routers.settings import router as settings_router
 from layers.routers.tools import router as tools_router
+from layers.routers.commands import router as commands_router
 
 # ─── Path resolution (works both as script and PyInstaller exe) ───────────────
 def _bundle_dir() -> Path:
@@ -376,27 +377,6 @@ def get_stats(db: Session = Depends(get_db)):
 
 app.include_router(notes_router)
 
-
-def _note_dict(n: Note, full: bool = False) -> dict:
-    d = {
-        "id": n.id,
-        "title": n.title,
-        "category": n.category,
-        "subcategory": n.subcategory,
-        "summary": n.summary,
-        "tags": json.loads(n.tags or "[]"),
-        "source_file": n.source_file,
-        "created_at": n.created_at.isoformat() if n.created_at else None,
-        "updated_at": n.updated_at.isoformat() if n.updated_at else None,
-    }
-    if full:
-        d["content"] = n.content
-        d["commands"] = [_cmd_dict(c) for c in n.commands]
-        d["cves"] = [_cve_dict(c) for c in n.cves]
-        d["tools"] = [_tool_dict(t) for t in n.tools]
-    return d
-
-
 # ─── Analyze & Upload ──────────────────────────────────────────────────────────
 
 app.include_router(analyze_router)
@@ -446,27 +426,9 @@ def _tool_dict(t: Tool) -> dict:
 
 
 # ─── Commands ──────────────────────────────────────────────────────────────────
+# ─── Commands OS filter ────────────────────────────────────────────────────────
 
-@app.post("/api/commands/cheatsheet")
-def gen_cheatsheet(tool_name: str, db: Session = Depends(get_db)):
-    cmds = db.query(Command).filter(Command.tool_name.ilike(f"%{tool_name}%")).all()
-    result = ai.generate_cheatsheet(tool_name, [_cmd_dict(c) for c in cmds])
-    return {"tool": tool_name, "cheatsheet": result}
-
-
-def _cmd_dict(c: Command) -> dict:
-    return {
-        "id": c.id,
-        "command": c.command,
-        "description": c.description,
-        "tool_name": c.tool_name,
-        "os": c.os or "linux",
-        "flags": json.loads(c.flags or "[]"),
-        "examples": json.loads(c.examples or "[]"),
-        "tags": json.loads(c.tags or "[]"),
-        "category": c.category,
-        "note_id": c.note_id,
-    }
+app.include_router(commands_router)
 
 
 # ─── Graph Entities ────────────────────────────────────────────────────────────
@@ -788,66 +750,6 @@ async def generate_report(req: ReportRequest):
         progress=req.progress,
     )
     return result
-
-
-# ─── Commands OS filter ────────────────────────────────────────────────────────
-
-class CommandIn(BaseModel):
-    command: str
-    description: Optional[str] = None
-    tool_name: Optional[str] = None
-    os: str = "linux"
-    category: Optional[str] = None
-    tags: Optional[list[str]] = None
-
-
-@app.post("/api/commands", status_code=201)
-def create_command(data: CommandIn, db: Session = Depends(get_db)):
-    """Create a single command directly (e.g. from Enum/WebVuln 'Save to KB' button).
-
-    INSERT OR IGNORE semantics: if an identical command already exists in the same
-    category, return it instead of creating a duplicate.
-    """
-    existing = (
-        db.query(Command)
-        .filter(Command.command == data.command, Command.category == data.category)
-        .first()
-    )
-    if existing:
-        return _cmd_dict(existing)
-
-    c = Command(
-        command=data.command,
-        description=data.description,
-        tool_name=data.tool_name,
-        os=data.os,
-        category=data.category,
-        tags=json.dumps(data.tags or []),
-        flags="[]",
-        examples="[]",
-    )
-    db.add(c)
-    db.commit()
-    db.refresh(c)
-    return _cmd_dict(c)
-
-
-@app.get("/api/commands")
-def list_commands(
-    search: Optional[str] = None,
-    tool: Optional[str] = None,
-    os: Optional[str] = None,
-    db: Session = Depends(get_db),
-):
-    q = db.query(Command)
-    if tool:
-        q = q.filter(Command.tool_name.ilike(f"%{tool}%"))
-    if os and os != "all":
-        q = q.filter((Command.os == os) | (Command.os == "both"))
-    if search:
-        q = q.filter(Command.command.ilike(f"%{search}%") | Command.description.ilike(f"%{search}%"))
-    cmds = q.order_by(Command.created_at.desc()).limit(500).all()
-    return [_cmd_dict(c) for c in cmds]
 
 
 # ─── MITRE ATT&CK ─────────────────────────────────────────────────────────────
