@@ -949,7 +949,15 @@ async def _edb_search(extra_params: dict, limit: int = 15):
 
 
 def _edb_map(rows: list, limit: int) -> list:
-    """Normaliza las filas crudas de Exploit-DB al objeto que devolvemos."""
+    """Normaliza las filas crudas de Exploit-DB al objeto que devolvemos.
+
+    El JSON de EDB usa nombres de campo poco intuitivos (viene de un DataTables):
+      - el título está en description[1]  (description = ["id", "título"])
+      - la plataforma en platform_id      (o platform.platform si es dict)
+      - el tipo en type_id                (o type.name)
+      - el CVE, dentro de la lista code[]  (y a veces trae códigos que NO son CVE)
+    Por eso el mapeo tiene tantos .get() con alternativas.
+    """
     exploits = []
     for row in rows[:limit]:
         eid = row.get("id", "")
@@ -963,6 +971,8 @@ def _edb_map(rows: list, limit: int) -> list:
         code = row.get("code")
         if isinstance(code, list) and code and isinstance(code[0], dict):
             c0 = code[0].get("code", "")
+            # Solo lo tratamos como CVE si tiene forma AAAA-NNNN (el campo también
+            # trae otros identificadores, p. ej. de Metasploit)
             if re.match(r"^\d{4}-\d{3,}$", c0):
                 cve = "CVE-" + c0
         exploits.append({
@@ -1008,11 +1018,18 @@ async def exploit_search(q: str):
 
 # ─── NVD (National Vulnerability Database, NIST) — ficha oficial de un CVE ─────
 async def _nvd_lookup(cve_id: str) -> dict:
-    """Consulta la API pública de NVD por un CVE y devuelve su ficha oficial:
-    descripción, CVSS/severidad, CWE, fechas y referencias. Sin API key (con
-    límite de tasa, suficiente para uso interactivo)."""
+    """Consulta la API pública de NVD (NIST) por un CVE y devuelve su ficha
+    oficial: descripción, CVSS/severidad, CWE, fechas y referencias.
+
+    NVD es la fuente autoritativa "qué es este CVE y cómo de grave es". No hace
+    falta API key (hay límite de tasa, de sobra para uso interactivo).
+
+    Siempre devuelve un dict con la clave 'found' (True/False) para que quien lo
+    llame no tenga que capturar excepciones: si algo falla, found=False + 'error'.
+    """
     import httpx
     try:
+        # La API v2.0 filtra por un CVE concreto con el parámetro cveId
         async with httpx.AsyncClient(timeout=15, headers={"User-Agent": "CyberKB/3.0"}) as client:
             r = await client.get(
                 "https://services.nvd.nist.gov/rest/json/cves/2.0",
@@ -1020,37 +1037,48 @@ async def _nvd_lookup(cve_id: str) -> dict:
             )
         if r.status_code != 200:
             return {"found": False, "cve_id": cve_id, "error": f"NVD HTTP {r.status_code}"}
+        # La respuesta trae una lista 'vulnerabilities'; cada elemento tiene un 'cve'
         vulns = r.json().get("vulnerabilities", [])
         if not vulns:
             return {"found": False, "cve_id": cve_id}
         cve = vulns[0].get("cve", {})
+
+        # Descripción: NVD la da en varios idiomas; cogemos la inglesa
         desc = next((d.get("value", "") for d in cve.get("descriptions", []) if d.get("lang") == "en"), "")
+
+        # CVSS: un CVE puede traer métricas en varias versiones del estándar.
+        # Preferimos la más nueva disponible (3.1 > 3.0 > 2.0) y paramos en la 1ª.
         cvss = severity = vector = None
         metrics = cve.get("metrics", {})
         for key in ("cvssMetricV31", "cvssMetricV30", "cvssMetricV2"):
             if metrics.get(key):
                 m = metrics[key][0]
                 cdata = m.get("cvssData", {})
-                cvss = cdata.get("baseScore")
-                severity = cdata.get("baseSeverity") or m.get("baseSeverity")
-                vector = cdata.get("vectorString")
+                cvss = cdata.get("baseScore")          # p. ej. 10.0
+                severity = cdata.get("baseSeverity") or m.get("baseSeverity")  # p. ej. CRITICAL
+                vector = cdata.get("vectorString")     # cadena CVSS (AV:N/AC:L/...)
                 break
+
+        # CWE = tipo de fallo (p. ej. CWE-89 = SQLi). Está anidado en 'weaknesses'.
         cwes = []
         for w in cve.get("weaknesses", []):
             for d in w.get("description", []):
                 v = d.get("value", "")
                 if v.startswith("CWE-") and v not in cwes:
                     cwes.append(v)
+
+        # Referencias (advisories, parches...): nos quedamos con las 6 primeras
         refs = [ref.get("url", "") for ref in cve.get("references", []) if ref.get("url")][:6]
+
         return {
             "found": True,
             "cve_id": cve.get("id", cve_id),
             "description": desc,
             "cvss": cvss,
-            "severity": (severity or "").capitalize() or None,
+            "severity": (severity or "").capitalize() or None,  # CRITICAL -> Critical
             "vector": vector,
             "cwe": cwes,
-            "published": (cve.get("published") or "")[:10],
+            "published": (cve.get("published") or "")[:10],       # solo la fecha (YYYY-MM-DD)
             "modified": (cve.get("lastModified") or "")[:10],
             "references": refs,
         }
@@ -1060,13 +1088,20 @@ async def _nvd_lookup(cve_id: str) -> dict:
 
 @app.get("/api/cve-lookup")
 async def cve_lookup(id: str):
-    """[Módulo CVEs] Busca cualquier CVE por su ID en NVD (ficha oficial)."""
+    """[Módulo CVEs] Busca cualquier CVE por su ID en NVD (ficha oficial).
+
+    Lo llama el frontend cuando escribes un ID (CVE-AAAA-NNNN) que no tienes en
+    la KB y pulsas "Buscar en NVD". Validamos el formato aquí para no gastar una
+    petición a NVD con basura.
+    """
     cid = (id or "").strip().upper()
     if not re.match(r"^CVE-\d{4}-\d{4,}$", cid):
         raise HTTPException(400, "Formato de CVE inválido (esperado CVE-AAAA-NNNN)")
     return await _nvd_lookup(cid)
 
 
+# Cuerpo (JSON) que acepta POST /api/cves. Solo cve_id es obligatorio; el resto
+# se rellena con lo que traiga la ficha de NVD al guardar.
 class CVECreate(BaseModel):
     cve_id: str
     description: Optional[str] = None
@@ -1077,13 +1112,18 @@ class CVECreate(BaseModel):
 
 @app.post("/api/cves")
 def create_cve(data: CVECreate, db: Session = Depends(get_db)):
-    """[Módulo CVEs] Guarda un CVE en la KB (p. ej. tras buscarlo en NVD).
-    Si ya existe, actualiza los campos aportados (upsert)."""
+    """[Módulo CVEs] Guarda un CVE en la KB (botón "Guardar" tras buscar en NVD).
+
+    Va a la misma tabla `cves` que los CVEs que la IA detecta en documentos.
+    Es un upsert: si el CVE ya existe, actualiza sus campos en vez de duplicarlo;
+    devuelve created=True/False para que el frontend sepa qué pasó.
+    """
     cid = data.cve_id.strip().upper()
     if not re.match(r"^CVE-\d{4}-\d{4,}$", cid):
         raise HTTPException(400, "Formato de CVE inválido")
     row = db.query(CVE).filter(CVE.cve_id == cid).first()
     if row:
+        # Ya existe → solo sobreescribimos los campos que llegan con valor
         if data.description:
             row.description = data.description
         if data.severity:
@@ -1095,6 +1135,7 @@ def create_cve(data: CVECreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(row)
         return {"created": False, **_cve_dict(row)}
+    # No existe → fila nueva
     row = CVE(cve_id=cid, description=data.description, severity=data.severity,
               cvss=data.cvss, title=data.title)
     db.add(row)
@@ -1105,8 +1146,12 @@ def create_cve(data: CVECreate, db: Session = Depends(get_db)):
 
 @app.post("/api/cves/{cve_id}/enrich")
 async def enrich_cve(cve_id: str, db: Session = Depends(get_db)):
-    """[Módulo CVEs] Rellena CVSS/severidad/descripción oficiales de un CVE
-    ya existente consultando NVD."""
+    """[Módulo CVEs] Rellena CVSS/severidad/descripción oficiales de un CVE que
+    YA está en la KB, consultando NVD (botón "↻ Enriquecer").
+
+    Útil porque los CVEs detectados por la IA a veces traen esos campos vacíos o
+    imprecisos; aquí los sustituimos por los datos autoritativos de NVD.
+    """
     row = db.query(CVE).filter(CVE.cve_id == cve_id).first()
     if not row:
         raise HTTPException(404, "CVE no encontrado en la base de datos")

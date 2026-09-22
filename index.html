@@ -3097,6 +3097,7 @@ async function renderGraph(){
 // ─── CVEs ─────────────────────────────────────────────────────────────────────
 const _edbCache={};  // cve_id → {count, exploits, loaded}
 
+// Vacía la caja de búsqueda y vuelve a pintar la lista completa (botón ✕)
 function clearCveSearch(){
   const inp=document.getElementById('cveSearch');
   inp.value=''; inp.focus();
@@ -3104,6 +3105,8 @@ function clearCveSearch(){
 }
 
 // ─── Filtro por severidad (módulo CVEs) ───────────────────────────────────────
+// _cveSevFilter guarda la severidad activa ('all' | 'critical' | 'high' | ...).
+// renderCVEs() lo lee para filtrar; los botones de la barra llaman a setCveSev.
 let _cveSevFilter='all';
 function setCveSev(sev,btn){
   _cveSevFilter=sev;
@@ -3113,6 +3116,11 @@ function setCveSev(sev,btn){
 }
 
 // ─── Buscar cualquier CVE por ID en NVD (módulo CVEs) ─────────────────────────
+// Flujo de lookupCVE(id):
+//   1) pide la ficha oficial a /api/cve-lookup (NVD) y la pinta (descripción,
+//      CVSS, CWE, refs). Guarda la respuesta en _lastLookup para poder guardarla.
+//   2) en la misma vista consulta los exploits de EDB (/api/cves/{id}/exploits).
+//   3) el botón "Guardar en KB" llama a saveLookedCVE(), que persiste _lastLookup.
 let _lastLookup=null;
 async function lookupCVE(id){
   const list=document.getElementById('cvesList');
@@ -3163,6 +3171,8 @@ async function lookupCVE(id){
     list.innerHTML='<div class="empty-msg" style="color:var(--red)">Error consultando NVD: '+esc(e.message)+'</div>';
   }
 }
+// Rellena un CVE existente con los datos oficiales de NVD (botón "↻ Enriquecer").
+// El trabajo lo hace el backend; aquí solo lanzamos la petición y refrescamos.
 async function enrichCVE(cveId, btn){
   if(btn){ btn.disabled=true; btn.textContent='⟳…'; }
   try{
@@ -3171,6 +3181,9 @@ async function enrichCVE(cveId, btn){
     else { if(btn){btn.disabled=false;btn.textContent='↻ Enriquecer';} setStatus('No se pudo enriquecer: '+(r.error||'desconocido'),'error'); }
   }catch(e){ if(btn){btn.disabled=false;btn.textContent='↻ Enriquecer';} setStatus('Error enriqueciendo: '+e.message,'error'); }
 }
+// Persiste en la KB el CVE que se acaba de buscar en NVD (POST /api/cves).
+// Ojo: solo se guardan cve_id/descripción/severidad/CVSS; el CWE y las
+// referencias se ven en la ficha pero la tabla no tiene columnas para ellos.
 async function saveLookedCVE(btn){
   if(!_lastLookup||!_lastLookup.found) return;
   const d=_lastLookup;
@@ -3189,6 +3202,8 @@ function renderCVEs(){
   if(_cveSevFilter!=='all') cves=cves.filter(c=>(c.severity||'').toLowerCase()===_cveSevFilter);
   document.getElementById('cveCount').textContent=cves.length+' CVEs';
   if(!cves.length){
+    // Si no hay resultados locales pero lo tecleado ES un ID de CVE completo,
+    // ofrecemos buscarlo en NVD en vez de decir simplemente "sin CVEs".
     const qt=q.trim();
     if(/^cve-\d{4}-\d{4,}$/i.test(qt)){
       document.getElementById('cvesList').innerHTML=`<div class="empty-msg">No tienes <b>${esc(qt.toUpperCase())}</b> en tu KB.<br><button class="btn-outline" style="margin-top:10px" onclick="lookupCVE('${esc(qt.toUpperCase())}')">🔎 Buscar en NVD</button></div>`;
