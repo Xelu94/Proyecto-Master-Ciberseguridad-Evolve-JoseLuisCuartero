@@ -21,6 +21,7 @@ from layers.routers.osint import router as osint_router
 from layers.routers.notes import router as notes_router
 from layers.routers.analyze import router as analyze_router
 from layers.routers.chat import router as chat_router
+from layers.routers.settings import router as settings_router
 
 # ─── Path resolution (works both as script and PyInstaller exe) ───────────────
 def _bundle_dir() -> Path:
@@ -29,16 +30,10 @@ def _bundle_dir() -> Path:
         return Path(sys._MEIPASS)   # PyInstaller temp extraction dir
     return Path(__file__).parent
 
-def _runtime_dir() -> Path:
-    """Where user data lives (.env, data/, uploads/) — always next to exe/script."""
-    if getattr(sys, "frozen", False):
-        return Path(sys.executable).parent
-    return Path(__file__).parent
-
 BUNDLE_DIR  = _bundle_dir()
-RUNTIME_DIR = _runtime_dir()
+# RUNTIME_DIR = _runtime_dir()
 
-load_dotenv(dotenv_path=RUNTIME_DIR / ".env", encoding="utf-8", override=True)
+# load_dotenv(dotenv_path=RUNTIME_DIR / ".env", encoding="utf-8", override=True)
 
 from database import get_db, init_db, engine
 from models import Note, Command, Tool, CVE, OsintResult, GraphEntity, EntityRelation, entity_note_map, MitreTechnique
@@ -46,9 +41,9 @@ import claude_service as ai
 import document_parser as parser
 import osint_tools as osint
 
-UPLOAD_DIR = RUNTIME_DIR / os.getenv("UPLOAD_DIR", "uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
-(RUNTIME_DIR / "data").mkdir(exist_ok=True)
+# UPLOAD_DIR = RUNTIME_DIR / os.getenv("UPLOAD_DIR", "uploads")
+# UPLOAD_DIR.mkdir(exist_ok=True)
+# (RUNTIME_DIR / "data").mkdir(exist_ok=True)
 
 
 def _migrate_db():
@@ -760,119 +755,7 @@ app.include_router(osint_router)
 
 # ─── Settings (API Keys) ──────────────────────────────────────────────────────
 
-SETTINGS_KEYS = [
-    "ANTHROPIC_API_KEY",
-    "VIRUSTOTAL_API_KEY",
-    "ABUSEIPDB_API_KEY",
-    "MALWAREBAZAAR_API_KEY",
-    "HUNTER_API_KEY",
-    "SHODAN_API_KEY",
-    "URLSCAN_API_KEY",
-    "HIBP_API_KEY",
-    "LEAKRADAR_API_KEY",
-    "ANYRUN_API_KEY",
-]
-
-
-def _mask(val: str) -> str:
-    if not val:
-        return ""
-    if len(val) <= 8:
-        return "*" * len(val)
-    return val[:4] + "*" * (len(val) - 8) + val[-4:]
-
-
-def _read_env_file() -> dict:
-    env_path = RUNTIME_DIR / ".env"
-    pairs = {}
-    if env_path.exists():
-        for line in env_path.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                k, _, v = line.partition("=")
-                pairs[k.strip()] = v.strip()
-    return pairs
-
-
-def _write_env_file(pairs: dict):
-    env_path = RUNTIME_DIR / ".env"
-    # Read existing lines to preserve comments/order
-    existing_lines = []
-    if env_path.exists():
-        existing_lines = env_path.read_text(encoding="utf-8").splitlines()
-
-    written = set()
-    new_lines = []
-    for line in existing_lines:
-        stripped = line.strip()
-        if stripped and not stripped.startswith("#") and "=" in stripped:
-            k = stripped.partition("=")[0].strip()
-            if k in pairs:
-                new_lines.append(f"{k}={pairs[k]}")
-                written.add(k)
-                continue
-        new_lines.append(line)
-
-    # Append any new keys not already in file
-    for k, v in pairs.items():
-        if k not in written:
-            new_lines.append(f"{k}={v}")
-
-    env_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
-
-
-@app.get("/api/settings")
-def get_settings():
-    pairs = _read_env_file()
-    result = {}
-    for k in SETTINGS_KEYS:
-        val = pairs.get(k, "")
-        result[k] = {"masked": _mask(val), "set": bool(val)}
-    return result
-
-
-class SettingsIn(BaseModel):
-    keys: dict[str, str]
-
-
-@app.post("/api/settings")
-def save_settings(data: SettingsIn):
-    # Only allow whitelisted keys
-    filtered = {k: v for k, v in data.keys.items() if k in SETTINGS_KEYS}
-    if not filtered:
-        raise HTTPException(400, "No valid keys provided")
-
-    _write_env_file(filtered)
-
-    # Reload into current process environment + dependent modules
-    load_dotenv(dotenv_path=RUNTIME_DIR / ".env", encoding="utf-8", override=True)
-    import claude_service as _ai
-    import osint_tools as _osint
-    _ai.client = None  # force re-init on next call
-    # Reload API keys in osint module
-    for k in filtered:
-        val = os.getenv(k, "")
-        if k == "SHODAN_API_KEY":
-            _osint.SHODAN_KEY = val
-        elif k == "VIRUSTOTAL_API_KEY":
-            _osint.VT_KEY = val
-        elif k == "HUNTER_API_KEY":
-            _osint.HUNTER_KEY = val
-        elif k == "URLSCAN_API_KEY":
-            _osint.URLSCAN_KEY = val
-        elif k == "ABUSEIPDB_API_KEY":
-            _osint.ABUSEIPDB_KEY = val
-        elif k == "MALWAREBAZAAR_API_KEY":
-            _osint.MALWAREBAZAAR_KEY = val
-        elif k == "HIBP_API_KEY":
-            _osint.HIBP_KEY = val
-        elif k == "LEAKRADAR_API_KEY":
-            _osint.LEAKRADAR_KEY = val
-        elif k == "ANYRUN_API_KEY":
-            _osint.ANYRUN_KEY = val
-
-    return {"saved": list(filtered.keys())}
-
+app.include_router(settings_router)
 
 # ─── Run ───────────────────────────────────────────────────────────────────────
 

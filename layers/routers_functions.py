@@ -7,6 +7,7 @@ from models import CVE, Command, Tool, Note, MitreTechnique, GraphEntity
 import claude_service as ai
 from pathlib import Path
 import sys
+from dotenv import load_dotenv
 
 
 # OSINT
@@ -264,3 +265,60 @@ def _persist_entities(entities_data: list, relations_data: list, note: Note, db:
 
 class ChatIn(BaseModel):
     question: str
+
+
+# SETTINGS
+
+class SettingsIn(BaseModel):
+    keys: dict[str, str]
+
+RUNTIME_DIR = _runtime_dir()
+
+load_dotenv(dotenv_path=RUNTIME_DIR / ".env", encoding="utf-8", override=True)
+(RUNTIME_DIR / "data").mkdir(exist_ok=True)
+
+def _read_env_file() -> dict:
+    env_path = RUNTIME_DIR / ".env"
+    pairs = {}
+    if env_path.exists():
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, _, v = line.partition("=")
+                pairs[k.strip()] = v.strip()
+    return pairs
+
+
+def _mask(val: str) -> str:
+    if not val:
+        return ""
+    if len(val) <= 8:
+        return "*" * len(val)
+    return val[:4] + "*" * (len(val) - 8) + val[-4:]
+
+
+def _write_env_file(pairs: dict):
+    env_path = RUNTIME_DIR / ".env"
+    # Read existing lines to preserve comments/order
+    existing_lines = []
+    if env_path.exists():
+        existing_lines = env_path.read_text(encoding="utf-8").splitlines()
+
+    written = set()
+    new_lines = []
+    for line in existing_lines:
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#") and "=" in stripped:
+            k = stripped.partition("=")[0].strip()
+            if k in pairs:
+                new_lines.append(f"{k}={pairs[k]}")
+                written.add(k)
+                continue
+        new_lines.append(line)
+
+    # Append any new keys not already in file
+    for k, v in pairs.items():
+        if k not in written:
+            new_lines.append(f"{k}={v}")
+
+    env_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
