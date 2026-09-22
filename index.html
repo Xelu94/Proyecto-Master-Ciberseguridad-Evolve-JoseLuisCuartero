@@ -3089,12 +3089,77 @@ async function renderGraph(){
 // ─── CVEs ─────────────────────────────────────────────────────────────────────
 const _edbCache={};  // cve_id → {count, exploits, loaded}
 
+// ─── Buscar cualquier CVE por ID en NVD (módulo CVEs) ─────────────────────────
+let _lastLookup=null;
+async function lookupCVE(id){
+  const list=document.getElementById('cvesList');
+  list.innerHTML='<div class="empty-msg">Buscando '+esc(id)+' en NVD…</div>';
+  try{
+    const d=await API.get('/api/cve-lookup?id='+encodeURIComponent(id));
+    _lastLookup=d;
+    const back=`<div style="margin-bottom:8px;"><a href="#" onclick="document.getElementById('cveSearch').value='';renderCVEs();return false;" style="color:var(--cyan);font-size:11px;font-family:var(--mono)">← volver a mis CVEs</a></div>`;
+    if(!d.found){
+      list.innerHTML=back+'<div class="empty-msg">CVE '+esc(id)+' no encontrado en NVD'+(d.error?' ('+esc(d.error)+')':'')+'.</div>';
+      return;
+    }
+    const sev=(d.severity||'').toLowerCase();
+    list.innerHTML=back+`<div class="cve-entry" style="border:1px solid var(--cyan);">
+      <div>
+        <div class="cve-id">${esc(d.cve_id)}</div>
+        ${d.severity?`<span class="cve-sev sev-${sev}">${esc(d.severity)}</span>`:''}
+        ${d.cvss!=null?`<div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:3px">CVSS ${d.cvss}</div>`:''}
+        <a href="https://nvd.nist.gov/vuln/detail/${esc(d.cve_id)}" target="_blank" class="nvd-link">↗ NVD</a>
+        <a href="https://www.exploit-db.com/search?cve=${esc(d.cve_id)}" target="_blank" class="nvd-link" style="color:var(--orange);border-color:rgba(255,102,0,.3);">↗ EDB</a>
+      </div>
+      <div class="cve-body">
+        <div class="cve-desc">${esc(d.description||'Sin descripción')}</div>
+        ${d.cwe&&d.cwe.length?`<div style="margin-top:6px;font-size:10px;font-family:var(--mono);color:var(--purple)">${d.cwe.map(esc).join(' · ')}</div>`:''}
+        ${d.published?`<div style="font-size:10px;color:var(--text3);margin-top:4px">Publicado ${esc(d.published)}${d.modified?' · Modificado '+esc(d.modified):''}</div>`:''}
+        ${d.vector?`<div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px">${esc(d.vector)}</div>`:''}
+        ${d.references&&d.references.length?`<div style="margin-top:6px;font-size:10px;color:var(--text3)">Referencias: ${d.references.slice(0,4).map(u=>`<a href="${esc(u)}" target="_blank" style="color:var(--blue)">↗</a>`).join(' ')}</div>`:''}
+        <div id="lookupEdb" style="margin-top:8px;font-size:11px;color:var(--text3)">⟳ Buscando exploits en Exploit-DB…</div>
+        <div style="margin-top:10px;"><button class="btn-outline" onclick="saveLookedCVE(this)">💾 Guardar en KB</button></div>
+      </div>
+    </div>`;
+    // Exploits de EDB en la misma vista
+    try{
+      const edb=await API.get('/api/cves/'+encodeURIComponent(d.cve_id)+'/exploits');
+      const el=document.getElementById('lookupEdb');
+      if(el){
+        el.innerHTML = edb.count>0
+          ? `<div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:4px">🔥 ${edb.count} EXPLOIT(S) EN EXPLOIT-DB:</div>`+
+            edb.exploits.map(e=>`<div style="display:flex;gap:6px;align-items:center;margin-bottom:2px;">${e.verified?'<span style="color:var(--green);font-size:10px">✓</span>':'<span style="color:var(--text3);font-size:10px">·</span>'}<a href="${esc(e.url)}" target="_blank" style="font-size:11px;color:var(--orange)">${esc(e.title||e.id)}</a><span style="font-size:10px;color:var(--text3)">${esc(e.date)}</span></div>`).join('')
+          : '<span style="font-size:11px;color:var(--text3)">Sin exploit conocido en Exploit-DB.</span>';
+      }
+    }catch(err){ const el=document.getElementById('lookupEdb'); if(el) el.innerHTML='<span style="font-size:11px;color:var(--orange)">Error consultando Exploit-DB</span>'; }
+  }catch(e){
+    list.innerHTML='<div class="empty-msg" style="color:var(--red)">Error consultando NVD: '+esc(e.message)+'</div>';
+  }
+}
+async function saveLookedCVE(btn){
+  if(!_lastLookup||!_lastLookup.found) return;
+  const d=_lastLookup;
+  btn.disabled=true; btn.textContent='⟳ Guardando…';
+  try{
+    await API.post('/api/cves',{cve_id:d.cve_id,description:d.description,severity:d.severity,cvss:d.cvss});
+    await loadAll();
+    btn.textContent='✓ Guardado en KB';
+    setStatus('CVE '+d.cve_id+' guardado en la base de conocimiento');
+  }catch(e){ btn.disabled=false; btn.textContent='💾 Guardar en KB'; setStatus('Error guardando CVE: '+e.message,'error'); }
+}
+
 function renderCVEs(){
   const q=(document.getElementById('cveSearch').value||'').toLowerCase();
   let cves=q?S.cves.filter(c=>c.cve_id.toLowerCase().includes(q)||(c.description||'').toLowerCase().includes(q)):S.cves;
   document.getElementById('cveCount').textContent=cves.length+' CVEs';
   if(!cves.length){
-    document.getElementById('cvesList').innerHTML='<div class="empty-msg">Sin CVEs registrados.</div>';return;
+    const qt=q.trim();
+    if(/^cve-\d{4}-\d{4,}$/i.test(qt)){
+      document.getElementById('cvesList').innerHTML=`<div class="empty-msg">No tienes <b>${esc(qt.toUpperCase())}</b> en tu KB.<br><button class="btn-outline" style="margin-top:10px" onclick="lookupCVE('${esc(qt.toUpperCase())}')">🔎 Buscar en NVD</button></div>`;
+    } else {
+      document.getElementById('cvesList').innerHTML='<div class="empty-msg">Sin CVEs registrados.</div>';
+    }
+    return;
   }
   document.getElementById('cvesList').innerHTML=cves.map(c=>{
     const sevClass=`sev-${(c.severity||'info').toLowerCase()}`;
