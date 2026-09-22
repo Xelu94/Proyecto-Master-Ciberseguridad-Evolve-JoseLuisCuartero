@@ -3190,8 +3190,12 @@ async function saveLookedCVE(btn){
   btn.disabled=true; btn.textContent='⟳ Guardando…';
   try{
     await API.post('/api/cves',{cve_id:d.cve_id,description:d.description,severity:d.severity,cvss:d.cvss});
-    await loadAll();
-    btn.textContent='✓ Guardado en KB';
+    // Refrescamos los datos SIN repintar la ficha, para que la confirmación
+    // "✓ Guardado" siga visible en la propia tarjeta que estás mirando.
+    S.cves=await API.get('/api/cves');
+    btn.textContent='✓ Guardado en la KB';
+    btn.style.color='var(--green)';
+    btn.style.borderColor='var(--green)';
     setStatus('CVE '+d.cve_id+' guardado en la base de conocimiento');
   }catch(e){ btn.disabled=false; btn.textContent='💾 Guardar en KB'; setStatus('Error guardando CVE: '+e.message,'error'); }
 }
