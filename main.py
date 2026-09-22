@@ -22,6 +22,7 @@ from layers.routers.notes import router as notes_router
 from layers.routers.analyze import router as analyze_router
 from layers.routers.chat import router as chat_router
 from layers.routers.settings import router as settings_router
+from layers.routers.tools import router as tools_router
 
 # ─── Path resolution (works both as script and PyInstaller exe) ───────────────
 def _bundle_dir() -> Path:
@@ -424,52 +425,7 @@ def _persist_mitre(techniques: list, note: Note, db: Session):
 
 # ─── Tools ─────────────────────────────────────────────────────────────────────
 
-@app.get("/api/tools")
-def list_tools(db: Session = Depends(get_db)):
-    tools = db.query(Tool).order_by(Tool.mention_count.desc()).all()
-    return [_tool_dict(t) for t in tools]
-
-
-@app.get("/api/tools/{tool_id}")
-def get_tool(tool_id: int, db: Session = Depends(get_db)):
-    t = db.query(Tool).filter(Tool.id == tool_id).first()
-    if not t:
-        raise HTTPException(404, "Tool not found")
-    d = _tool_dict(t)
-    d["notes"] = [{"id": n.id, "title": n.title, "category": n.category} for n in t.notes]
-    d["commands"] = [_cmd_dict(c) for c in db.query(Command).filter(Command.tool_name.ilike(t.name)).all()]
-    return d
-
-
-class ToolUpdate(BaseModel):
-    url: Optional[str] = None
-    description: Optional[str] = None
-    category: Optional[str] = None
-    use_cases: Optional[list[str]] = None
-    requires_api: Optional[bool] = None
-    api_info: Optional[str] = None
-
-
-@app.put("/api/tools/{tool_id}")
-def update_tool(tool_id: int, data: ToolUpdate, db: Session = Depends(get_db)):
-    t = db.query(Tool).filter(Tool.id == tool_id).first()
-    if not t:
-        raise HTTPException(404, "Tool not found")
-    if data.url is not None:
-        t.url = data.url
-    if data.description is not None:
-        t.description = data.description
-    if data.category is not None:
-        t.category = data.category
-    if data.use_cases is not None:
-        t.use_cases = json.dumps(data.use_cases)
-    if data.requires_api is not None:
-        t.requires_api = data.requires_api
-    if data.api_info is not None:
-        t.api_info = data.api_info
-    db.commit()
-    db.refresh(t)
-    return _tool_dict(t)
+app.include_router(tools_router)
 
 
 def _tool_dict(t: Tool) -> dict:

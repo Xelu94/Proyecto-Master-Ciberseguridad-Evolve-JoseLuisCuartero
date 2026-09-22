@@ -10,16 +10,6 @@ import sys
 from dotenv import load_dotenv
 
 
-# OSINT
-
-def _save_osint(query: str, qtype: str, result: dict, db: Session):
-    r = OsintResult(query=query, query_type=qtype, result=json.dumps(result))
-    db.add(r)
-    db.commit()
-
-
-# NOTES
-
 class NoteIn(BaseModel):
     title: str
     content: str
@@ -28,6 +18,34 @@ class NoteIn(BaseModel):
     summary: Optional[str] = None
     tags: Optional[list[str]] = None
     source_file: Optional[str] = None
+
+
+class AnalyzeIn(BaseModel):
+    text: str
+    title: Optional[str] = None
+
+
+class ChatIn(BaseModel):
+    question: str
+
+
+class SettingsIn(BaseModel):
+    keys: dict[str, str]
+
+
+class ToolUpdate(BaseModel):
+    url: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    use_cases: Optional[list[str]] = None
+    requires_api: Optional[bool] = None
+    api_info: Optional[str] = None
+
+
+def _save_osint(query: str, qtype: str, result: dict, db: Session):
+    r = OsintResult(query=query, query_type=qtype, result=json.dumps(result))
+    db.add(r)
+    db.commit()
 
 
 def _cve_dict(c: CVE) -> dict:
@@ -92,13 +110,6 @@ def _note_dict(n: Note, full: bool = False) -> dict:
         d["cves"] = [_cve_dict(c) for c in n.cves]
         d["tools"] = [_tool_dict(t) for t in n.tools]
     return d
-
-
-# ANALYZE
-
-class AnalyzeIn(BaseModel):
-    text: str
-    title: Optional[str] = None
 
 
 def _persist_tools(tools_data: list, db: Session) -> list:
@@ -261,21 +272,11 @@ def _persist_entities(entities_data: list, relations_data: list, note: Note, db:
     db.commit()
 
 
-# CHAT
-
-class ChatIn(BaseModel):
-    question: str
-
-
-# SETTINGS
-
-class SettingsIn(BaseModel):
-    keys: dict[str, str]
-
 RUNTIME_DIR = _runtime_dir()
 
 load_dotenv(dotenv_path=RUNTIME_DIR / ".env", encoding="utf-8", override=True)
 (RUNTIME_DIR / "data").mkdir(exist_ok=True)
+
 
 def _read_env_file() -> dict:
     env_path = RUNTIME_DIR / ".env"
@@ -322,3 +323,5 @@ def _write_env_file(pairs: dict):
             new_lines.append(f"{k}={v}")
 
     env_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+
+
