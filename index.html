@@ -761,8 +761,15 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
 
   <!-- CVEs PANEL -->
   <div class="panel" id="panel-cves">
-    <div class="ed-toolbar">
-      <input type="text" id="cveSearch" placeholder="buscar CVE..." oninput="renderCVEs()" class="sel" style="flex:1;min-width:150px;">
+    <div class="ed-toolbar" style="flex-wrap:wrap;">
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        <button class="os-btn active" id="cveSev-all" onclick="setCveSev('all',this)">Todas</button>
+        <button class="os-btn" id="cveSev-critical" onclick="setCveSev('critical',this)">🔴 Crítica</button>
+        <button class="os-btn" id="cveSev-high" onclick="setCveSev('high',this)">🟠 Alta</button>
+        <button class="os-btn" id="cveSev-medium" onclick="setCveSev('medium',this)">🟡 Media</button>
+        <button class="os-btn" id="cveSev-low" onclick="setCveSev('low',this)">🟢 Baja</button>
+      </div>
+      <input type="text" id="cveSearch" placeholder="buscar CVE o teclea un ID (CVE-AAAA-NNNN)..." oninput="renderCVEs()" class="sel" style="flex:1;min-width:150px;">
       <span style="font-size:11px;color:var(--text3);font-family:var(--mono);" id="cveCount"></span>
     </div>
     <div class="cves-body" id="cvesList"><div class="empty-msg">Sin CVEs registrados. Se detectan automáticamente al analizar documentos.</div></div>
@@ -3089,6 +3096,15 @@ async function renderGraph(){
 // ─── CVEs ─────────────────────────────────────────────────────────────────────
 const _edbCache={};  // cve_id → {count, exploits, loaded}
 
+// ─── Filtro por severidad (módulo CVEs) ───────────────────────────────────────
+let _cveSevFilter='all';
+function setCveSev(sev,btn){
+  _cveSevFilter=sev;
+  document.querySelectorAll('#panel-cves .os-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderCVEs();
+}
+
 // ─── Buscar cualquier CVE por ID en NVD (módulo CVEs) ─────────────────────────
 let _lastLookup=null;
 async function lookupCVE(id){
@@ -3159,6 +3175,7 @@ async function saveLookedCVE(btn){
 function renderCVEs(){
   const q=(document.getElementById('cveSearch').value||'').toLowerCase();
   let cves=q?S.cves.filter(c=>c.cve_id.toLowerCase().includes(q)||(c.description||'').toLowerCase().includes(q)):S.cves;
+  if(_cveSevFilter!=='all') cves=cves.filter(c=>(c.severity||'').toLowerCase()===_cveSevFilter);
   document.getElementById('cveCount').textContent=cves.length+' CVEs';
   if(!cves.length){
     const qt=q.trim();
