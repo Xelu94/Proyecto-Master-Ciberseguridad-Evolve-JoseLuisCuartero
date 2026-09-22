@@ -994,6 +994,124 @@ async def exploit_search(q: str):
     return res
 
 
+# ─── NVD (National Vulnerability Database, NIST) — ficha oficial de un CVE ─────
+async def _nvd_lookup(cve_id: str) -> dict:
+    """Consulta la API pública de NVD por un CVE y devuelve su ficha oficial:
+    descripción, CVSS/severidad, CWE, fechas y referencias. Sin API key (con
+    límite de tasa, suficiente para uso interactivo)."""
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=15, headers={"User-Agent": "CyberKB/3.0"}) as client:
+            r = await client.get(
+                "https://services.nvd.nist.gov/rest/json/cves/2.0",
+                params={"cveId": cve_id},
+            )
+        if r.status_code != 200:
+            return {"found": False, "cve_id": cve_id, "error": f"NVD HTTP {r.status_code}"}
+        vulns = r.json().get("vulnerabilities", [])
+        if not vulns:
+            return {"found": False, "cve_id": cve_id}
+        cve = vulns[0].get("cve", {})
+        desc = next((d.get("value", "") for d in cve.get("descriptions", []) if d.get("lang") == "en"), "")
+        cvss = severity = vector = None
+        metrics = cve.get("metrics", {})
+        for key in ("cvssMetricV31", "cvssMetricV30", "cvssMetricV2"):
+            if metrics.get(key):
+                m = metrics[key][0]
+                cdata = m.get("cvssData", {})
+                cvss = cdata.get("baseScore")
+                severity = cdata.get("baseSeverity") or m.get("baseSeverity")
+                vector = cdata.get("vectorString")
+                break
+        cwes = []
+        for w in cve.get("weaknesses", []):
+            for d in w.get("description", []):
+                v = d.get("value", "")
+                if v.startswith("CWE-") and v not in cwes:
+                    cwes.append(v)
+        refs = [ref.get("url", "") for ref in cve.get("references", []) if ref.get("url")][:6]
+        return {
+            "found": True,
+            "cve_id": cve.get("id", cve_id),
+            "description": desc,
+            "cvss": cvss,
+            "severity": (severity or "").capitalize() or None,
+            "vector": vector,
+            "cwe": cwes,
+            "published": (cve.get("published") or "")[:10],
+            "modified": (cve.get("lastModified") or "")[:10],
+            "references": refs,
+        }
+    except Exception as e:
+        return {"found": False, "cve_id": cve_id, "error": str(e)}
+
+
+@app.get("/api/cve-lookup")
+async def cve_lookup(id: str):
+    """[Módulo CVEs] Busca cualquier CVE por su ID en NVD (ficha oficial)."""
+    cid = (id or "").strip().upper()
+    if not re.match(r"^CVE-\d{4}-\d{4,}$", cid):
+        raise HTTPException(400, "Formato de CVE inválido (esperado CVE-AAAA-NNNN)")
+    return await _nvd_lookup(cid)
+
+
+class CVECreate(BaseModel):
+    cve_id: str
+    description: Optional[str] = None
+    severity: Optional[str] = None
+    cvss: Optional[float] = None
+    title: Optional[str] = None
+
+
+@app.post("/api/cves")
+def create_cve(data: CVECreate, db: Session = Depends(get_db)):
+    """[Módulo CVEs] Guarda un CVE en la KB (p. ej. tras buscarlo en NVD).
+    Si ya existe, actualiza los campos aportados (upsert)."""
+    cid = data.cve_id.strip().upper()
+    if not re.match(r"^CVE-\d{4}-\d{4,}$", cid):
+        raise HTTPException(400, "Formato de CVE inválido")
+    row = db.query(CVE).filter(CVE.cve_id == cid).first()
+    if row:
+        if data.description:
+            row.description = data.description
+        if data.severity:
+            row.severity = data.severity
+        if data.cvss is not None:
+            row.cvss = data.cvss
+        if data.title:
+            row.title = data.title
+        db.commit()
+        db.refresh(row)
+        return {"created": False, **_cve_dict(row)}
+    row = CVE(cve_id=cid, description=data.description, severity=data.severity,
+              cvss=data.cvss, title=data.title)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return {"created": True, **_cve_dict(row)}
+
+
+@app.post("/api/cves/{cve_id}/enrich")
+async def enrich_cve(cve_id: str, db: Session = Depends(get_db)):
+    """[Módulo CVEs] Rellena CVSS/severidad/descripción oficiales de un CVE
+    ya existente consultando NVD."""
+    row = db.query(CVE).filter(CVE.cve_id == cve_id).first()
+    if not row:
+        raise HTTPException(404, "CVE no encontrado en la base de datos")
+    nvd = await _nvd_lookup(cve_id)
+    if not nvd.get("found"):
+        return {"updated": False, "error": nvd.get("error") or "no encontrado en NVD"}
+    if nvd.get("cvss") is not None:
+        row.cvss = nvd["cvss"]
+    if nvd.get("severity"):
+        row.severity = nvd["severity"]
+    if nvd.get("description"):
+        row.description = nvd["description"]
+    db.commit()
+    db.refresh(row)
+    return {"updated": True, **_cve_dict(row)}
+
+
 def _cve_dict(c: CVE) -> dict:
     return {
         "id": c.id,
