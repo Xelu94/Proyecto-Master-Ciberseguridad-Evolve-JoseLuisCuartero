@@ -905,57 +905,72 @@ def list_cves(db: Session = Depends(get_db)):
     return [_cve_dict(c) for c in cves]
 
 
-@app.get("/api/cves/{cve_id}/exploits")
-async def cve_exploits(cve_id: str):
-    """Query Exploit-DB for public exploits for a given CVE."""
+# ─── Exploit-DB (compartido por módulos CVEs y Enumeración) ───────────────────
+_EDB_HEADERS = {
+    "User-Agent": "CyberKB/3.0",
+    "X-Requested-With": "XMLHttpRequest",
+    "Accept": "application/json, text/javascript, */*; q=0.01",
+    "Referer": "https://www.exploit-db.com/search",
+}
+
+
+async def _edb_search(extra_params: dict, limit: int = 15):
+    """Consulta la búsqueda JSON (formato DataTables) de Exploit-DB y devuelve
+    (exploits, error). Lo usan tanto el buscador por CVE (módulo CVEs) como el
+    buscador por versión (módulo Enumeración); solo cambian los `extra_params`
+    ('cve' o 'q'). El mapeo de la fila cruda de EDB es común a los dos.
+    """
     import httpx
-    # Strip 'CVE-' prefix for the search query
-    cve_num = re.sub(r"^CVE-", "", cve_id.strip(), flags=re.IGNORECASE)
+    params = {
+        "action": "search", "draw": "1",
+        "columns[0][data]": "id", "columns[1][data]": "date_published",
+        "columns[2][data]": "title", "columns[3][data]": "type",
+        "columns[4][data]": "platform", "columns[5][data]": "verified",
+        "order[0][column]": "1", "order[0][dir]": "desc",
+        "start": "0", "length": str(limit),
+        **extra_params,
+    }
     try:
-        headers = {
-            "User-Agent": "CyberKB/3.0",
-            "X-Requested-With": "XMLHttpRequest",
-            "Accept": "application/json, text/javascript, */*; q=0.01",
-            "Referer": "https://www.exploit-db.com/search",
-        }
-        async with httpx.AsyncClient(timeout=15, headers=headers) as client:
-            r = await client.get(
-                "https://www.exploit-db.com/search",
-                params={
-                    "action": "search",
-                    "cve": cve_num,
-                    "draw": "1",
-                    "columns[0][data]": "id",
-                    "columns[1][data]": "date_published",
-                    "columns[2][data]": "title",
-                    "columns[3][data]": "type",
-                    "columns[4][data]": "platform",
-                    "columns[5][data]": "verified",
-                    "order[0][column]": "1",
-                    "order[0][dir]": "desc",
-                    "start": "0",
-                    "length": "10",
-                },
-            )
+        async with httpx.AsyncClient(timeout=15, headers=_EDB_HEADERS) as client:
+            r = await client.get("https://www.exploit-db.com/search", params=params)
         if r.status_code != 200:
-            return {"cve_id": cve_id, "count": 0, "exploits": [], "error": f"EDB HTTP {r.status_code}"}
-        data = r.json()
-        rows = data.get("data", [])
+            return [], f"EDB HTTP {r.status_code}"
+        rows = r.json().get("data", [])
         exploits = []
-        for row in rows[:10]:
+        for row in rows[:limit]:
             eid = row.get("id", "")
+            desc = row.get("description")
+            title = desc[1] if isinstance(desc, list) and len(desc) > 1 else (row.get("title") or "")
+            platform = row.get("platform_id") or (
+                row.get("platform", {}).get("platform", "") if isinstance(row.get("platform"), dict) else "")
+            typ = row.get("type_id") or (
+                row.get("type", {}).get("name", "") if isinstance(row.get("type"), dict) else "")
+            cve = ""
+            code = row.get("code")
+            if isinstance(code, list) and code and isinstance(code[0], dict):
+                c0 = code[0].get("code", "")
+                if re.match(r"^\d{4}-\d{3,}$", c0):
+                    cve = "CVE-" + c0
             exploits.append({
-                "id":       eid,
-                "title":    row.get("description_cut", row.get("title", "")),
-                "date":     row.get("date_published", row.get("date", ""))[:10] if row.get("date_published") or row.get("date") else "",
-                "type":     row.get("type", {}).get("name", "") if isinstance(row.get("type"), dict) else str(row.get("type", "")),
-                "platform": row.get("platform", {}).get("name", "") if isinstance(row.get("platform"), dict) else str(row.get("platform", "")),
-                "url":      f"https://www.exploit-db.com/exploits/{eid}" if eid else "",
+                "id": eid, "title": title, "date": (row.get("date_published") or "")[:10],
+                "type": typ, "platform": platform, "cve": cve,
+                "url": f"https://www.exploit-db.com/exploits/{eid}" if eid else "",
                 "verified": bool(row.get("verified")),
             })
-        return {"cve_id": cve_id, "count": len(exploits), "exploits": exploits}
+        return exploits, None
     except Exception as e:
-        return {"cve_id": cve_id, "count": 0, "exploits": [], "error": str(e)}
+        return [], str(e)
+
+
+@app.get("/api/cves/{cve_id}/exploits")
+async def cve_exploits(cve_id: str):
+    """Exploits públicos en Exploit-DB para un CVE concreto (búsqueda por ID)."""
+    cve_num = re.sub(r"^CVE-", "", cve_id.strip(), flags=re.IGNORECASE)
+    exploits, error = await _edb_search({"cve": cve_num}, limit=10)
+    res = {"cve_id": cve_id, "count": len(exploits), "exploits": exploits}
+    if error:
+        res["error"] = error
+    return res
 
 
 @app.get("/api/exploit-search")
@@ -969,73 +984,14 @@ async def exploit_search(q: str):
     título, tipo, plataforma, fecha, CVE (si lo tiene) y enlace. Es el gemelo
     por texto de GET /api/cves/{cve_id}/exploits, que busca lo mismo por CVE.
     """
-    import httpx
     query = (q or "").strip()
     if not query:
         return {"query": q, "count": 0, "exploits": []}
-    try:
-        # Petición a la búsqueda JSON de Exploit-DB (responde en formato DataTables)
-        headers = {
-            "User-Agent": "CyberKB/3.0",
-            "X-Requested-With": "XMLHttpRequest",
-            "Accept": "application/json, text/javascript, */*; q=0.01",
-            "Referer": "https://www.exploit-db.com/search",
-        }
-        async with httpx.AsyncClient(timeout=15, headers=headers) as client:
-            r = await client.get(
-                "https://www.exploit-db.com/search",
-                params={
-                    "action": "search",
-                    "q": query,
-                    "draw": "1",
-                    "columns[0][data]": "id",
-                    "columns[1][data]": "date_published",
-                    "columns[2][data]": "title",
-                    "columns[3][data]": "type",
-                    "columns[4][data]": "platform",
-                    "columns[5][data]": "verified",
-                    "order[0][column]": "1",
-                    "order[0][dir]": "desc",
-                    "start": "0",
-                    "length": "15",
-                },
-            )
-        if r.status_code != 200:
-            return {"query": query, "count": 0, "exploits": [], "error": f"EDB HTTP {r.status_code}"}
-        data = r.json()
-        rows = data.get("data", [])
-        # Normaliza cada fila cruda de Exploit-DB al objeto que devolvemos
-        # (EDB trae el título en description[1], la plataforma en platform_id,
-        #  el tipo en type_id y el CVE dentro de code[])
-        exploits = []
-        for row in rows[:15]:
-            eid = row.get("id", "")
-            desc = row.get("description")
-            title = desc[1] if isinstance(desc, list) and len(desc) > 1 else (row.get("title") or "")
-            platform = row.get("platform_id") or (
-                row.get("platform", {}).get("platform", "") if isinstance(row.get("platform"), dict) else "")
-            typ = row.get("type_id") or (
-                row.get("type", {}).get("name", "") if isinstance(row.get("type"), dict) else "")
-            cve = ""
-            code = row.get("code")
-            if isinstance(code, list) and code and isinstance(code[0], dict):
-                c0 = code[0].get("code", "")
-                # Solo si tiene forma de CVE real (AAAA-NNNN+); el campo también trae otros códigos
-                if re.match(r"^\d{4}-\d{3,}$", c0):
-                    cve = "CVE-" + c0
-            exploits.append({
-                "id":       eid,
-                "title":    title,
-                "date":     (row.get("date_published") or "")[:10],
-                "type":     typ,
-                "platform": platform,
-                "cve":      cve,
-                "url":      f"https://www.exploit-db.com/exploits/{eid}" if eid else "",
-                "verified": bool(row.get("verified")),
-            })
-        return {"query": query, "count": len(exploits), "exploits": exploits}
-    except Exception as e:
-        return {"query": query, "count": 0, "exploits": [], "error": str(e)}
+    exploits, error = await _edb_search({"q": query}, limit=15)
+    res = {"query": query, "count": len(exploits), "exploits": exploits}
+    if error:
+        res["error"] = error
+    return res
 
 
 def _cve_dict(c: CVE) -> dict:
