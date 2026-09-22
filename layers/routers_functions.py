@@ -7,7 +7,6 @@ from models import CVE, Command, Tool, Note, MitreTechnique, GraphEntity
 import claude_service as ai
 from pathlib import Path
 import sys
-import os
 
 
 # OSINT
@@ -259,3 +258,9 @@ def _persist_entities(entities_data: list, relations_data: list, note: Note, db:
         except Exception:
             pass
     db.commit()
+
+
+# CHAT
+
+class ChatIn(BaseModel):
+    question: str

@@ -2,7 +2,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException
 from database import get_db
-from models import Note, Command, CVE, Tool, MitreTechnique
+from models import Note, Command, CVE, MitreTechnique
 import json
 from datetime import datetime
 
