@@ -599,6 +599,8 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
         <option value="malware">Malware</option>
       </select>
       <span style="font-size:10px;color:var(--text3);font-family:var(--mono);" id="toolCount"></span>
+      <button class="btn-outline" onclick="openAddTool()" style="flex-shrink:0;" title="Añadir una herramienta a mano">+ Añadir</button>
+      <button class="btn-outline" onclick="seedTools()" style="flex-shrink:0;" title="Cargar el catálogo base de herramientas de pentest (no duplica)">⬇ Catálogo base</button>
     </div>
     <div class="tools-grid" id="toolsGrid">
       <div class="no-tools"><p>⚙ Sin herramientas aún</p><p style="font-size:11px">Sube un documento o escribe sobre una herramienta — se detectarán automáticamente.</p></div>
@@ -1533,6 +1535,47 @@ EXEC xp_cmdshell 'whoami';</pre>
   </div>
 </div>
 
+<!-- ADD TOOL MODAL -->
+<div class="overlay" id="addToolModal">
+  <div class="modal" style="max-width:520px;width:95vw;">
+    <h3>⚙ Añadir herramienta</h3>
+    <label>Nombre *</label>
+    <input id="atName" type="text" placeholder="p. ej. nmap">
+    <label>URL</label>
+    <input id="atUrl" type="text" placeholder="https://...">
+    <div style="display:flex;gap:8px;">
+      <div style="flex:1;">
+        <label>Categoría</label>
+        <select id="atCat" class="sel" style="width:100%;">
+          <option value="">— sin categoría —</option>
+          <option value="reconocimiento">Reconocimiento</option>
+          <option value="enumeracion">Enumeración</option>
+          <option value="explotacion">Explotación</option>
+          <option value="post-explotacion">Post-Explotación</option>
+          <option value="web-hacking">Web Hacking</option>
+          <option value="osint">OSINT</option>
+          <option value="forense">Forense</option>
+          <option value="malware">Malware</option>
+        </select>
+      </div>
+      <div style="flex:1;">
+        <label>Tipo</label>
+        <select id="atType" class="sel" style="width:100%;">
+          <option value="software">⚙ Software</option>
+          <option value="web">🌐 Recurso web</option>
+        </select>
+      </div>
+    </div>
+    <label>Descripción</label>
+    <textarea id="atDesc" placeholder="Qué hace la herramienta..."></textarea>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text2);"><input type="checkbox" id="atApi"> Requiere API key</label>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeModal('addToolModal')">Cancelar</button>
+      <button class="btn-green" onclick="submitAddTool()">Crear</button>
+    </div>
+  </div>
+</div>
+
 <!-- SETTINGS MODAL -->
 <div class="overlay" id="settingsModal">
   <div class="modal" style="max-width:520px;width:95vw;overflow-x:hidden;">
@@ -2262,14 +2305,22 @@ async function openToolModal(id){
       html+='</div>';
     }
 
-    // URL edit form
+    // Formulario de edición (URL, categoría, tipo, API, descripción) + borrar
+    const _catOpts=['reconocimiento','enumeracion','explotacion','post-explotacion','web-hacking','osint','forense','malware']
+      .map(c=>`<option value="${c}" ${t.category===c?'selected':''}>${catLabel(c)}</option>`).join('');
     html+=`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-      <div class="ai-section-title" style="margin-bottom:6px">Editar URL / Descripción</div>
+      <div class="ai-section-title" style="margin-bottom:6px">Editar</div>
+      <input id="toolEditUrl" type="text" value="${esc(t.url||'')}" placeholder="URL https://..." style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:5px 8px;font-size:11px;outline:none;font-family:var(--mono);margin-bottom:6px">
       <div style="display:flex;gap:8px;margin-bottom:6px">
-        <input id="toolEditUrl" type="text" value="${esc(t.url||'')}" placeholder="https://..." style="flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:5px 8px;font-size:11px;outline:none;font-family:var(--mono)">
-        <button class="btn-green" onclick="updateTool(${t.id})">Guardar</button>
+        <select id="toolEditCat" class="sel" style="flex:1"><option value="">— sin categoría —</option>${_catOpts}</select>
+        <select id="toolEditType" class="sel" style="flex:1"><option value="software" ${t.tool_type!=='web'?'selected':''}>⚙ Software</option><option value="web" ${t.tool_type==='web'?'selected':''}>🌐 Web</option></select>
       </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);margin-bottom:6px;cursor:pointer"><input type="checkbox" id="toolEditApi" ${t.requires_api?'checked':''}> Requiere API key</label>
       <textarea id="toolEditDesc" placeholder="Descripción..." style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:5px 8px;font-size:11px;outline:none;font-family:var(--mono);min-height:60px;resize:vertical">${esc(t.description||'')}</textarea>
+      <div style="display:flex;gap:8px;margin-top:8px;justify-content:space-between">
+        <button class="btn-danger" onclick='deleteTool(${t.id},${jarg(t.name)})'>🗑 Borrar</button>
+        <button class="btn-green" onclick="updateTool(${t.id})">Guardar cambios</button>
+      </div>
     </div>`;
 
     document.getElementById('tmBody').innerHTML=html;
@@ -2282,11 +2333,58 @@ async function updateTool(id){
   const url=document.getElementById('toolEditUrl').value.trim();
   const desc=document.getElementById('toolEditDesc').value.trim();
   try{
-    await API.put('/api/tools/'+id,{url,description:desc});
+    await API.put('/api/tools/'+id,{
+      url, description:desc,
+      category:document.getElementById('toolEditCat').value,   // "" limpia la categoría
+      tool_type:document.getElementById('toolEditType').value,
+      requires_api:document.getElementById('toolEditApi').checked,
+    });
     await loadAll();
     closeModal('toolModal');
     setStatus('Herramienta actualizada');
   }catch(e){setStatus('Error: '+e.message,'error');}
+}
+
+// ─── Añadir / borrar / sembrar herramientas (módulo Herramientas) ─────────────
+function openAddTool(){
+  ['atName','atUrl','atDesc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('atCat').value='';
+  document.getElementById('atType').value='software';
+  document.getElementById('atApi').checked=false;
+  document.getElementById('addToolModal').classList.add('show');
+}
+async function submitAddTool(){
+  const name=document.getElementById('atName').value.trim();
+  if(!name){ setStatus('El nombre es obligatorio','warn'); return; }
+  try{
+    const r=await API.post('/api/tools',{
+      name,
+      url:document.getElementById('atUrl').value.trim()||null,
+      description:document.getElementById('atDesc').value.trim()||null,
+      category:document.getElementById('atCat').value||null,
+      tool_type:document.getElementById('atType').value,
+      requires_api:document.getElementById('atApi').checked,
+    });
+    closeModal('addToolModal');
+    await loadAll();
+    setStatus(r.created?('Herramienta "'+name+'" añadida'):('"'+name+'" ya existía — mención +1'));
+  }catch(e){ setStatus('Error añadiendo: '+e.message,'error'); }
+}
+async function seedTools(){
+  try{
+    const r=await API.post('/api/tools/seed',{});
+    await loadAll();
+    setStatus('Catálogo base cargado — '+r.added+' herramientas nuevas');
+  }catch(e){ setStatus('Error cargando catálogo: '+e.message,'error'); }
+}
+async function deleteTool(id,name){
+  if(!confirm('¿Borrar la herramienta "'+name+'"?')) return;
+  try{
+    await API.del('/api/tools/'+id);
+    closeModal('toolModal');
+    await loadAll();
+    setStatus('Herramienta "'+name+'" borrada');
+  }catch(e){ setStatus('Error borrando: '+e.message,'error'); }
 }
 
 // ─── COMMANDS ─────────────────────────────────────────────────────────────────

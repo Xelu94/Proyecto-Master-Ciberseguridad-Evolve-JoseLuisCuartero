@@ -663,7 +663,9 @@ def get_tool(tool_id: int, db: Session = Depends(get_db)):
     if not t:
         raise HTTPException(404, "Tool not found")
     d = _tool_dict(t)
-    d["notes"] = [{"id": n.id, "title": n.title, "category": n.category} for n in t.notes]
+    # La relación Tool→Notes en el modelo se llama `tools` (no `notes`); usar el
+    # nombre correcto — antes daba 500 al abrir el detalle de cualquier herramienta.
+    d["notes"] = [{"id": n.id, "title": n.title, "category": n.category} for n in t.tools]
     d["commands"] = [_cmd_dict(c) for c in db.query(Command).filter(Command.tool_name.ilike(t.name)).all()]
     return d
 
