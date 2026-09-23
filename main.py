@@ -1,21 +1,15 @@
 import os
-import re
 import sys
 import json
-import shutil
-import uuid
-from datetime import datetime
 from pathlib import Path
-from typing import Optional
-
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from dotenv import load_dotenv
+from database import get_db, init_db, engine
+from models import Note, Command, Tool, CVE
+
 
 from layers.routers.osint import router as osint_router
 from layers.routers.notes import router as notes_router
@@ -30,23 +24,23 @@ from layers.routers.graph import router as graph_router
 from layers.routers.audits import router as audits_router
 from layers.routers.forensic import router as forensic_router
 
-# ─── Path resolution (works both as script and PyInstaller exe) ───────────────
+
+# # ─── Path resolution (works both as script and PyInstaller exe) ───────────────
 def _bundle_dir() -> Path:
     """Where bundled files live (index.html etc.)."""
     if getattr(sys, "frozen", False):
         return Path(sys._MEIPASS)   # PyInstaller temp extraction dir
     return Path(__file__).parent
 
+
 BUNDLE_DIR  = _bundle_dir()
+
+
+###### No eliminar hasta comprobar que botón de Api Keys funciona correctamente #####
+
 # RUNTIME_DIR = _runtime_dir()
 
 # load_dotenv(dotenv_path=RUNTIME_DIR / ".env", encoding="utf-8", override=True)
-
-from database import get_db, init_db, engine
-from models import Note, Command, Tool, CVE, OsintResult, GraphEntity, EntityRelation, entity_note_map, MitreTechnique
-import claude_service as ai
-import document_parser as parser
-import osint_tools as osint
 
 # UPLOAD_DIR = RUNTIME_DIR / os.getenv("UPLOAD_DIR", "uploads")
 # UPLOAD_DIR.mkdir(exist_ok=True)
@@ -386,122 +380,16 @@ app.include_router(notes_router)
 
 app.include_router(analyze_router)
 
-def _persist_mitre(techniques: list, note: Note, db: Session):
-    """Upsert MITRE ATT&CK techniques extracted from a note."""
-    for td in techniques:
-        tid = td.get("id", "").strip()
-        if not tid:
-            continue
-        existing = db.query(MitreTechnique).filter(
-            MitreTechnique.technique_id == tid,
-            MitreTechnique.note_id == note.id
-        ).first()
-        if not existing:
-            mt = MitreTechnique(
-                note_id=note.id,
-                technique_id=tid,
-                technique_name=td.get("name"),
-                tactic=td.get("tactic"),
-                context_snippet=td.get("snippet"),
-            )
-            db.add(mt)
-    db.commit()
-
-
 # ─── Tools ─────────────────────────────────────────────────────────────────────
 
 app.include_router(tools_router)
-
-
-def _tool_dict(t: Tool) -> dict:
-    return {
-        "id": t.id,
-        "name": t.name,
-        "url": t.url,
-        "description": t.description,
-        "category": t.category,
-        "tool_type": t.tool_type or "software",
-        "use_cases": json.loads(t.use_cases or "[]"),
-        "tags": json.loads(t.tags or "[]"),
-        "requires_api": t.requires_api,
-        "api_info": t.api_info,
-        "mention_count": t.mention_count,
-        "created_at": t.created_at.isoformat() if t.created_at else None,
-    }
-
 
 # ─── Commands ──────────────────────────────────────────────────────────────────
 # ─── Commands OS filter ────────────────────────────────────────────────────────
 
 app.include_router(commands_router)
 
-
 # ─── Graph Entities ────────────────────────────────────────────────────────────
-
-def _persist_entities(entities_data: list, relations_data: list, note: Note, db: Session):
-    """Upsert extracted entities into DB and link them to a note."""
-    from sqlalchemy import text as sqlt, select as sqsel
-
-    entity_map: dict[str, GraphEntity] = {}  # normalized_name -> obj
-
-    for ed in entities_data:
-        name = ed.get("name", "").strip()[:200]
-        if not name:
-            continue
-        etype = ed.get("type", "concept")
-        if etype not in ai.VALID_ENTITY_TYPES:
-            etype = "concept"
-
-        existing = db.query(GraphEntity).filter(
-            GraphEntity.name.ilike(name)
-        ).first()
-        if existing:
-            existing.frequency = (existing.frequency or 1) + 1
-            if not existing.description and ed.get("description"):
-                existing.description = ed["description"]
-            obj = existing
-        else:
-            obj = GraphEntity(
-                name=name,
-                entity_type=etype,
-                description=ed.get("description"),
-                frequency=1,
-            )
-            db.add(obj)
-
-        db.flush()
-
-        # Link to note (ignore duplicate)
-        try:
-            db.execute(sqlt(
-                "INSERT OR IGNORE INTO entity_note_map (entity_id, note_id) VALUES (:eid, :nid)"
-            ), {"eid": obj.id, "nid": note.id})
-        except Exception:
-            pass
-
-        entity_map[name.lower()] = obj
-
-    db.commit()
-
-    # Persist co-occurrence relations
-    for pair in relations_data:
-        if len(pair) != 2:
-            continue
-        obj_a = entity_map.get(pair[0].strip().lower())
-        obj_b = entity_map.get(pair[1].strip().lower())
-        if not obj_a or not obj_b or obj_a.id == obj_b.id:
-            continue
-        id_a, id_b = min(obj_a.id, obj_b.id), max(obj_a.id, obj_b.id)
-        try:
-            db.execute(sqlt("""
-                INSERT INTO entity_relations (entity_a_id, entity_b_id, weight)
-                VALUES (:a, :b, 1)
-                ON CONFLICT(entity_a_id, entity_b_id) DO UPDATE SET weight = weight + 1
-            """), {"a": id_a, "b": id_b})
-        except Exception:
-            pass
-    db.commit()
-
 
 app.include_router(graph_router)
 
