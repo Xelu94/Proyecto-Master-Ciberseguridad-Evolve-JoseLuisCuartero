@@ -672,6 +672,7 @@ class ToolUpdate(BaseModel):
     url: Optional[str] = None
     description: Optional[str] = None
     category: Optional[str] = None
+    tool_type: Optional[str] = None
     use_cases: Optional[list[str]] = None
     requires_api: Optional[bool] = None
     api_info: Optional[str] = None
@@ -688,6 +689,8 @@ def update_tool(tool_id: int, data: ToolUpdate, db: Session = Depends(get_db)):
         t.description = data.description
     if data.category is not None:
         t.category = data.category
+    if data.tool_type is not None:
+        t.tool_type = data.tool_type
     if data.use_cases is not None:
         t.use_cases = json.dumps(data.use_cases)
     if data.requires_api is not None:
@@ -697,6 +700,98 @@ def update_tool(tool_id: int, data: ToolUpdate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(t)
     return _tool_dict(t)
+
+
+# ─── [Módulo Herramientas] Crear / borrar / sembrar catálogo ──────────────────
+class ToolCreate(BaseModel):
+    name: str
+    url: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    tool_type: Optional[str] = "software"
+    requires_api: Optional[bool] = False
+    api_info: Optional[str] = None
+
+
+@app.post("/api/tools", status_code=201)
+def create_tool(data: ToolCreate, db: Session = Depends(get_db)):
+    """Crea una herramienta a mano. Si ya existe una con ese nombre, sube su
+    contador de menciones en vez de duplicarla (upsert por nombre)."""
+    name = (data.name or "").strip()
+    if not name:
+        raise HTTPException(400, "El nombre es obligatorio")
+    existing = db.query(Tool).filter(Tool.name.ilike(name)).first()
+    if existing:
+        existing.mention_count = (existing.mention_count or 0) + 1
+        db.commit()
+        db.refresh(existing)
+        return {"created": False, **_tool_dict(existing)}
+    t = Tool(
+        name=name,
+        url=data.url or None,
+        description=data.description or None,
+        category=data.category or None,
+        tool_type=data.tool_type or "software",
+        requires_api=bool(data.requires_api),
+        api_info=data.api_info or None,
+        mention_count=1,
+    )
+    db.add(t)
+    db.commit()
+    db.refresh(t)
+    return {"created": True, **_tool_dict(t)}
+
+
+@app.delete("/api/tools/{tool_id}", status_code=204)
+def delete_tool(tool_id: int, db: Session = Depends(get_db)):
+    """Borra una herramienta (p. ej. un falso positivo del análisis por IA)."""
+    t = db.query(Tool).filter(Tool.id == tool_id).first()
+    if not t:
+        raise HTTPException(404, "Tool not found")
+    db.delete(t)
+    db.commit()
+    return
+
+
+# Catálogo base: herramientas de pentest que aparecen en los módulos de la app.
+_TOOLS_SEED = [
+    {"name": "nmap",        "category": "enumeracion",      "url": "https://nmap.org",                                   "description": "Escáner de red y puertos: descubre hosts, servicios y versiones."},
+    {"name": "netdiscover", "category": "enumeracion",      "url": "https://github.com/netdiscover-scanner/netdiscover", "description": "Descubrimiento de hosts en la red local por ARP."},
+    {"name": "arp-scan",    "category": "enumeracion",      "url": "https://github.com/royhills/arp-scan",               "description": "Descubrimiento de hosts por ARP, rápido y directo."},
+    {"name": "enum4linux",  "category": "enumeracion",      "url": "https://github.com/CiscoCXSecurity/enum4linux",      "description": "Enumeración de SMB/NetBIOS: usuarios, grupos, recursos compartidos."},
+    {"name": "smbclient",   "category": "enumeracion",      "url": "https://www.samba.org",                              "description": "Cliente SMB para listar y acceder a recursos compartidos de Windows."},
+    {"name": "dig",         "category": "reconocimiento",   "url": "https://linux.die.net/man/1/dig",                    "description": "Consultas DNS; útil para transferencias de zona (AXFR)."},
+    {"name": "dnsrecon",    "category": "reconocimiento",   "url": "https://github.com/darkoperator/dnsrecon",           "description": "Reconocimiento DNS: registros, subdominios y AXFR."},
+    {"name": "curl",        "category": "reconocimiento",   "url": "https://curl.se",                                    "description": "Cliente HTTP de línea de comandos; ver cabeceras y probar endpoints."},
+    {"name": "hydra",       "category": "explotacion",      "url": "https://github.com/vanhauser-thc/thc-hydra",         "description": "Fuerza bruta de credenciales sobre múltiples protocolos (SSH, RDP, HTTP...)."},
+    {"name": "searchsploit","category": "explotacion",      "url": "https://gitlab.com/exploit-database/exploitdb",      "description": "Búsqueda local de exploits de Exploit-DB por producto y versión."},
+    {"name": "Metasploit",  "category": "explotacion",      "url": "https://www.metasploit.com",                         "description": "Framework de explotación con módulos de exploits, auxiliares y payloads."},
+    {"name": "ffuf",        "category": "web-hacking",      "url": "https://github.com/ffuf/ffuf",                       "description": "Fuzzing web rápido de directorios, ficheros y parámetros."},
+    {"name": "gobuster",    "category": "web-hacking",      "url": "https://github.com/OJ/gobuster",                     "description": "Fuerza bruta de directorios, DNS y vhosts."},
+    {"name": "nikto",       "category": "web-hacking",      "url": "https://github.com/sullo/nikto",                     "description": "Escáner de vulnerabilidades y malas configuraciones en servidores web."},
+    {"name": "sqlmap",      "category": "web-hacking",      "url": "https://sqlmap.org",                                 "description": "Detección y explotación automática de inyección SQL."},
+    {"name": "Burp Suite",  "category": "web-hacking",      "url": "https://portswigger.net/burp",                       "description": "Proxy de interceptación para pruebas de aplicaciones web (Repeater, Intruder)."},
+    {"name": "Impacket",    "category": "post-explotacion", "url": "https://github.com/fortra/impacket",                 "description": "Herramientas Python para protocolos Windows (psexec, secretsdump, mssqlclient)."},
+    {"name": "xfreerdp",    "category": "post-explotacion", "url": "https://www.freerdp.com",                            "description": "Cliente RDP para Linux; conexión a escritorios remotos de Windows."},
+]
+
+
+@app.post("/api/tools/seed")
+def seed_tools(db: Session = Depends(get_db)):
+    """Precarga el catálogo base de pentest. Idempotente: salta las que ya
+    existan por nombre, así que se puede pulsar sin miedo a duplicar."""
+    added = 0
+    for td in _TOOLS_SEED:
+        if db.query(Tool).filter(Tool.name.ilike(td["name"])).first():
+            continue
+        db.add(Tool(
+            name=td["name"], url=td.get("url"), description=td.get("description"),
+            category=td.get("category"), tool_type=td.get("tool_type", "software"),
+            requires_api=False, mention_count=1,
+        ))
+        added += 1
+    db.commit()
+    return {"added": added, "total_seed": len(_TOOLS_SEED)}
 
 
 def _tool_dict(t: Tool) -> dict:
