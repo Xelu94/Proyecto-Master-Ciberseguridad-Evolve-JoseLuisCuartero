@@ -779,21 +779,36 @@ _TOOLS_SEED = [
 
 
 @app.post("/api/tools/seed")
-def seed_tools(db: Session = Depends(get_db)):
-    """Precarga el catálogo base de pentest. Idempotente: salta las que ya
-    existan por nombre, así que se puede pulsar sin miedo a duplicar."""
+def toggle_seed_tools(db: Session = Depends(get_db)):
+    """Toggle del catálogo base de pentest:
+      - si NO está cargado → añade las herramientas del catálogo (etiquetadas
+        con 'catalogo-base' para poder distinguirlas luego).
+      - si YA está cargado → borra solo esas (las que llevan la etiqueta).
+    Las herramientas metidas a mano o detectadas en notas NO se tocan, porque
+    no llevan la etiqueta 'catalogo-base'. Devuelve action='added'|'removed'.
+    """
+    seeded = [t for t in db.query(Tool).all()
+              if "catalogo-base" in json.loads(t.tags or "[]")]
+    if seeded:
+        for t in seeded:
+            db.delete(t)
+        db.commit()
+        return {"action": "removed", "count": len(seeded)}
+
     added = 0
     for td in _TOOLS_SEED:
+        # No pisamos una que ya exista con ese nombre (manual o de nota)
         if db.query(Tool).filter(Tool.name.ilike(td["name"])).first():
             continue
         db.add(Tool(
             name=td["name"], url=td.get("url"), description=td.get("description"),
             category=td.get("category"), tool_type=td.get("tool_type", "software"),
             requires_api=False, mention_count=1,
+            tags=json.dumps(["catalogo-base"]),
         ))
         added += 1
     db.commit()
-    return {"added": added, "total_seed": len(_TOOLS_SEED)}
+    return {"action": "added", "count": added}
 
 
 def _tool_dict(t: Tool) -> dict:
