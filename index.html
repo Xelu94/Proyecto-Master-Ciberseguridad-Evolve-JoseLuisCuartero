@@ -2226,10 +2226,15 @@ function renderToolsGrid(){
   if(cat) tools=tools.filter(t=>t.category===cat);
 
   document.getElementById('toolCount').textContent=tools.length+' herramientas';
-  // El botón de catálogo mantiene su texto; cambia de color (clase seed-active)
-  // cuando el catálogo base está cargado, para verse "pulsado".
+  // El botón de catálogo: cuando el catálogo base está cargado se pinta de
+  // verde (seed-active) y la flecha apunta hacia arriba (⬆ = quitar); si no,
+  // aspecto normal con la flecha hacia abajo (⬇ = cargar).
   const _sb=document.getElementById('btnSeedTools');
-  if(_sb) _sb.classList.toggle('seed-active', S.tools.some(t=>(t.tags||[]).includes('catalogo-base')));
+  if(_sb){
+    const _loaded=S.tools.some(t=>(t.tags||[]).includes('catalogo-base'));
+    _sb.classList.toggle('seed-active', _loaded);
+    _sb.textContent=(_loaded?'⬆':'⬇')+' Catálogo base';
+  }
 
   if(!tools.length){
     document.getElementById('toolsGrid').innerHTML=`<div class="no-tools">
