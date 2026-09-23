@@ -366,60 +366,6 @@ async def reverse_dns(ip: str) -> dict:
         return {"error": str(e)}
 
 
-async def asn_lookup(query: str) -> dict:
-    """ASN/BGP info via BGPView API (free, no key)."""
-    try:
-        async with httpx.AsyncClient(timeout=15, headers=_HEADERS) as client:
-            # Determine if query is ASN number, IP, or prefix
-            query = query.strip()
-            if re.match(r"^(AS)?\d+$", query, re.I):
-                asn_num = re.sub(r"^AS", "", query, flags=re.I)
-                r = await client.get(f"https://api.bgpview.io/asn/{asn_num}")
-                data = r.json()
-                if data.get("status") == "ok":
-                    d = data["data"]
-                    prefixes_r = await client.get(f"https://api.bgpview.io/asn/{asn_num}/prefixes")
-                    prefixes_data = prefixes_r.json()
-                    v4 = [p["prefix"] for p in prefixes_data.get("data", {}).get("ipv4_prefixes", [])[:20]]
-                    return {
-                        "asn":         f"AS{d.get('asn')}",
-                        "name":        d.get("name", ""),
-                        "description": d.get("description_short", "") or d.get("description_full", [""])[0],
-                        "country":     d.get("country_code", ""),
-                        "rir":         d.get("rir_allocation", {}).get("rir_name", ""),
-                        "website":     d.get("website", ""),
-                        "prefixes_v4": v4,
-                    }
-                return {"error": data.get("status_message", "ASN not found")}
-
-            elif re.match(r"^\d{1,3}(\.\d{1,3}){3}$", query):
-                r = await client.get(f"https://api.bgpview.io/ip/{query}")
-                data = r.json()
-                if data.get("status") == "ok":
-                    d = data["data"]
-                    prefixes = d.get("prefixes", [])
-                    result = {
-                        "ip":       query,
-                        "rir":      d.get("rir_allocation", {}).get("rir_name", ""),
-                        "prefixes": [],
-                    }
-                    for p in prefixes[:5]:
-                        asn_info = p.get("asn", {})
-                        result["prefixes"].append({
-                            "prefix":  p.get("prefix", ""),
-                            "asn":     f"AS{asn_info.get('asn', '')}",
-                            "name":    asn_info.get("name", ""),
-                            "country": asn_info.get("country_code", ""),
-                            "description": asn_info.get("description", ""),
-                        })
-                    return result
-                return {"error": "IP not found"}
-            else:
-                return {"error": "Introduce una IP o número ASN (ej: AS1234 o 8.8.8.8)"}
-    except Exception as e:
-        return {"error": str(e)}
-
-
 async def shodan_lookup(query: str) -> dict:
     if not SHODAN_KEY:
         return {"error": "SHODAN_API_KEY no configurado en .env"}

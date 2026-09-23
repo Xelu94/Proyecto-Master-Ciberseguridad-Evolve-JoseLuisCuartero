@@ -664,7 +664,6 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
         <div class="sb-section" style="padding:8px 10px 4px;font-size:9px;color:var(--text3);letter-spacing:1px;margin-top:4px;">IP / RED</div>
         <button class="osint-tool-btn" onclick="selectOsintTool('ip',this)" data-tool="ip">📍 IP Geolocate</button>
         <button class="osint-tool-btn" onclick="selectOsintTool('reverse-dns',this)" data-tool="reverse-dns">↩ Reverse DNS</button>
-        <button class="osint-tool-btn" onclick="selectOsintTool('asn',this)" data-tool="asn">🔗 ASN / BGP</button>
         <button class="osint-tool-btn" onclick="selectOsintTool('shodan',this)" data-tool="shodan">
           👁 Shodan <span class="needs-key">API</span>
         </button>
@@ -695,7 +694,9 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
         <button class="osint-tool-btn" onclick="selectOsintTool('abuseipdb',this)" data-tool="abuseipdb">
           🚨 IP Reputation <span class="needs-key">API</span>
         </button>
-        <button class="osint-tool-btn" onclick="selectOsintTool('malwarebazaar',this)" data-tool="malwarebazaar">☣ MalwareBazaar</button>
+        <button class="osint-tool-btn" onclick="selectOsintTool('malwarebazaar',this)" data-tool="malwarebazaar">
+          ☣ MalwareBazaar <span class="needs-key">API</span>
+        </button>
 
         <div class="sb-section" style="padding:8px 10px 4px;font-size:9px;color:var(--text3);letter-spacing:1px;margin-top:4px;">HISTORIAL</div>
         <div id="osintHistoryList" style="font-size:10px;color:var(--text3);padding:0 6px;"></div>
@@ -2351,7 +2352,7 @@ const OSINT_PLACEHOLDERS={
   whois:'dominio.com', dns:'dominio.com', subdomains:'dominio.com',
   ssl:'dominio.com', wayback:'https://dominio.com', dmarc:'dominio.com',
   robots:'dominio.com',
-  ip:'1.1.1.1', 'reverse-dns':'1.1.1.1', asn:'AS13335 o 8.8.8.8',
+  ip:'1.1.1.1', 'reverse-dns':'1.1.1.1',
   shodan:'apache port:80', virustotal:'dominio.com, IP, URL o hash',
   'email-verify':'usuario@dominio.com', hibp:'usuario@dominio.com o dominio.com',
   hunter:'dominio.com', leakradar:'usuario@dominio.com o @dominio.com',
@@ -2364,7 +2365,7 @@ const OSINT_PLACEHOLDERS={
 const OSINT_PARAM={
   whois:'domain', dns:'domain', subdomains:'domain', ssl:'domain',
   wayback:'url', dmarc:'domain', robots:'domain',
-  ip:'ip', 'reverse-dns':'ip', asn:'query',
+  ip:'ip', 'reverse-dns':'ip',
   shodan:'query', virustotal:'target',
   'email-verify':'email', hibp:'target', hunter:'domain', leakradar:'query',
   headers:'url', urlscan:'query',
@@ -2563,25 +2564,6 @@ function renderOsintResult(tool,q,data){
       html+=_section('Registros A de los hostnames',Object.entries(data.a_records).map(([h,ips])=>
         `<div style="margin-bottom:4px"><span style="color:var(--cyan)">${esc(h)}</span> → ${_chips(ips)}</div>`
       ).join(''));
-    }
-
-  // ── ASN ────────────────────────────────────────────────
-  } else if(tool==='asn'){
-    if(data.asn){
-      html+=_kv([
-        ['ASN', data.asn],
-        ['Nombre', data.name],
-        ['Descripción', data.description],
-        ['País', data.country],
-        ['RIR', data.rir],
-        ['Web', data.website?`<a href="${esc(data.website)}" target="_blank" style="color:var(--blue)">${esc(data.website)}</a>`:''],
-      ]);
-      if(data.prefixes_v4?.length) html+=_section(`Prefijos IPv4 (${data.prefixes_v4.length})`,`<div class="osint-sub-list">${_chips(data.prefixes_v4)}</div>`);
-    } else if(data.prefixes?.length){
-      html+=_section('Prefijos / ASN de esta IP',data.prefixes.map(p=>`
-        <div class="osint-result-card" style="margin-bottom:6px;padding:10px">
-          ${_kv([['Prefijo',p.prefix],['ASN',p.asn],['Nombre',p.name],['País',p.country],['Descripción',p.description]])}
-        </div>`).join(''));
     }
 
   // ── EMAIL VERIFY ───────────────────────────────────────

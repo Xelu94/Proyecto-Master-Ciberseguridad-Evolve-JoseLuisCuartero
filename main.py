@@ -1296,13 +1296,6 @@ async def api_rdns(ip: str, db: Session = Depends(get_db)):
     return result
 
 
-@app.post("/api/osint/asn")
-async def api_asn(query: str, db: Session = Depends(get_db)):
-    result = await osint.asn_lookup(query)
-    _save_osint(query, "asn", result, db)
-    return result
-
-
 @app.post("/api/osint/hibp")
 async def api_hibp(target: str, db: Session = Depends(get_db)):
     result = await osint.hibp_check(target)
