@@ -51,6 +51,26 @@ class CommandIn(BaseModel):
     tags: Optional[list[str]] = None
 
 
+class AuditItemIn(BaseModel):
+    done: bool
+    notes: Optional[str] = None
+
+
+class ReportItem(BaseModel):
+    id: str
+    text: str
+    done: bool
+    notes: Optional[str] = None
+    severity: Optional[str] = None
+
+
+class ReportRequest(BaseModel):
+    audit_type: str
+    audit_name: str
+    items: list[ReportItem]
+    progress: int
+
+
 def _save_osint(query: str, qtype: str, result: dict, db: Session):
     r = OsintResult(query=query, query_type=qtype, result=json.dumps(result))
     db.add(r)
