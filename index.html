@@ -5256,9 +5256,27 @@ async function searchExploitDB(){
       data.exploits.map(e=>`<div class="enum-cmd-card" style="margin-bottom:6px;">
         <a href="${esc(e.url)}" target="_blank" style="color:var(--cyan);font-size:12px;text-decoration:none;">${esc(e.title)} ↗</a>
         <div class="enum-meta" style="margin-top:4px;">${e.type?`<span>${esc(e.type)}</span>`:''}${e.platform?`<span>${esc(e.platform)}</span>`:''}${e.date?`<span>${esc(e.date)}</span>`:''}${e.cve?`<span class="auth-tag auth-req">${esc(e.cve)}</span>`:''}${e.verified?'<span class="noise-tag noise-low">✓ verificado</span>':''}</div>
+        ${e.cve?`<button class="enum-save-btn" style="margin-top:6px;" onclick='saveCveFromEnum(${jarg(e.cve)},this)' title="Guardar ${esc(e.cve)} en la KB de CVEs">💾 Guardar CVE</button>`:''}
       </div>`).join('');
   }catch(err){
     out.innerHTML='<div style="color:var(--red);font-size:11px">Error consultando Exploit-DB: '+esc(err.message)+'</div>';
+  }
+}
+
+// Guarda en la KB de CVEs un CVE que aparece en un resultado de Exploit-DB
+// (buscador "Versión → exploit conocido" de Enumeración). Guarda solo el ID;
+// luego, en el módulo CVEs, "↻ Enriquecer" trae CVSS/severidad/descripción de NVD.
+async function saveCveFromEnum(cveId, btn){
+  const orig=btn.textContent; btn.disabled=true; btn.textContent='⟳…';
+  try{
+    const r=await API.post('/api/cves',{cve_id:cveId});
+    S.cves=await API.get('/api/cves');
+    btn.textContent=r.created?'✓ Guardado':'✓ Ya estaba';
+    btn.style.color='var(--green)'; btn.style.borderColor='var(--green)';
+    setStatus(r.created?('CVE '+cveId+' guardado en la KB'):('CVE '+cveId+' ya estaba en la KB'));
+  }catch(e){
+    btn.disabled=false; btn.textContent=orig;
+    setStatus('No se pudo guardar '+cveId+': '+e.message,'error');
   }
 }
 function onSvcPortsChanged(){
