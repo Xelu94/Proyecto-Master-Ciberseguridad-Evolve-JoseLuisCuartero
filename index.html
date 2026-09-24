@@ -343,7 +343,11 @@ tr.svc-open-row td{background:rgba(0,170,255,.08);}
 .wv-eng-table td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2);}
 .wv-eng-table td:first-child{color:var(--orange);}
 .wv-eng-table tr:hover td{background:var(--bg3);}
-.wv-rce-code{display:block;color:var(--orange);white-space:pre-wrap;word-break:break-all;font-size:10px;}
+.wv-rce summary{cursor:pointer;color:var(--cyan);font-size:10px;list-style:none;white-space:nowrap;}
+.wv-rce summary::-webkit-details-marker{display:none;}
+.wv-rce summary::before{content:'▸ ';}
+.wv-rce[open] summary::before{content:'▾ ';}
+.wv-rce code{display:block;margin-top:4px;color:var(--orange);white-space:pre-wrap;word-break:break-all;font-size:10px;}
 .wv-files{display:flex;flex-wrap:wrap;gap:6px;}
 .wv-file-chip{font-family:var(--mono);font-size:11px;color:var(--orange);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:3px 8px;cursor:pointer;}
 .wv-file-chip:hover{border-color:var(--orange);}
@@ -4974,7 +4978,7 @@ function openWebVuln(id){
   if(v.engineTable){
     html+=`<div class="wv-sec"><div class="wv-sec-title det">Motores de plantillas</div>
       <table class="wv-eng-table"><thead><tr><th>Lenguaje</th><th>Motor</th><th>Payload de prueba</th><th>Resultado</th><th>Payload real (RCE)</th></tr></thead><tbody>
-      ${v.engineTable.map(r=>`<tr><td>${esc(r.lang)}</td><td>${esc(r.engine)}</td><td>${r.payload?esc(r.payload):(r.note?`<span style="color:var(--text3);font-style:italic;">${esc(r.note)}</span>`:'<span style="color:var(--text3)">—</span>')}</td><td>${r.result?esc(r.result):'<span style="color:var(--text3)">—</span>'}</td><td>${r.rce?`<code class="wv-rce-code">${esc(r.rce)}</code>`:'<span style="color:var(--text3)">—</span>'}</td></tr>`).join('')}
+      ${v.engineTable.map(r=>`<tr><td>${esc(r.lang)}</td><td>${esc(r.engine)}</td><td>${r.payload?esc(r.payload):(r.note?`<span style="color:var(--text3);font-style:italic;">${esc(r.note)}</span>`:'<span style="color:var(--text3)">—</span>')}</td><td>${r.result?esc(r.result):'<span style="color:var(--text3)">—</span>'}</td><td>${r.rce?`<details class="wv-rce"><summary>Ver RCE</summary><code>${esc(r.rce)}</code></details>`:'<span style="color:var(--text3)">—</span>'}</td></tr>`).join('')}
       </tbody></table></div>`;
   }
 
