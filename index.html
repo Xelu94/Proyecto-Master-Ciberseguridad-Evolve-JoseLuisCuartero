@@ -1921,7 +1921,7 @@ const API = {
   },
   async del(path){
     const r=await fetch(this.base+path,{method:'DELETE'});
-    if(!r.ok) throw new Error(await r.text());
+    if(!r.ok){ const err=new Error(await r.text()); err.status=r.status; throw err; }
     return r.status===204?null:r.json();
   },
 };
@@ -3287,7 +3287,17 @@ async function deleteCVE(id, cveId, btn){
     await loadAll();
     renderCVEs();
     setStatus('CVE '+cveId+' borrado de la KB');
-  }catch(e){ setStatus('Error borrando CVE: '+e.message,'error'); }
+  }catch(e){
+    if(e.status===404){
+      // El CVE ya no estaba (otra pestaña lo borró, o la lista está obsoleta).
+      // No es un error para el usuario: refrescamos y seguimos.
+      await loadAll();
+      renderCVEs();
+      setStatus('El CVE '+cveId+' ya no estaba en la KB; lista actualizada','warn');
+    } else {
+      setStatus('Error borrando CVE: '+e.message,'error');
+    }
+  }
 }
 
 // Rellena un CVE existente con los datos oficiales de NVD (botón "↻ Enriquecer").
