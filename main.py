@@ -1256,6 +1256,22 @@ def create_cve(data: CVECreate, db: Session = Depends(get_db)):
     return {"created": True, **_cve_dict(row)}
 
 
+@app.delete("/api/cves/{cid}", status_code=204)
+def delete_cve(cid: int, db: Session = Depends(get_db)):
+    """[Módulo CVEs] Borra un CVE de la KB (botón 🗑 de la tarjeta).
+
+    Da simetría con Herramientas, que ya tenía borrado. Antes un CVE guardado a
+    mano (sin nota asociada) no se podía quitar por ninguna vía. Se borra por id
+    numérico (PK), igual que DELETE /api/tools/{id}.
+    """
+    row = db.query(CVE).filter(CVE.id == cid).first()
+    if not row:
+        raise HTTPException(404, "CVE no encontrado en la base de datos")
+    db.delete(row)
+    db.commit()
+    return
+
+
 @app.post("/api/cves/{cve_id}/enrich")
 async def enrich_cve(cve_id: str, db: Session = Depends(get_db)):
     """[Módulo CVEs] Rellena CVSS/severidad/descripción oficiales de un CVE que

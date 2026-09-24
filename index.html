@@ -3278,6 +3278,18 @@ async function lookupCVE(id){
     list.innerHTML='<div class="empty-msg" style="color:var(--red)">Error consultando NVD: '+esc(e.message)+'</div>';
   }
 }
+// Borra un CVE de la KB (botón "🗑 Borrar" de la tarjeta). Simetría con
+// Herramientas; el backend expone DELETE /api/cves/{id} por id numérico.
+async function deleteCVE(id, cveId, btn){
+  if(!confirm('¿Borrar el CVE '+cveId+' de la KB?')) return;
+  try{
+    await API.del('/api/cves/'+id);
+    await loadAll();
+    renderCVEs();
+    setStatus('CVE '+cveId+' borrado de la KB');
+  }catch(e){ setStatus('Error borrando CVE: '+e.message,'error'); }
+}
+
 // Rellena un CVE existente con los datos oficiales de NVD (botón "↻ Enriquecer").
 // El trabajo lo hace el backend; aquí solo lanzamos la petición y refrescamos.
 async function enrichCVE(cveId, btn){
@@ -3340,6 +3352,7 @@ function renderCVEs(){
         <a href="https://nvd.nist.gov/vuln/detail/${esc(c.cve_id)}" target="_blank" class="nvd-link">↗ NVD</a>
         <a href="https://www.exploit-db.com/search?cve=${esc(c.cve_id)}" target="_blank" class="nvd-link" style="color:var(--orange);border-color:rgba(255,102,0,.3);">↗ EDB</a>
         <button class="nvd-link" style="cursor:pointer;background:none;border:none;padding:0;color:var(--cyan);" onclick="enrichCVE('${esc(c.cve_id)}',this)" title="Rellenar CVSS, severidad y descripción oficiales desde NVD">↻ Enriquecer</button>
+        <button class="nvd-link" style="cursor:pointer;background:none;border:none;padding:0;color:var(--red);" onclick="deleteCVE(${c.id},'${esc(c.cve_id)}',this)" title="Borrar este CVE de la KB">🗑 Borrar</button>
         <div style="margin-top:6px;">${edbBadge}</div>
       </div>
       <div class="cve-body">
