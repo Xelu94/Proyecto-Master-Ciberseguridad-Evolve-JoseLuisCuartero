@@ -3487,6 +3487,7 @@ function switchTab(name){
   if(name==='mitre') loadMitre();
   if(name==='enum'){ initEnumSaveButtons(); initEnumTarget(); highlightServices(); }
   if(name==='webvuln') renderWebVulnList();
+  if(name==='cves') renderCVEs();   // repinta por si se guardó un CVE desde otra pestaña (p. ej. Enum)
 }
 
 // ─── MODALS ───────────────────────────────────────────────────────────────────
@@ -5290,8 +5291,17 @@ async function searchExploitDB(){
 async function saveCveFromEnum(cveId, btn){
   const orig=btn.textContent; btn.disabled=true; btn.textContent='⟳…';
   try{
-    const r=await API.post('/api/cves',{cve_id:cveId});
+    // Traemos la ficha de NVD para guardarlo ya con descripción/CVSS/severidad;
+    // guardar solo el ID lo dejaba "sin descripción". Si NVD no responde, fallback
+    // a guardar solo el ID (luego se puede "↻ Enriquecer" desde el módulo CVEs).
+    let payload={cve_id:cveId};
+    try{
+      const nvd=await API.get('/api/cve-lookup?id='+encodeURIComponent(cveId));
+      if(nvd && nvd.found) payload={cve_id:cveId, description:nvd.description, severity:nvd.severity, cvss:nvd.cvss};
+    }catch(_){ /* NVD caído → guardamos solo el ID */ }
+    const r=await API.post('/api/cves', payload);
     S.cves=await API.get('/api/cves');
+    renderCVEs();   // refresca la lista de CVEs aunque estemos en la pestaña de Enum (sin F5)
     btn.textContent=r.created?'✓ Guardado':'✓ Ya estaba';
     btn.style.color='var(--green)'; btn.style.borderColor='var(--green)';
     setStatus(r.created?('CVE '+cveId+' guardado en la KB'):('CVE '+cveId+' ya estaba en la KB'));
