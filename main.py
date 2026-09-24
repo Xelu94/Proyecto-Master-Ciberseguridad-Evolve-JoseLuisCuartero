@@ -1043,20 +1043,26 @@ async def _edb_search(extra_params: dict, limit: int = 15):
         "start": "0", "length": str(limit),
         **extra_params,
     }
-    # Exploit-DB va detrás de Cloudflare y responde lento/intermitente (502, 429,
-    # timeouts). Un reintento absorbe la mayoría de los fallos transitorios.
+    # Exploit-DB va detrás de Cloudflare y responde lento/intermitente (502, 503,
+    # 429, timeouts). Reintentamos varias veces con backoff creciente para absorber
+    # esos fallos transitorios; los estados NO transitorios (p. ej. 403 = bloqueo)
+    # cortan el bucle porque insistir no ayuda y solo alarga la espera.
+    TRANSIENT = {429, 500, 502, 503, 504}
+    delays = [1.0, 2.0]                 # esperas entre intentos → len(delays)+1 intentos
     last_err = None
-    for attempt in range(2):
+    for attempt in range(len(delays) + 1):
         try:
             async with httpx.AsyncClient(timeout=20, headers=_EDB_HEADERS) as client:
                 r = await client.get("https://www.exploit-db.com/search", params=params)
             if r.status_code == 200:
                 return _edb_map(r.json().get("data", []), limit), None
             last_err = f"Exploit-DB devolvió HTTP {r.status_code}"
+            if r.status_code not in TRANSIENT:
+                break
         except Exception as e:
             last_err = str(e)
-        if attempt == 0:
-            await asyncio.sleep(1.2)
+        if attempt < len(delays):
+            await asyncio.sleep(delays[attempt])
     return [], last_err
 
 
