@@ -13,7 +13,12 @@ resumen profesional que cubre **solo** la materia de ciberseguridad que contenga
 Descarta todo lo que no sea ciberseguridad antes de escribir una sola línea: portadas,
 índices, biografías de ponentes, agradecimientos, publicidad, condiciones comerciales,
 cabeceras y pies repetidos, transcripción de saludos y despedidas, y cualquier materia
-ajena a la seguridad de la información.
+ajena a la seguridad de la información — incluida la IA sin enfoque de seguridad
+(cómo funciona un modelo, asistentes de código, generación de imagen/vídeo/música,
+vehículos autónomos, traducción automática, lanzamientos de laboratorios de IA,
+ética o regulación de la IA sin materia de seguridad concreta). Un documento que
+habla de IA constantemente pero no toca ninguno de los puntos de seguridad de abajo
+se descarta igual que cualquier otro tema ajeno.
 
 Conserva lo que caiga en alguno de estos campos:
 
@@ -29,6 +34,12 @@ Conserva lo que caiga en alguno de estos campos:
 - **Infraestructura**: nube (AWS/Azure/GCP), red y perímetro, OT, IoT, contenedores, móvil.
 - **Operación**: SOC, SIEM, threat hunting, threat intel, pentesting, red/blue team.
 - **Desarrollo seguro**: SAST, DAST, SDLC seguro, revisión de código, seguridad de API.
+- **Seguridad de la IA**: prompt injection, jailbreaks, envenenamiento de datos o de
+  modelo, ataques adversariales (evasión, extracción, inversión de modelo), fuga del
+  system prompt, MITRE ATLAS, OWASP Top 10 para LLM, red teaming de modelos,
+  deepfakes o clonación de voz como vector de ataque (fraude, vishing, suplantación),
+  cadena de suministro de IA (AIBOM, procedencia del modelo), guardarraíles y
+  firewalls de IA, agentes de IA como superficie de ataque.
 - **Continuidad**: DRP, BCP, RTO/RPO, copias de seguridad y restauración.
 - **Cadena de suministro**: evaluación de terceros, SBOM, riesgo de proveedores.
 - **Cultura**: concienciación, formación, simulacros de phishing.

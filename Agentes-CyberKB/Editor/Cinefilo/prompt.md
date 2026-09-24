@@ -39,6 +39,12 @@ Cuenta si el material trata alguno de estos campos:
 - **Infraestructura**: nube, red y perímetro, OT, IoT, contenedores, móvil.
 - **Operación**: SOC, SIEM, threat hunting, threat intel, pentesting, red/blue team.
 - **Desarrollo seguro**: SAST, DAST, SDLC seguro, revisión de código, seguridad de API.
+- **Seguridad de la IA**: prompt injection, jailbreaks, envenenamiento de datos o de
+  modelo, ataques adversariales (evasión, extracción, inversión de modelo), fuga del
+  system prompt, MITRE ATLAS, OWASP Top 10 para LLM, red teaming de modelos,
+  deepfakes o clonación de voz como vector de ataque (fraude, vishing, suplantación),
+  cadena de suministro de IA (AIBOM, procedencia del modelo), guardarraíles y
+  firewalls de IA, agentes de IA como superficie de ataque.
 - **Continuidad**: DRP, BCP, RTO/RPO, copias de seguridad y restauración.
 - **Cadena de suministro**: evaluación de terceros, SBOM, riesgo de proveedores.
 - **Cultura**: concienciación, formación, simulacros de phishing.
@@ -46,6 +52,16 @@ Cuenta si el material trata alguno de estos campos:
 No cuenta el material que solo roza el tema: informática general, programación sin
 enfoque de seguridad, noticias de empresas tecnológicas sin incidente detrás, criptomonedas
 como producto financiero, ficción sobre hackers, política digital sin materia de seguridad.
+
+**Tampoco cuenta la IA sin enfoque de seguridad**, aunque hable de IA constantemente:
+cómo funciona un modelo o una arquitectura (transformers, entrenamiento, benchmarks),
+asistentes de código, generación de imagen/vídeo/música, vehículos autónomos y
+robótica, traducción automática, recomendadores, chatbots de atención al cliente,
+lanzamientos de laboratorios de IA, ética o regulación de la IA sin materia de
+seguridad de la información (sesgo, impacto laboral, marcos como la EU AI Act o el
+NIST AI RMF salvo que el vídeo trate de gestión de riesgo de seguridad concreta). Un
+vídeo sobre IA que no toca ninguno de los puntos de seguridad de arriba es `false`,
+por mucho que mencione "IA" en el título.
 
 Un vídeo mixto cuenta si la materia de seguridad es sustancial y no una mención de paso.
 
