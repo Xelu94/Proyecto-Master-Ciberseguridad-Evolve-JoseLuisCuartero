@@ -786,8 +786,8 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
   <div class="panel" id="panel-enum">
     <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;">
       <span style="font-size:10px;font-family:var(--mono);color:var(--text3);white-space:nowrap;">🎯 OBJETIVO</span>
-      <input type="text" id="enumTarget" placeholder="IP o dominio (ej. 10.10.10.5) — rellena todos los comandos" oninput="applyEnumTarget()"
-        style="max-width:340px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:3px 9px;font-size:11px;font-family:var(--mono);outline:none;"
+      <input type="text" id="enumTarget" placeholder="IP o dominio — ej. 10.10.10.5" title="Rellena automáticamente todos los comandos de abajo" oninput="applyEnumTarget()"
+        style="flex:1;min-width:220px;max-width:380px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:3px 9px;font-size:11px;font-family:var(--mono);outline:none;"
         onfocus="this.style.borderColor='var(--cyan)'" onblur="this.style.borderColor='var(--border2)'">
       <span style="margin-left:auto;font-size:10px;color:var(--text3);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="Escanea y enumera únicamente los sistemas incluidos en el alcance autorizado de la auditoría.">🛡 Solo dentro del alcance autorizado</span>
     </div>
