@@ -790,9 +790,9 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
       <span style="margin-left:auto;font-size:10px;color:var(--text3);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="Escanea y enumera únicamente los sistemas incluidos en el alcance autorizado de la auditoría.">🛡 Solo dentro del alcance autorizado</span>
     </div>
     <div class="enum-subtabs">
-      <button class="enum-stab active" id="estab-discovery" onclick="switchEnumTab('discovery')">① 🌐 Descubrir la red</button>
-      <button class="enum-stab" id="estab-scan" onclick="switchEnumTab('scan')">② ⚡ Escanear puertos</button>
-      <button class="enum-stab" id="estab-services" onclick="switchEnumTab('services')">③ 🔍 Enumerar servicios</button>
+      <button class="enum-stab active" id="estab-discovery" onclick="switchEnumTab('discovery')">🌐 Descubrir la red</button>
+      <button class="enum-stab" id="estab-scan" onclick="switchEnumTab('scan')">⚡ Escanear puertos</button>
+      <button class="enum-stab" id="estab-services" onclick="switchEnumTab('services')">🔍 Enumerar servicios</button>
     </div>
 
     <!-- SECTION 1: Descubrimiento de Red -->
@@ -1047,8 +1047,7 @@ La IA clasificará el contenido, extraerá comandos, herramientas y CVEs automá
     <div class="enum-section" id="esec-services">
       <div class="enum-group" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <span style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-family:var(--mono);">Puertos abiertos</span>
-        <input type="text" id="svcOpenPorts" placeholder="22,80,445…" oninput="onSvcPortsChanged()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:3px 9px;font-size:11px;font-family:var(--mono);outline:none;max-width:180px;" title="Los puertos que te dio la Fase 1 del escaneo. Se sincroniza con ②.">
-        <label style="display:flex;align-items:center;gap:5px;font-size:10px;font-family:var(--mono);color:var(--text2);cursor:pointer;"><input type="checkbox" id="svcOnlyOpen" onchange="highlightServices()"> Solo abiertos</label>
+        <input type="text" id="svcOpenPorts" placeholder="22,80,445…" oninput="onSvcPortsChanged()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:3px 9px;font-size:11px;font-family:var(--mono);outline:none;max-width:180px;" title="Los puertos que te dio la Fase 1 del escaneo. Se sincroniza con la pestaña Escanear puertos.">
         <span id="svcOpenHint" style="font-size:10px;color:var(--text3);font-family:var(--mono);"></span>
       </div>
 
@@ -5153,10 +5152,10 @@ function applyEnumTarget(){
   document.querySelectorAll('#panel-enum [data-tpl]').forEach(code=>{
     code.textContent = t ? code.dataset.tpl.replace(/\bIP\b/g,t) : code.dataset.tpl;
   });
-  // Generador Nmap (②): usa el objetivo, o la IP de ejemplo si está vacío
+  // Generador Nmap (Escanear puertos): usa el objetivo, o la IP de ejemplo si está vacío
   const ipField=document.getElementById('nmapIP');
   if(ipField){ ipField.value = t || _ENUM_EXAMPLE_IP; buildNmapCmd(); }
-  // Generador de descubrimiento (①): si el objetivo es una IPv4, deriva su /24
+  // Generador de descubrimiento (Descubrir la red): si el objetivo es una IPv4, deriva su /24
   const netField=document.getElementById('genNetRange');
   if(netField){
     if(/^\d{1,3}(\.\d{1,3}){3}$/.test(t)) netField.value=t.replace(/\.\d{1,3}$/,'.0')+'/24';
@@ -5202,30 +5201,25 @@ function toggleEnumFlag(flag){
   buildNmapCmd();
 }
 
-// #3 Puente puertos abiertos → servicios de ③
+// Puente: puertos abiertos → resaltar servicios (Enumerar servicios)
 function highlightServices(){
   const raw=(document.getElementById('nmapPorts')?.value||'').trim();
   const svc=document.getElementById('svcOpenPorts');
-  if(svc && svc.value!==raw) svc.value=raw;   // sincroniza el campo de ③ (sin disparar oninput)
+  if(svc && svc.value!==raw) svc.value=raw;   // sincroniza el campo de Enumerar servicios (sin disparar oninput)
   const open=new Set((raw.match(/\d+/g)||[]).map(Number));
   const any=open.size>0;
-  const onlyOpen=(document.getElementById('svcOnlyOpen')?.checked)&&any;
   document.querySelectorAll('#esec-services .enum-accordion').forEach(acc=>{
     const ports=(acc.querySelector('.enum-acc-port')?.textContent.match(/\d+/g)||[]).map(Number);
-    const isOpen=ports.some(p=>open.has(p));
-    acc.classList.toggle('svc-open', isOpen&&any);
-    acc.hidden = onlyOpen && !isOpen;
+    acc.classList.toggle('svc-open', ports.some(p=>open.has(p))&&any);
   });
   document.querySelectorAll('#tblOtrosServicios tbody tr').forEach(tr=>{
     const ports=(tr.querySelector('td')?.textContent.match(/\d+/g)||[]).map(Number);
-    const isOpen=ports.some(p=>open.has(p));
-    tr.classList.toggle('svc-open-row', isOpen&&any);
-    tr.hidden = onlyOpen && !isOpen;
+    tr.classList.toggle('svc-open-row', ports.some(p=>open.has(p))&&any);
   });
   const hint=document.getElementById('svcOpenHint');
   if(hint) hint.textContent = any
     ? ('Resaltando servicios de: '+[...open].sort((a,b)=>a-b).join(', '))
-    : 'Escribe aquí los puertos abiertos (o rellénalos en ②) para resaltar sus servicios.';
+    : 'Escribe aquí los puertos abiertos (o rellénalos en Escanear puertos) para resaltar sus servicios.';
 }
 function onNmapPortsChanged(){ buildNmapCmd(); highlightServices(); }
 
