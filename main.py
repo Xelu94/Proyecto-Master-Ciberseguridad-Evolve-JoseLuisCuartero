@@ -628,9 +628,14 @@ def _persist_cves(cves: list, note: Note, db: Session):
 
 
 def _persist_mitre(techniques: list, note: Note, db: Session):
-    """Upsert MITRE ATT&CK techniques extracted from a note."""
+    """Upsert de técnicas ATT&CK extraídas de una nota.
+
+    Si el ID está en el catálogo de referencia (mitre_reference.json), usamos su
+    táctica/nombre canónicos en lugar de los que devuelve la IA (que a veces se
+    equivoca de táctica); así nada cae en "Uncategorized" por un fallo del modelo.
+    """
     for td in techniques:
-        tid = td.get("id", "").strip()
+        tid = td.get("id", "").strip().upper()
         if not tid:
             continue
         existing = db.query(MitreTechnique).filter(
@@ -638,11 +643,12 @@ def _persist_mitre(techniques: list, note: Note, db: Session):
             MitreTechnique.note_id == note.id
         ).first()
         if not existing:
+            ref = _MITRE_REF_BY_ID.get(tid)
             mt = MitreTechnique(
                 note_id=note.id,
                 technique_id=tid,
-                technique_name=td.get("name"),
-                tactic=td.get("tactic"),
+                technique_name=(ref["name"] if ref else td.get("name")),
+                tactic=((ref.get("tactics") or [None])[0] if ref else td.get("tactic")),
                 context_snippet=td.get("snippet"),
             )
             db.add(mt)
@@ -1838,6 +1844,98 @@ def search_mitre(q: str = "", db: Session = Depends(get_db)):
         }
         for r in rows
     ]
+
+
+# ─── Catálogo de referencia ATT&CK (dataset compacto local) ───────────────────
+# MITRE no ofrece API REST para buscar técnicas, así que llevamos un JSON compacto
+# (id, nombre, tácticas, descripción corta) generado del STIX oficial v19.2. Sirve
+# para el buscador "añadir técnica" y para corregir la táctica de lo que detecta la
+# IA (ver _persist_mitre). La URL de cada técnica se deriva del ID, no se guarda.
+def _load_mitre_ref() -> list:
+    try:
+        with open(BUNDLE_DIR / "mitre_reference.json", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+_MITRE_REF = _load_mitre_ref()
+_MITRE_REF_BY_ID = {t["id"]: t for t in _MITRE_REF}
+
+
+@app.get("/api/mitre/reference")
+def mitre_reference(q: str = "", limit: int = 40):
+    """[Módulo MITRE] Busca en el catálogo de referencia ATT&CK (local) por ID
+    (T1055), nombre o táctica. Alimenta el buscador de "añadir técnica". Prioriza
+    las coincidencias de ID/nombre sobre las de táctica."""
+    query = (q or "").strip().lower()
+    if not query:
+        return {"count": 0, "results": []}
+
+    def score(t):
+        idl, nm = t["id"].lower(), t["name"].lower()
+        if idl == query: return 0
+        if idl.startswith(query): return 1
+        if query in idl: return 2
+        if nm.startswith(query): return 3
+        if query in nm: return 4
+        return 5
+
+    matches = [t for t in _MITRE_REF
+               if query in t["id"].lower() or query in t["name"].lower()
+               or any(query in tac.lower() for tac in t.get("tactics", []))]
+    matches.sort(key=score)
+    return {"count": len(matches), "results": matches[:limit]}
+
+
+class MitreCreate(BaseModel):
+    technique_id: str
+
+
+@app.post("/api/mitre", status_code=201)
+def create_mitre(data: MitreCreate, db: Session = Depends(get_db)):
+    """[Módulo MITRE] Añade una técnica a la KB desde el buscador de referencia.
+    Rellena nombre/táctica/descripción desde el catálogo. Upsert por technique_id
+    de las añadidas a mano (note_id NULL): si ya está, no la duplica."""
+    tid = (data.technique_id or "").strip().upper()
+    if not re.match(r"^T\d{4}(\.\d{3})?$", tid):
+        raise HTTPException(400, "ID de técnica inválido (esperado T#### o T####.###)")
+    ref = _MITRE_REF_BY_ID.get(tid)
+    if not ref:
+        raise HTTPException(404, f"{tid} no está en el catálogo de referencia ATT&CK")
+    existing = db.query(MitreTechnique).filter(
+        MitreTechnique.technique_id == tid, MitreTechnique.note_id.is_(None)).first()
+    if existing:
+        return {"created": False, "id": existing.id, "technique_id": tid}
+    mt = MitreTechnique(
+        note_id=None, technique_id=tid, technique_name=ref["name"],
+        tactic=(ref.get("tactics") or [None])[0], context_snippet=ref.get("desc"))
+    db.add(mt); db.commit(); db.refresh(mt)
+    return {"created": True, "id": mt.id, "technique_id": tid}
+
+
+@app.delete("/api/mitre/technique/{tid}", status_code=204)
+def delete_mitre_technique(tid: str, db: Session = Depends(get_db)):
+    """[Módulo MITRE] Quita una técnica del módulo POR COMPLETO: borra todas sus
+    filas (vengan de notas o añadidas a mano). Es lo que hace el 🗑 de la tarjeta,
+    que en la vista está agregada por técnica (2A)."""
+    tid = (tid or "").strip().upper()
+    rows = db.query(MitreTechnique).filter(MitreTechnique.technique_id == tid).all()
+    if not rows:
+        raise HTTPException(404, "Técnica no encontrada")
+    for r in rows:
+        db.delete(r)
+    db.commit()
+    return
+
+
+@app.delete("/api/mitre/{mid}", status_code=204)
+def delete_mitre(mid: int, db: Session = Depends(get_db)):
+    """[Módulo MITRE] Borra una fila concreta de técnica por su id numérico."""
+    row = db.query(MitreTechnique).filter(MitreTechnique.id == mid).first()
+    if not row:
+        raise HTTPException(404, "Técnica no encontrada")
+    db.delete(row); db.commit()
+    return
 
 
 # ─── Forensic Mode ────────────────────────────────────────────────────────────

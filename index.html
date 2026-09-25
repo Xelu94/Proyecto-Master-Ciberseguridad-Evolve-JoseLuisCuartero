@@ -1405,7 +1405,7 @@ EXEC xp_cmdshell 'whoami';</pre>
   <div class="panel" id="panel-mitre">
     <div class="ed-toolbar" style="gap:8px;">
       <span style="font-size:10px;font-family:var(--mono);color:var(--text3);">⚡ MITRE ATT&amp;CK</span>
-      <input type="text" id="mitreSearch" class="sel" placeholder="Buscar técnica, ID o táctica..." style="flex:1;max-width:340px;" oninput="searchMitre(this.value)">
+      <input type="text" id="mitreSearch" class="sel" placeholder="Buscar por ID (T1055) o nombre para añadir…" style="flex:1;max-width:340px;" oninput="searchMitre(this.value)">
       <span id="mitreTotalBadge" style="font-size:10px;font-family:var(--mono);color:var(--text3);"></span>
       <div style="flex:1"></div>
       <button class="btn-outline" onclick="loadMitre()">↺ Recargar</button>
@@ -3649,99 +3649,187 @@ function setToolTypeFilter(val,btn){
 }
 
 // ─── MITRE ATT&CK ─────────────────────────────────────────────────────────────
+// Orden canónico de las 14+1 tácticas ATT&CK Enterprise (v19.2: "Defense Evasion"
+// pasó a "Stealth" y se añadió "Defense Impairment"). Debe coincidir con las
+// tácticas del catálogo mitre_reference.json.
 const TACTIC_ORDER=['Reconnaissance','Resource Development','Initial Access','Execution','Persistence',
-  'Privilege Escalation','Defense Evasion','Credential Access','Discovery','Lateral Movement',
-  'Collection','Command and Control','Exfiltration','Impact'];
+  'Privilege Escalation','Stealth','Defense Impairment','Credential Access','Discovery',
+  'Lateral Movement','Collection','Command and Control','Exfiltration','Impact'];
 
 function mitreTacticColor(tactic){
   const idx=TACTIC_ORDER.indexOf(tactic);
   const colors=['#94a3b8','#64748b','#ef4444','#f97316','#eab308','#a855f7','#6366f1',
-    '#ec4899','#06b6d4','#3b82f6','#10b981','#f59e0b','#14b8a6','#f43f5e'];
+    '#8b5cf6','#ec4899','#06b6d4','#3b82f6','#10b981','#f59e0b','#14b8a6','#f43f5e'];
   return idx>=0?colors[idx]:'#f59e0b';
 }
 
+// IDs de técnica ya guardadas en el módulo (para marcar cuáles ya tienes en el
+// buscador de referencia). Se refresca en cada loadMitre().
+let _mitreSaved=new Set();
+
 async function loadMitre(){
   const body=document.getElementById('mitreBody');
+  const search=document.getElementById('mitreSearch');
+  if(search) search.value='';
   try{
     const data=await API.get('/api/mitre');
     document.getElementById('mitreTotalBadge').textContent=data.total+' técnicas';
-    renderMitreTactics(data.tactics);
+    _mitreSaved=new Set();
+    Object.values(data.tactics).forEach(arr=>arr.forEach(t=>_mitreSaved.add(t.technique_id)));
+    body.innerHTML=renderMitreCoverage(data.tactics)+renderMitreTactics(data.tactics);
   }catch(e){
     body.innerHTML=`<div class="empty-msg">Error cargando técnicas: ${esc(String(e))}</div>`;
   }
 }
 
+// 2C — Vista de cobertura: cuántas técnicas tuyas caen en cada táctica del kill-chain.
+function renderMitreCoverage(tactics){
+  const counts={};
+  Object.entries(tactics||{}).forEach(([t,arr])=>{counts[t]=new Set(arr.map(x=>x.technique_id)).size;});
+  const chips=TACTIC_ORDER.map(t=>{
+    const n=counts[t]||0, col=mitreTacticColor(t);
+    return `<div title="${esc(t)}: ${n} técnica(s)" style="flex:1;min-width:66px;text-align:center;padding:5px 3px;border-radius:6px;
+      background:${n?col+'22':'var(--bg3)'};border:1px solid ${n?col+'55':'var(--border)'};opacity:${n?1:.45};">
+      <div style="font-size:7.5px;font-family:var(--mono);color:${n?col:'var(--text3)'};text-transform:uppercase;letter-spacing:.3px;line-height:1.25;">${esc(t)}</div>
+      <div style="font-size:14px;font-weight:700;color:${n?col:'var(--text3)'};">${n}</div>
+    </div>`;
+  }).join('');
+  return `<div style="margin-bottom:16px;">
+    <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:6px;">COBERTURA POR TÁCTICA</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;">${chips}</div></div>`;
+}
+
+// Devuelve el HTML de las tácticas con sus técnicas. 2A: agrega por technique_id
+// (una tarjeta por técnica aunque aparezca en varias notas → badge "en N notas").
 function renderMitreTactics(tactics){
-  const body=document.getElementById('mitreBody');
   if(!tactics||Object.keys(tactics).length===0){
-    body.innerHTML='<div class="empty-msg">No hay técnicas MITRE extraídas aún. Sube documentos con técnicas ATT&CK.</div>';
-    return;
+    return '<div class="empty-msg">Aún no tienes técnicas. Busca arriba por ID o nombre para añadirlas desde ATT&CK, o sube documentos con técnicas.</div>';
   }
-  // Sort tactics by canonical order, unknowns last
   const sorted=Object.keys(tactics).sort((a,b)=>{
     const ia=TACTIC_ORDER.indexOf(a),ib=TACTIC_ORDER.indexOf(b);
     if(ia<0&&ib<0) return a.localeCompare(b);
     if(ia<0) return 1; if(ib<0) return -1;
     return ia-ib;
   });
-
   let html='';
   for(const tactic of sorted){
-    const techs=tactics[tactic];
     const col=mitreTacticColor(tactic);
+    // 2A — agrupar filas por technique_id
+    const byId={};
+    for(const t of tactics[tactic]){ (byId[t.technique_id]=byId[t.technique_id]||[]).push(t); }
+    const ids=Object.keys(byId);
     html+=`<div style="margin-bottom:18px;">
       <div style="font-size:11px;font-family:var(--mono);color:${col};text-transform:uppercase;letter-spacing:1px;
         border-bottom:1px solid ${col}33;padding-bottom:4px;margin-bottom:8px;">
-        ⚡ ${esc(tactic)} <span style="color:var(--text3);font-size:10px;">(${techs.length})</span>
-      </div>
+        ⚡ ${esc(tactic)} <span style="color:var(--text3);font-size:10px;">(${ids.length})</span></div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;">`;
-    for(const t of techs){
-      const tid=t.technique_id;
+    for(const tid of ids){
+      const group=byId[tid], t=group[0];
       const turl='https://attack.mitre.org/techniques/'+tid.replace('.','/');
-      html+=`<div style="background:var(--bg3);border:1px solid ${col}44;border-radius:6px;padding:7px 10px;
-          min-width:180px;max-width:260px;flex:1;cursor:pointer;"
-          title="${esc(t.context_snippet||'')}"
-          onclick="mitreCardClick(${t.note_id},event)">
+      const notes=[...new Set(group.filter(g=>g.note_id).map(g=>g.note_id))];
+      const srcBadge = notes.length
+        ? `<span onclick="mitreCardClick(${notes[0]})" title="Ver nota" style="font-size:9px;color:var(--text3);cursor:pointer;text-decoration:underline dotted;">en ${notes.length} nota${notes.length>1?'s':''}</span>`
+        : `<span style="font-size:9px;color:var(--text3)">manual</span>`;
+      html+=`<div style="background:var(--bg3);border:1px solid ${col}44;border-radius:6px;padding:7px 10px;min-width:190px;max-width:270px;flex:1;">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
-          <a href="${turl}" target="_blank" onclick="event.stopPropagation()"
-            style="font-size:11px;font-family:var(--mono);color:${col};text-decoration:none;
-              background:${col}22;padding:1px 6px;border-radius:4px;">${esc(tid)}</a>
-          ${t.note_id?`<span style="font-size:9px;color:var(--text3)">nota #${t.note_id}</span>`:''}
+          <a href="${turl}" target="_blank" style="font-size:11px;font-family:var(--mono);color:${col};text-decoration:none;background:${col}22;padding:1px 6px;border-radius:4px;">${esc(tid)}</a>
+          <div style="flex:1"></div>
+          <button onclick="deleteMitreTech('${esc(tid)}',event)" title="Quitar del módulo" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;padding:0;line-height:1;">🗑</button>
         </div>
         <div style="font-size:11px;color:var(--text1);font-weight:500;">${esc(t.technique_name||'')}</div>
-        ${t.context_snippet?`<div style="font-size:10px;color:var(--text3);margin-top:3px;overflow:hidden;
-          text-overflow:ellipsis;white-space:nowrap;">${esc(t.context_snippet.substring(0,80))}</div>`:''}
+        ${t.context_snippet?`<div style="font-size:10px;color:var(--text3);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(t.context_snippet)}">${esc(t.context_snippet.substring(0,90))}</div>`:''}
+        <div style="margin-top:5px;display:flex;align-items:center;gap:8px;">${srcBadge}
+          <a href="${turl}" target="_blank" style="font-size:9px;color:var(--cyan);text-decoration:none;">ℹ️ más info</a></div>
       </div>`;
     }
     html+=`</div></div>`;
   }
-  body.innerHTML=html;
+  return html;
 }
 
 function mitreCardClick(noteId,ev){
+  if(ev) ev.stopPropagation();
   if(!noteId) return;
   loadNote(noteId);
   switchTab('editor');
 }
 
+// 2B — Quita una técnica entera del módulo (todas sus filas).
+async function deleteMitreTech(tid, ev){
+  if(ev) ev.stopPropagation();
+  if(!confirm('¿Quitar la técnica '+tid+' de tu módulo?')) return;
+  try{
+    await API.del('/api/mitre/technique/'+encodeURIComponent(tid));
+    loadMitre();
+    setStatus('Técnica '+tid+' quitada del módulo');
+  }catch(e){
+    if(e.status===404){ loadMitre(); setStatus('La técnica '+tid+' ya no estaba; lista actualizada','warn'); }
+    else setStatus('Error quitando '+tid+': '+e.message,'error');
+  }
+}
+
+// 1A — Añade una técnica desde el buscador de referencia (POST /api/mitre).
+async function addMitreTech(tid, btn){
+  const orig=btn.textContent; btn.disabled=true; btn.textContent='⟳…';
+  try{
+    const r=await API.post('/api/mitre',{technique_id:tid});
+    _mitreSaved.add(tid);
+    btn.textContent=r.created?'✓ Añadida':'✓ Ya estaba';
+    btn.style.color='var(--green)'; btn.style.borderColor='var(--green)';
+    setStatus(r.created?('Técnica '+tid+' añadida al módulo'):('Técnica '+tid+' ya estaba'));
+  }catch(e){ btn.disabled=false; btn.textContent=orig; setStatus('No se pudo añadir '+tid+': '+e.message,'error'); }
+}
+
+// El buscador consulta a la vez tus técnicas (para filtrarlas) y el catálogo de
+// referencia ATT&CK (para poder añadir las que no tengas), como el buscador de CVEs.
 let _mitreSearchTimer=null;
 function searchMitre(q){
   clearTimeout(_mitreSearchTimer);
-  _mitreSearchTimer=setTimeout(async()=>{
-    if(!q.trim()){loadMitre();return;}
-    try{
-      const rows=await API.get('/api/mitre/search?q='+encodeURIComponent(q));
-      document.getElementById('mitreTotalBadge').textContent=rows.length+' resultados';
-      if(!rows.length){
-        document.getElementById('mitreBody').innerHTML='<div class="empty-msg">Sin resultados para "'+esc(q)+'"</div>';
-        return;
-      }
-      // Re-group by tactic for render
+  _mitreSearchTimer=setTimeout(()=>doMitreSearch(q),280);
+}
+async function doMitreSearch(q){
+  const body=document.getElementById('mitreBody');
+  if(!q.trim()){ loadMitre(); return; }
+  try{
+    const [saved,ref]=await Promise.all([
+      API.get('/api/mitre/search?q='+encodeURIComponent(q)),
+      API.get('/api/mitre/reference?q='+encodeURIComponent(q)),
+    ]);
+    document.getElementById('mitreTotalBadge').textContent=saved.length+' en tu módulo';
+    let html='';
+    if(saved.length){
       const grouped={};
-      rows.forEach(r=>{const t=r.tactic||'Uncategorized';(grouped[t]=grouped[t]||[]).push(r);});
-      renderMitreTactics(grouped);
-    }catch(e){}
-  },280);
+      saved.forEach(r=>{const t=r.tactic||'Uncategorized';(grouped[t]=grouped[t]||[]).push(r);});
+      html+='<div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:6px;">EN TU MÓDULO</div>'+renderMitreTactics(grouped);
+    }
+    html+=renderMitreRefResults(ref.results||[]);
+    body.innerHTML=html||`<div class="empty-msg">Sin resultados para "${esc(q)}" (ni en tu módulo ni en el catálogo ATT&CK)</div>`;
+  }catch(e){
+    body.innerHTML=`<div class="empty-msg" style="color:var(--orange)">Error buscando: ${esc(e.message||String(e))}</div>`;
+  }
+}
+
+// Resultados del catálogo de referencia con botón para añadir (o marca de "ya la tienes").
+function renderMitreRefResults(results){
+  if(!results.length) return '';
+  const rows=results.map(t=>{
+    const col=mitreTacticColor((t.tactics||[])[0]);
+    const turl='https://attack.mitre.org/techniques/'+t.id.replace('.','/');
+    const already=_mitreSaved.has(t.id);
+    return `<div class="enum-cmd-card" style="margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <a href="${turl}" target="_blank" style="font-size:11px;font-family:var(--mono);color:${col};background:${col}22;padding:1px 6px;border-radius:4px;text-decoration:none;">${esc(t.id)}</a>
+        <span style="font-size:12px;color:var(--text1);font-weight:600;">${esc(t.name)}</span>
+        ${(t.tactics||[]).map(tc=>`<span style="font-size:9px;color:var(--text3);border:1px solid var(--border);border-radius:8px;padding:1px 6px;">${esc(tc)}</span>`).join('')}
+        <div style="flex:1"></div>
+        ${already
+          ? '<span style="font-size:10px;color:var(--green);font-family:var(--mono);">✓ en tu módulo</span>'
+          : `<button class="enum-save-btn" onclick='addMitreTech(${jarg(t.id)},this)'>➕ Añadir</button>`}
+      </div>
+      ${t.desc?`<div style="font-size:10px;color:var(--text3);margin-top:4px;">${esc(t.desc)}</div>`:''}
+    </div>`;
+  }).join('');
+  return `<div style="margin-top:14px;"><div style="font-size:10px;font-family:var(--mono);color:var(--cyan);margin-bottom:6px;">➕ AÑADIR DESDE ATT&CK (${results.length})</div>${rows}</div>`;
 }
 
 // ─── AUDIT ────────────────────────────────────────────────────────────────────
