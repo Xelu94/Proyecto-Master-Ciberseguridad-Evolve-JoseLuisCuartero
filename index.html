@@ -81,6 +81,9 @@ a{color:var(--blue);text-decoration:none;}a:hover{text-decoration:underline;}
 .ed-title{flex:1;min-width:160px;background:none;border:none;outline:none;color:var(--text);font-size:14px;font-weight:700;font-family:var(--sans);}
 .ed-title::placeholder{color:var(--text4);}
 .sel{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);border-radius:var(--r);padding:4px 8px;font-size:11px;outline:none;font-family:var(--mono);cursor:pointer;}
+/* Los <input> de texto que usan .sel (buscadores MITRE/CVEs…) deben mostrar el
+   cursor de texto, no la manita de .sel (que es para los <select>). */
+input.sel{cursor:text;}
 .sel:focus{border-color:var(--green);}
 .tags-in{background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:4px 8px;font-size:11px;outline:none;font-family:var(--mono);width:140px;}
 .tags-in:focus{border-color:var(--cyan);}
