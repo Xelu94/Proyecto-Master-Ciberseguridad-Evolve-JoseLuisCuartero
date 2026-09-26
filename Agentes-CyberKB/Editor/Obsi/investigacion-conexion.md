@@ -62,13 +62,14 @@ incl. [mcp.directory](https://mcp.directory/blog/obsidian-mcp-complete-guide-202
 agente de ingesta que depende de que el usuario tenga una app de escritorio abierta no
 es fiable para un pipeline automático. Se descarta para 3b.
 
-## La otra mitad de la pregunta — "que se conecte a la IA"
+## La otra mitad de la pregunta — "que se conecte a la IA" (descartada)
 
-Esto es un asunto distinto al de arriba: no es cómo *escribimos* en el vault, sino cómo
-lo hacemos *consultable por significado* una vez tiene contenido. Aquí es donde entra
-lo que iba a ser el agente 4 (Indexer) — ver
-[Editor/Agente4-IndexerO/investigacion-conexion-ia.md](../Agente4-IndexerO/investigacion-conexion-ia.md)
-para el hallazgo importante: puede que no haga falta construirlo desde cero.
+Esto era un asunto distinto al de arriba: no cómo *escribimos* en el vault, sino cómo
+hacerlo *consultable por significado*. Se investigó un posible "agente 4" (Indexer)
+para esto, pero el 2026-09-26 se decidió que no hace falta: Obsidian solo recibe una
+copia de lo que ya hay en SQLite, y la búsqueda semántica se construye directamente
+sobre `notes` en SQLite para `/api/chat`, sin tocar el vault. Ver
+[[project-investigacion-obsidian-ia]] para el detalle de esa decisión.
 
 ## Fuentes
 

@@ -75,7 +75,7 @@ pie la regla de no tocar `main.py` hasta que el usuario lo pida explícitamente.
 | `ffmpeg` en PATH | **No está instalado** — bloquea la ruta de transcripción por audio de Cinéfilo (la ruta de subtítulos oficiales sí funcionaría sin él) |
 | `.env` de la app | Tiene `ANTHROPIC_API_KEY` y `AGRUPADOR_URL`. **Falta `ESCRITOR_URL`**, que Cinéfilo necesita para entregarle el texto a Escritor. **Falta `OBSIDIAN_VAULT_DIR`** (agente Obsi, aún sin construir). |
 | Agente Obsi (3b) | No construido — carpeta vacía |
-| Agente4-IndexerO (4) | Decisión previa: no hace falta si solo entra información por la pipeline (ver `project_investigacion_obsidian_ia` en memoria) |
+| "Agente 4" (Indexer, descartado) | Carpeta `Agente4-IndexerO` eliminada (2026-09-26) — no hacía falta si solo entra información por la pipeline; la búsqueda semántica se construye sobre SQLite, no sobre el vault (ver `project_investigacion_obsidian_ia` en memoria) |
 
 ### 2.2 — Cómo se registrarían los routers (cuando se decida hacerlo)
 
@@ -220,7 +220,7 @@ activa solo desde la pestaña Editor completa, no desde el atajo rápido.
       solo funciona con vídeos que ya traen subtítulos oficiales
 - [ ] Añadir `ESCRITOR_URL` al `.env` de la app
 - [ ] Construir el agente Obsi (3b) — sigue pendiente, con su propia investigación ya
-      guardada en `Agente4-IndexerO`/`Obsi` (ver memoria del proyecto)
+      guardada en `Editor/Obsi/investigacion-conexion.md` (ver memoria del proyecto)
 - [ ] Decidir Parte 2.4 (convivencia / migración / híbrida) antes de tocar
       `/api/upload` o `/api/analyze`
 - [ ] Decidir si se registra todo de una vez en `main.py` o por agente, según vaya
