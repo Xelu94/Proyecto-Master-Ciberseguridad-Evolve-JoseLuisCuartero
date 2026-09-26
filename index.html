@@ -3778,7 +3778,7 @@ async function deleteMitreTech(tid, ev){
 // tienes, o "✓ en tu módulo" + papelera para quitarla en el momento si ya la tienes.
 function mitreRefAction(tid){
   if(_mitreSaved.has(tid)){
-    return `<span style="font-size:10px;color:var(--green);font-family:var(--mono);">✓ en tu módulo</span>`+
+    return `<span style="font-size:10px;font-weight:600;color:var(--green);font-family:var(--mono);background:rgba(0,255,136,.12);border:1px solid var(--green);border-radius:10px;padding:2px 9px;white-space:nowrap;">✓ En tu módulo</span>`+
       `<button onclick='removeMitreFromRef(${jarg(tid)},this)' title="Quitar del módulo" style="background:none;border:none;color:var(--red);cursor:pointer;padding:0;line-height:0;display:inline-flex;align-items:center;">${TRASH_SVG}</button>`;
   }
   return `<button class="enum-save-btn" onclick='addMitreTech(${jarg(tid)},this)'>➕ Añadir</button>`;
@@ -3859,7 +3859,7 @@ function renderMitreRefResults(results){
         <span style="font-size:12px;color:var(--text1);font-weight:600;">${esc(t.name)}</span>
         ${(t.tactics||[]).map(tc=>`<span style="font-size:9px;color:var(--text3);border:1px solid var(--border);border-radius:8px;padding:1px 6px;">${esc(tc)}</span>`).join('')}
         <div style="flex:1"></div>
-        <span class="mitre-ref-action" style="display:inline-flex;align-items:center;gap:6px;">${mitreRefAction(t.id)}</span>
+        <span class="mitre-ref-action" style="display:inline-flex;align-items:center;gap:12px;">${mitreRefAction(t.id)}</span>
       </div>
       ${t.desc?`<div style="font-size:10px;color:var(--text3);margin-top:4px;">${esc(t.desc)}</div>`:''}
     </div>`;
