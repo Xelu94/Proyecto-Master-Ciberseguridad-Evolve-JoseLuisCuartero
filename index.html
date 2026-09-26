@@ -1406,6 +1406,7 @@ EXEC xp_cmdshell 'whoami';</pre>
     <div class="ed-toolbar" style="gap:8px;">
       <span style="font-size:10px;font-family:var(--mono);color:var(--text3);">⚡ MITRE ATT&amp;CK</span>
       <input type="text" id="mitreSearch" class="sel" placeholder="Buscar por ID (T1055) o nombre para añadir…" style="flex:1;max-width:340px;" oninput="searchMitre(this.value)">
+      <button class="btn-outline" onclick="clearMitreSearch()" title="Limpiar búsqueda" style="flex-shrink:0;padding:4px 11px;">✕</button>
       <span id="mitreTotalBadge" style="font-size:10px;font-family:var(--mono);color:var(--text3);"></span>
       <div style="flex:1"></div>
       <button class="btn-outline" onclick="loadMitre()">↺ Recargar</button>
@@ -3690,7 +3691,7 @@ function renderMitreCoverage(tactics){
     const n=counts[t]||0, col=mitreTacticColor(t);
     return `<div title="${esc(t)}: ${n} técnica(s)" style="flex:1;min-width:66px;text-align:center;padding:5px 3px;border-radius:6px;
       background:${n?col+'22':'var(--bg3)'};border:1px solid ${n?col+'55':'var(--border)'};opacity:${n?1:.45};">
-      <div style="font-size:7.5px;font-family:var(--mono);color:${n?col:'var(--text3)'};text-transform:uppercase;letter-spacing:.3px;line-height:1.25;">${esc(t)}</div>
+      <div style="font-size:7.5px;font-family:var(--mono);color:${n?col:'var(--text3)'};text-transform:uppercase;letter-spacing:.3px;line-height:1.25;overflow-wrap:anywhere;word-break:break-word;">${esc(t)}</div>
       <div style="font-size:14px;font-weight:700;color:${n?col:'var(--text3)'};">${n}</div>
     </div>`;
   }).join('');
@@ -3734,7 +3735,7 @@ function renderMitreTactics(tactics){
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
           <a href="${turl}" target="_blank" style="font-size:11px;font-family:var(--mono);color:${col};text-decoration:none;background:${col}22;padding:1px 6px;border-radius:4px;">${esc(tid)}</a>
           <div style="flex:1"></div>
-          <button onclick="deleteMitreTech('${esc(tid)}',event)" title="Quitar del módulo" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;padding:0;line-height:1;">🗑</button>
+          <button onclick="deleteMitreTech('${esc(tid)}',event)" title="Quitar del módulo" style="background:none;border:none;color:var(--red);cursor:pointer;padding:0;line-height:0;display:inline-flex;align-items:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6"/></svg></button>
         </div>
         <div style="font-size:11px;color:var(--text1);font-weight:500;">${esc(t.technique_name||'')}</div>
         ${t.context_snippet?`<div style="font-size:10px;color:var(--text3);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(t.context_snippet)}">${esc(t.context_snippet.substring(0,90))}</div>`:''}
@@ -3786,6 +3787,12 @@ let _mitreSearchTimer=null;
 function searchMitre(q){
   clearTimeout(_mitreSearchTimer);
   _mitreSearchTimer=setTimeout(()=>doMitreSearch(q),280);
+}
+// Botón ✕ del buscador: vacía el campo y vuelve a la vista general.
+function clearMitreSearch(){
+  const inp=document.getElementById('mitreSearch');
+  inp.value=''; inp.focus();
+  loadMitre();
 }
 async function doMitreSearch(q){
   const body=document.getElementById('mitreBody');
