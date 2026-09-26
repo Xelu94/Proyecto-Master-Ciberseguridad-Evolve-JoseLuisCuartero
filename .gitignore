@@ -41,3 +41,6 @@ Thumbs.db
 Agentes-CyberKB/Editor/*/videos/
 Agentes-CyberKB/Editor/*/resumenes/
 Agentes-CyberKB/Editor/*/agrupaciones/
+
+# Registro de decisiones del mockup del Editor (log de trabajo, solo local)
+Agentes-CyberKB/Editor/DECISIONES_EDITOR.md
