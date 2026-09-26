@@ -3668,6 +3668,10 @@ function mitreTacticColor(tactic){
 // buscador de referencia). Se refresca en cada loadMitre().
 let _mitreSaved=new Set();
 
+// Icono de papelera (SVG monocromo que hereda el color con currentColor; el emoji
+// 🗑 no se puede teñir). Se usa en las tarjetas y en los resultados del buscador.
+const TRASH_SVG='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6"/></svg>';
+
 async function loadMitre(){
   const body=document.getElementById('mitreBody');
   const search=document.getElementById('mitreSearch');
@@ -3735,7 +3739,7 @@ function renderMitreTactics(tactics){
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
           <a href="${turl}" target="_blank" style="font-size:11px;font-family:var(--mono);color:${col};text-decoration:none;background:${col}22;padding:1px 6px;border-radius:4px;">${esc(tid)}</a>
           <div style="flex:1"></div>
-          <button onclick="deleteMitreTech('${esc(tid)}',event)" title="Quitar del módulo" style="background:none;border:none;color:var(--red);cursor:pointer;padding:0;line-height:0;display:inline-flex;align-items:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6"/></svg></button>
+          <button onclick="deleteMitreTech('${esc(tid)}',event)" title="Quitar del módulo" style="background:none;border:none;color:var(--red);cursor:pointer;padding:0;line-height:0;display:inline-flex;align-items:center;">${TRASH_SVG}</button>
         </div>
         <div style="font-size:11px;color:var(--text1);font-weight:500;">${esc(t.technique_name||'')}</div>
         ${t.context_snippet?`<div style="font-size:10px;color:var(--text3);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(t.context_snippet)}">${esc(t.context_snippet.substring(0,90))}</div>`:''}
@@ -3770,15 +3774,42 @@ async function deleteMitreTech(tid, ev){
 }
 
 // 1A — Añade una técnica desde el buscador de referencia (POST /api/mitre).
+// HTML de la zona de acción de un resultado del buscador: "➕ Añadir" si no la
+// tienes, o "✓ en tu módulo" + papelera para quitarla en el momento si ya la tienes.
+function mitreRefAction(tid){
+  if(_mitreSaved.has(tid)){
+    return `<span style="font-size:10px;color:var(--green);font-family:var(--mono);">✓ en tu módulo</span>`+
+      `<button onclick='removeMitreFromRef(${jarg(tid)},this)' title="Quitar del módulo" style="background:none;border:none;color:var(--red);cursor:pointer;padding:0;line-height:0;display:inline-flex;align-items:center;">${TRASH_SVG}</button>`;
+  }
+  return `<button class="enum-save-btn" onclick='addMitreTech(${jarg(tid)},this)'>➕ Añadir</button>`;
+}
+
+// 1A — Añade desde el buscador y deja la fila lista para quitarla al momento
+// (cambia la zona de acción a "✓ en tu módulo" + papelera), sin recargar la búsqueda.
 async function addMitreTech(tid, btn){
-  const orig=btn.textContent; btn.disabled=true; btn.textContent='⟳…';
+  const cont=btn.closest('.mitre-ref-action');
+  btn.disabled=true; btn.textContent='⟳…';
   try{
     const r=await API.post('/api/mitre',{technique_id:tid});
     _mitreSaved.add(tid);
-    btn.textContent=r.created?'✓ Añadida':'✓ Ya estaba';
-    btn.style.color='var(--green)'; btn.style.borderColor='var(--green)';
+    if(cont) cont.innerHTML=mitreRefAction(tid);
     setStatus(r.created?('Técnica '+tid+' añadida al módulo'):('Técnica '+tid+' ya estaba'));
-  }catch(e){ btn.disabled=false; btn.textContent=orig; setStatus('No se pudo añadir '+tid+': '+e.message,'error'); }
+  }catch(e){ btn.disabled=false; btn.textContent='➕ Añadir'; setStatus('No se pudo añadir '+tid+': '+e.message,'error'); }
+}
+
+// Quita una técnica desde el buscador (papelera del resultado) y devuelve la zona
+// de acción a "➕ Añadir". Sin confirmación: es reversible al instante (re-añadir).
+async function removeMitreFromRef(tid, btn){
+  const cont=btn.closest('.mitre-ref-action');
+  try{
+    await API.del('/api/mitre/technique/'+encodeURIComponent(tid));
+    _mitreSaved.delete(tid);
+    if(cont) cont.innerHTML=mitreRefAction(tid);
+    setStatus('Técnica '+tid+' quitada del módulo');
+  }catch(e){
+    if(e.status===404){ _mitreSaved.delete(tid); if(cont) cont.innerHTML=mitreRefAction(tid); }
+    else setStatus('Error quitando '+tid+': '+e.message,'error');
+  }
 }
 
 // El buscador consulta a la vez tus técnicas (para filtrarlas) y el catálogo de
@@ -3822,16 +3853,13 @@ function renderMitreRefResults(results){
   const rows=results.map(t=>{
     const col=mitreTacticColor((t.tactics||[])[0]);
     const turl='https://attack.mitre.org/techniques/'+t.id.replace('.','/');
-    const already=_mitreSaved.has(t.id);
     return `<div class="enum-cmd-card" style="margin-bottom:6px;">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <a href="${turl}" target="_blank" style="font-size:11px;font-family:var(--mono);color:${col};background:${col}22;padding:1px 6px;border-radius:4px;text-decoration:none;">${esc(t.id)}</a>
         <span style="font-size:12px;color:var(--text1);font-weight:600;">${esc(t.name)}</span>
         ${(t.tactics||[]).map(tc=>`<span style="font-size:9px;color:var(--text3);border:1px solid var(--border);border-radius:8px;padding:1px 6px;">${esc(tc)}</span>`).join('')}
         <div style="flex:1"></div>
-        ${already
-          ? '<span style="font-size:10px;color:var(--green);font-family:var(--mono);">✓ en tu módulo</span>'
-          : `<button class="enum-save-btn" onclick='addMitreTech(${jarg(t.id)},this)'>➕ Añadir</button>`}
+        <span class="mitre-ref-action" style="display:inline-flex;align-items:center;gap:6px;">${mitreRefAction(t.id)}</span>
       </div>
       ${t.desc?`<div style="font-size:10px;color:var(--text3);margin-top:4px;">${esc(t.desc)}</div>`:''}
     </div>`;
